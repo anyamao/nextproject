@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import useContactStore from "@/store/states";
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, ArrowBigLeft } from "lucide-react";
 function NavigationPanel() {
   const { mathNavigationState, togglemathNavigation } = useContactStore();
 
@@ -9,17 +9,47 @@ function NavigationPanel() {
     <main>
       <div className="flex flex-row absolute min-h-screen">
         {mathNavigationState && (
-          <div className="min-h-full w-[300px] pt-[10px] flex flex-col  px-[10px] bg-red-200">
-            <Link onClick={togglemathNavigation} href="/maths">
-              Go back to all maths
-            </Link>
-            <Link onClick={togglemathNavigation} href="/maths/trigonometry">
-              Trigonometry
-            </Link>
+          <div className="min-h-full w-[300px] pt-[20px] flex flex-col pl-[20px]  px-[10px] bg-white">
+            <div className="flex flex-row border-b-gray-200 border-b-[1px]">
+              <Link
+                className="text-[15px] font-medium"
+                onClick={togglemathNavigation}
+                href="/maths"
+              >
+                Go to all maths
+              </Link>
+            </div>
+            <div className="flex flex-row border-b-gray-200 font-medium mt-[20px] border-b-[1px]">
+              <Link
+                onClick={togglemathNavigation}
+                href="/maths/trigonometry/theory"
+              >
+                Trigonometry
+              </Link>
+            </div>
+            <div className="flex flex-row ml-[10px]  mt-[10px] ">
+              <Link
+                onClick={togglemathNavigation}
+                href="/maths/trigonometry/theory"
+              >
+                ・Theory
+              </Link>
+            </div>
+            <div className="flex flex-row ml-[10px]  mt-[8px] ">
+              <Link
+                onClick={togglemathNavigation}
+                href="/maths/trigonometry/practice"
+              >
+                ・Practice
+              </Link>
+            </div>
           </div>
         )}
-        <div className="min-h-full w-[50px] flex justify-center text-[rgba(0,0,0,0.5)] pt-[10px]  bg-red-200">
-          <PanelLeft onClick={togglemathNavigation}></PanelLeft>
+        <div className="min-h-full w-[50px] flex justify-center text-[rgba(0,0,0,0.5)] pt-[20px]  bg-white border-r-[1px] border-r-gray-300">
+          <PanelLeft
+            onClick={togglemathNavigation}
+            className="w-[20px] cursor-pointer"
+          ></PanelLeft>
         </div>
       </div>
     </main>

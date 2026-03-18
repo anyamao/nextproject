@@ -8,18 +8,26 @@ function NavigationPanel() {
     <main>
       {navigationState && (
         <div className="min-w-full absolute  z-20  min-h-full flex  flex-1">
-          <div className="bg-pink-100 shadow-lg rounded-[10px] w-full  h-[200px]">
+          <div className="bg-white shadow-lg rounded-[10px] w-full flex flex-col p-[10px] px-[20px]  h-[200px]">
+            <Link
+              onClick={toggleNavigation}
+              href="/"
+              className="cursor-pointer font-semibold"
+            >
+              Home
+            </Link>
+
             <Link
               onClick={toggleNavigation}
               href="/english"
-              className="cursor-pointer"
+              className="cursor-pointer mt-[10px] font-semibold"
             >
               English
             </Link>
             <Link
               onClick={toggleNavigation}
               href="/maths"
-              className="cursor-pointer"
+              className="cursor-pointer mt-[10px] font-semibold"
             >
               Maths
             </Link>
