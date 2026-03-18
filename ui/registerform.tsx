@@ -7,7 +7,7 @@ function Registerform() {
     <main>
       {registerState && (
         <div className=" min-w-full absolute z-22  min-h-full  backdrop-blur-xs bg-white/30  flex justify-center flex-1">
-          <div className="bg-pink-100 shadow-lg rounded-[10px] w-[500px] mt-[15%] h-[600px]">
+          <div className="bg-white shadow-lg rounded-[10px] w-[500px] mt-[15%] h-[600px]">
             Register
           </div>
         </div>

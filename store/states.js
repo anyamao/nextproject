@@ -22,6 +22,9 @@ const useContactStore = create((set) => ({
   mathnavigationState: false,
   togglemathNavigation: () =>
     set((state) => ({ mathNavigationState: !state.mathNavigationState })),
+  englishnavigationState: false,
+  toggleenglishNavigation: () =>
+    set((state) => ({ englishNavigationState: !state.englishNavigationState })),
 }));
 
 export default useContactStore;

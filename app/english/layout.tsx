@@ -1,5 +1,5 @@
 import "./../globals.css";
-import MathNav from "./../../ui/mathnavbar";
+import EnglishNav from "./../../ui/englishnavbar";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -9,9 +9,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <div className="bg-gray-50 relative text-black min-w-screen min-h-screen justify-between  flex flex-row  ">
-          <MathNav></MathNav>
+          <EnglishNav></EnglishNav>
           <div className=" flex justify-center items-center  px-[100px] mt-[50px]   flex-1 ">
-            <div className="bg-white border-[1px] border-gray-200 rounded-md  p-[50px] min-h-full flex-1 max-w-[1500px]">
+            <div className="bg-white border-[1px] border-gray-200 rounded-lg p-[50px] min-h-full flex-1 max-w-[1500px]">
               {children}
             </div>
           </div>
