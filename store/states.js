@@ -19,10 +19,10 @@ const useContactStore = create((set) => ({
   toggleRegister: () =>
     set((state) => ({ registerState: !state.registerState })),
 
-  mathnavigationState: false,
+  mathnavigationState: true,
   togglemathNavigation: () =>
     set((state) => ({ mathNavigationState: !state.mathNavigationState })),
-  englishnavigationState: false,
+  englishnavigationState: true,
   toggleenglishNavigation: () =>
     set((state) => ({ englishNavigationState: !state.englishNavigationState })),
 }));

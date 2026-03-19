@@ -16,7 +16,7 @@ function NavigationPanel() {
                 onClick={togglemathNavigation}
                 href="/maths"
               >
-                Go to all maths
+                Ко всей математике
               </Link>
             </div>
             <div className="flex flex-row border-b-gray-200 font-medium mt-[20px] border-b-[1px]">
@@ -24,7 +24,7 @@ function NavigationPanel() {
                 onClick={togglemathNavigation}
                 href="/maths/trigonometry/theory"
               >
-                Trigonometry
+                Тригонометрия
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[10px] ">
@@ -32,7 +32,7 @@ function NavigationPanel() {
                 onClick={togglemathNavigation}
                 href="/maths/trigonometry/theory"
               >
-                ・Theory
+                ・Теория
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[8px] ">
@@ -40,7 +40,7 @@ function NavigationPanel() {
                 onClick={togglemathNavigation}
                 href="/maths/trigonometry/practice"
               >
-                ・Practice
+                ・Практика
               </Link>
             </div>
           </div>

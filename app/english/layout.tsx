@@ -11,7 +11,7 @@ export default function RootLayout({
         <div className="bg-gray-50 relative text-black min-w-screen min-h-screen justify-between  flex flex-row  ">
           <EnglishNav></EnglishNav>
           <div className=" flex justify-center items-center  px-[100px] mt-[50px]   flex-1 ">
-            <div className="bg-white border-[1px] border-gray-200 rounded-lg p-[50px] min-h-full flex-1 max-w-[1500px]">
+            <div className=" border-gray-200 rounded-lg min-h-full flex-1 max-w-[1500px]">
               {children}
             </div>
           </div>

@@ -14,7 +14,7 @@ function NavigationPanel() {
               href="/"
               className="cursor-pointer font-semibold"
             >
-              Home
+              Домой
             </Link>
 
             <Link
@@ -22,14 +22,14 @@ function NavigationPanel() {
               href="/english"
               className="cursor-pointer mt-[10px] font-semibold"
             >
-              English
+              Английский
             </Link>
             <Link
               onClick={toggleNavigation}
               href="/maths"
               className="cursor-pointer mt-[10px] font-semibold"
             >
-              Maths
+              Математика
             </Link>
           </div>
         </div>
