@@ -11,13 +11,13 @@ function page() {
   return (
     <main>
       <div className="flex flex-row items-center justify-between">
-        <Link href="/english/A1/people">
+        <Link href="/english/A2/people">
           {" "}
           <ArrowLeft className="text-gray-600"></ArrowLeft>
         </Link>
         <div className="bg-purple-300 flex items-center justify-center w-[300px] h-[50px] rounded-full text-[20px] font-semibold">
           {" "}
-          A1: People - Grammar
+          A2: People - Grammar
         </div>
       </div>
       <div className="text-wrap mt-[50px] ">
@@ -179,10 +179,14 @@ function page() {
       </div>
       <div className="text-wrap ">
         <div className="flex mt-[30px]  justify-center">
-          <div className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl w-[350px] h-[80px]">
+          <a
+            href="https://forms.gle/UVDFZdo4zsV92gm79"
+            target="_blank"
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl w-[350px] h-[80px]"
+          >
             {" "}
             Take the test!{" "}
-          </div>
+          </a>
         </div>
       </div>
     </main>

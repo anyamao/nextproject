@@ -9,6 +9,14 @@ const useContactStore = create((set) => ({
   navigationState: false,
   toggleNavigation: () =>
     set((state) => ({ navigationState: !state.navigationState })),
+  closeEverything: () =>
+    set((state) => ({
+      navigationState: false,
+      mathnavigationState: false,
+      englishnavigationState: false,
+      contactState: false,
+      registerState: false,
+    })),
 
   loginState: false,
   toggleLogin: () => set((state) => ({ loginState: !state.logintState })),
@@ -23,6 +31,7 @@ const useContactStore = create((set) => ({
   togglemathNavigation: () =>
     set((state) => ({ mathnavigationState: !state.mathnavigationState })),
   englishnavigationState: true,
+
   toggleenglishNavigation: () =>
     set((state) => ({ englishnavigationState: !state.englishnavigationState })),
 }));

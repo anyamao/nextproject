@@ -44,24 +44,18 @@ function NavigationPanel() {
               </Link>
             </div>
             <div className="flex flex-row border-b-gray-200 font-medium mt-[20px] border-b-[1px]">
-              <Link onClick={toggleenglishNavigation} href="/english/A1/">
+              <Link onClick={toggleenglishNavigation} href="/english/A2/">
                 Уровень английского A1-A2
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[10px] ">
-              <Link
-                onClick={toggleenglishNavigation}
-                href="/maths/trigonometry/theory"
-              >
-                ・Занятие 1
+              <Link onClick={toggleenglishNavigation} href="/english/A2/people">
+                ・Занятие 1 - People
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[8px] ">
-              <Link
-                onClick={toggleenglishNavigation}
-                href="/maths/trigonometry/practice"
-              >
-                ・Занятие 2
+              <Link onClick={toggleenglishNavigation} href="">
+                ・Занятие 2 - Routines
               </Link>
             </div>
           </div>

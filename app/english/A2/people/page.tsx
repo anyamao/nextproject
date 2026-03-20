@@ -11,17 +11,17 @@ function page() {
   return (
     <main>
       <div className="flex flex-row items-center justify-between">
-        <Link href="/english/A1">
+        <Link href="/english/A2">
           {" "}
           <ArrowLeft className="text-gray-600"></ArrowLeft>
         </Link>
         <div className="bg-purple-300 flex items-center justify-center w-[180px] h-[50px] rounded-full text-[20px] font-semibold">
           {" "}
-          A1: People
+          A2: People
         </div>
       </div>
       <Link
-        href="/english/A1/people/grammar"
+        href="/english/A2/people/grammar"
         className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[50px]"
       >
         <div className="flex flex-row items-center justify-between">
@@ -38,7 +38,7 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A1/people/vocab"
+        href="/english/A2/people/vocab"
         className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px]"
       >
         <div className="flex flex-row items-center justify-between">
@@ -56,7 +56,7 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A1/people/reading"
+        href="/english/A2/people/reading"
         className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px]"
       >
         <div className="flex flex-row items-center justify-between">
@@ -73,14 +73,14 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A1/people/ai"
+        href="/english/A2/people/ai"
         className="flex flex-row hover:translate-y-[-10px] relative transition:all hover:shadow-md  transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px] z-5"
       >
         <img
           src="/aiclose.png"
-          className=" absolute left-0 ml-[30px] w-[160px] h-[160px]"
+          className=" absolute left-0 ml-[30px] w-[100px] h-[100px] md:w-[160px] md:h-[160px]"
         />
-        <div className="flex flex-row ml-[70px] items-center justify-between">
+        <div className="flex flex-row md:ml-[70px] ml-[30px] items-center justify-between">
           <Speech className="w-[65px] h-[65px] opacity-0 text-purple-500"></Speech>
           <div className="flex  ml-[30px] flex-col">
             <div className=" font-semibold">Speaking</div>

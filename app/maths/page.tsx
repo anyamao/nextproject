@@ -6,15 +6,15 @@ function page() {
           Сборник теории и практики по математике
         </div>
 
-        <div className="flex flex-row mt-[20px] border-b-[1px] border-b-gray-200 items-top justify-between">
+        <div className="flex md:flex-row flex-col mt-[20px] border-b-[1px] border-b-gray-200 items-top justify-between">
           <div className="text-[20px]">
             Здесь собраны материалы для подготовки к экзаменам по математике,
             планируется покрыть все темы из профильного ЕГЭ по математике.
             Приятной подготовки!
           </div>
           <img
-            src="/Telegram Desktop/maths.png"
-            className="  mt-[-50px] mr-[-20px] w-[550px]"
+            src="/maths.png"
+            className="  md:mt-[-50px] mr-[-20px] md:w-[550px] md:h-[300px]"
           />
         </div>
       </div>
