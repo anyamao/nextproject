@@ -10,6 +10,10 @@ const supabase = createClient(
 
 export default async function Home() {
   return (
-    <div className="flex-1 flex min-w-full min-h-full relative ">1212122</div>
+    <div className="flex-1 flex justify-center min-w-full min-h-full relative bg-blue-500 ">
+      <div className="text-wrap mt-[40px] h-[800px] text-[30px] font-semibold w-[70%]">
+        Бесплатные уроки по английскому, математике и другим предметам!
+      </div>
+    </div>
   );
 }
