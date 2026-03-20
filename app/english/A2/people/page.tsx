@@ -38,7 +38,7 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A2/people/vocab"
+        href="/english/A2/people"
         className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px]"
       >
         <div className="flex flex-row items-center justify-between">
@@ -56,7 +56,7 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A2/people/reading"
+        href="/english/A2/people"
         className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px]"
       >
         <div className="flex flex-row items-center justify-between">
@@ -73,7 +73,7 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A2/people/ai"
+        href="/english/A2/people"
         className="flex flex-row hover:translate-y-[-10px] relative transition:all hover:shadow-md  transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px] z-5"
       >
         <img
