@@ -3,12 +3,12 @@ import Link from "next/link";
 import useContactStore from "@/store/states";
 import { PanelLeft, ArrowBigLeft } from "lucide-react";
 function NavigationPanel() {
-  const { englishNavigationState, toggleenglishNavigation } = useContactStore();
+  const { englishnavigationState, toggleenglishNavigation } = useContactStore();
 
   return (
     <main>
-      <div className="flex flex-row absolute min-h-screen">
-        {englishNavigationState && (
+      <div className="flex flex-row absolute z-10 min-h-full">
+        {englishnavigationState && (
           <div className="min-h-full w-[300px] pt-[20px] flex flex-col pl-[20px]  px-[10px] bg-white">
             <div className="flex flex-row border-b-gray-200 border-b-[1px]">
               <Link
@@ -69,7 +69,7 @@ function NavigationPanel() {
         <div className="min-h-full shadow-[15px_0_10px_-4px_rgba(0,0,0,0.02)] w-[50px] flex justify-center text-[rgba(0,0,0,0.5)] pt-[20px]  bg-white border-r-[1px] border-r-gray-300">
           <PanelLeft
             onClick={toggleenglishNavigation}
-            className="w-[20px] cursor-pointer"
+            className="w-[30px] text-purple-500 cursor-pointer"
           ></PanelLeft>
         </div>
       </div>

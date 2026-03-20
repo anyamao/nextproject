@@ -3,12 +3,12 @@ import Link from "next/link";
 import useContactStore from "@/store/states";
 import { PanelLeft, ArrowBigLeft } from "lucide-react";
 function NavigationPanel() {
-  const { mathNavigationState, togglemathNavigation } = useContactStore();
+  const { mathnavigationState, togglemathNavigation } = useContactStore();
 
   return (
     <main>
-      <div className="flex flex-row absolute min-h-screen">
-        {mathNavigationState && (
+      <div className="flex flex-row absolute min-h-full">
+        {mathnavigationState && (
           <div className="min-h-full w-[300px] pt-[20px] flex flex-col pl-[20px]  px-[10px] bg-white">
             <div className="flex flex-row border-b-gray-200 border-b-[1px]">
               <Link

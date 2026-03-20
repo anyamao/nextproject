@@ -73,11 +73,15 @@ function page() {
         </div>
       </Link>
       <Link
-        href="/english/A1/people/reading"
-        className="flex flex-row hover:translate-y-[-10px] transition:all hover:shadow-md transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px]"
+        href="/english/A1/people/ai"
+        className="flex flex-row hover:translate-y-[-10px] relative transition:all hover:shadow-md  transition-transform duration-300 text-wrap cursor-pointer transition-all  items-center justify-between mt-[-10px] z-5"
       >
-        <div className="flex flex-row items-center justify-between">
-          <Speech className="w-[65px] h-[65px] text-purple-500"></Speech>
+        <img
+          src="/aiclose.png"
+          className=" absolute left-0 ml-[30px] w-[160px] h-[160px]"
+        />
+        <div className="flex flex-row ml-[70px] items-center justify-between">
+          <Speech className="w-[65px] h-[65px] opacity-0 text-purple-500"></Speech>
           <div className="flex  ml-[30px] flex-col">
             <div className=" font-semibold">Speaking</div>
             <div className=" text-gray-500 font-semibold ">
@@ -85,6 +89,7 @@ function page() {
             </div>
           </div>
         </div>
+
         <div className=" bg-purple-100 w-[45px] h-[45px] flex items-center justify-center text-purple-500 rounded-full ">
           <Check className="w-[35px] h-[35px]"></Check>
         </div>

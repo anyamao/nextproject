@@ -51,7 +51,7 @@ function page() {
         </p>
       </div>
       <div className="text-wrap">
-        <p className="mt-[10px] text-[20px] font-semibold bg-purple-100">
+        <p className="mt-[10px] text-[25px] font-semibold bg-purple-100">
           Present Simple (Простое настоящее){" "}
         </p>
         <p className="mt-[10px]">Используется, когда мы говорим о: </p>{" "}
@@ -76,10 +76,27 @@ function page() {
           🔑 Маркеры: always, usually, often, sometimes, never, every day, on
           Mondays.
         </p>
+        <p className="mt-[10px] bg-purple-100 font-semibold">
+          {" "}
+          Как формировать предложения?
+        </p>
+        <p className="mt-[10px]">
+          {" "}
+          Всё просто, общая структура в Present Simple это Object + Verb,
+          например I drink, you sleep, she dances. Если вы говорите о дейтсвии,
+          глагол to be в этом времени не используется, не говорят she is dances.
+          Но если в предложении нет глагола то его заменяет глагол to be в
+          нужной форме, частый случай - описание человека, he is interesting,
+          you are beautiful. Are используется с you, we,they. Am используется
+          только с I. Is используется во всех остальных случаях, или же с he,
+          she, it, that, it, this.<br></br> Лучший способ запомнить это -
+          разгвор на английском, так у вас сложется интуитивное понимание.
+        </p>
+        <img src="/table1.png" className="w-[900px] mb-[-30px]" />
       </div>
 
       <div className="text-wrap">
-        <p className="mt-[10px] text-[20px] font-semibold bg-purple-100">
+        <p className="mt-[10px] text-[25px] font-semibold bg-purple-100">
           Present Continuous (Настоящее длительное)
         </p>
         <p className="mt-[10px]">Используется, когда мы говорим о: </p>{" "}
@@ -114,6 +131,59 @@ function page() {
         <p className="mt-[10px]">
           🔑 Маркеры: now, at the moment, currently, today, this week, Look!
         </p>
+        <p className="mt-[10px] bg-purple-100 font-semibold">
+          {" "}
+          Как формировать предложения?
+        </p>
+        <p className="mt-[10px]">
+          Здесь всегда будет использоваться как глагол to be так и обычный
+          глагол. Общая структура -{" "}
+          <span className="font-semibold"> Object + to be + Verb(ing). </span>{" "}
+          Например - I am playing, we are cooking.
+        </p>
+        <img src="/table2.png" className="w-[900px] mb-[-30px]" />
+      </div>
+      <div className="text-wrap">
+        <p className="mt-[10px] text-[25px] font-semibold bg-purple-100">
+          Stative verbs (tricky part!)
+        </p>
+        <p className="mt-[10px]">
+          {" "}
+          Один и тот же глагол в Present Simple и Present Continuous будет
+          значить разные вещи, например I think he&apos;s nice это мнение,
+          мнение всегда в Present Simple. А I&apos;m thinking about him это то
+          что происходит сейчас, я сейчас о нем думаю, поэтому Present
+          Continuous. Так как мнения всегда в Present Simple, love, hate тоже
+          будут в Present Simple, если вы хотите сказать что что-то любите или
+          ненавидите.{" "}
+        </p>
+        <p className="mt-[10px]">
+          <span className="font-semibold">
+            Данные глаголы почти никогда нельзя использовать в Continuous{" "}
+          </span>
+          - love, hate, like, prefer, want, need, know, believe, understand,
+          think (мнение), remember, have (владею), belong, cost, seem, be, see,
+          hear, smell
+        </p>
+        <p className="mt-[10px]">
+          Примеры правильной постановки частых предложений: <br></br> I know the
+          answer. <br></br> I hear the noise. <br></br>This car belongs to
+          me.{" "}
+        </p>
+        <p className="mt-[10px]">
+          {" "}
+          Также еще пример - He is rude. Это его черта характера, он обычно
+          грубый. He is being rude today. Обычно он не грубый, сегодня он ведёт
+          себя грубо.{" "}
+        </p>
+      </div>
+      <div className="text-wrap ">
+        <div className="flex mt-[30px]  justify-center">
+          <div className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl w-[350px] h-[80px]">
+            {" "}
+            Take the test!{" "}
+          </div>
+        </div>
       </div>
     </main>
   );

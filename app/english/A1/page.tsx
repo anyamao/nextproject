@@ -17,8 +17,10 @@ function page() {
         <div className="flex flex-col mt-[30px] items-center">
           <Link
             href="/english/A1/people"
-            className=" w-[180px] rounded-full h-[180px] outline-purple-200 outline-[8px] border-[5px] border-white bg-purple-500"
-          ></Link>
+            className=" w-[180px] flex items-center justify-center rounded-full h-[180px] outline-purple-200 outline-[8px] border-[5px] border-white bg-purple-500"
+          >
+            <img src="/cover3.png" className="w-[150px]  h-[150px]" />{" "}
+          </Link>
           <div className="bg-purple-200 mt-[10px] h-[35px] rotate-7 flex items-center justify-center w-[130px]">
             <Link href="/english/A1/people" className="rotate-353">
               People
