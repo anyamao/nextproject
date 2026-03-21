@@ -7,10 +7,10 @@ function Navigation() {
   return (
     <main>
       <div
-        className="cursor-pointer bg-gray-900 text-[12px]   items-center justify-center font-semibold flex flex-row items-center px-[15px] py-[8px] rounded-full text-white"
+        className="cursor-pointer bg-gray-900 text-[10px]   items-center justify-center font-semibold flex flex-row items-center md:px-[15px] px-[12px] md:py-[8px] py-[5px] rounded-full text-white"
         onClick={toggleNavigation}
       >
-        <Menu className="w-[20px]" />
+        <Menu className=" w-[15px] md:w-[20px]" />
         <p className="ml-[10px]">Меню </p>
       </div>
     </main>
