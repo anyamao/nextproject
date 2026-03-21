@@ -10,7 +10,7 @@ function Contactform() {
       {contactState && (
         <div className="w-full z-23 absolute h-full backdrop-blur-md  flex justify-center  flex-1">
           <div className=" relative md:w-[600px] w-[400px] mt-[200px] ml-[50px] h-[600px]">
-            <div className="text-white md:w-[500px] w-[350px] pl-[25px] flex flex-col  md:h-[460px] h-[360px] bg-orange-400 rounded-lg shadow-lg font-semibold">
+            <div className="text-white md:w-[500px] w-[320px] pl-[25px] flex flex-col  md:h-[460px] h-[360px] bg-orange-400 rounded-lg shadow-lg font-semibold">
               <div className="w-full relative h-[30px]">
                 <X
                   onClick={toggleContact}
