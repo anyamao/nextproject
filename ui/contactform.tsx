@@ -21,7 +21,7 @@ function Contactform() {
                 src="/me"
                 className="md:w-[200px] md:h-[200px] w-[150px] h-[150px] mt-[10px] rounded-full outline-1 outline-white"
               />
-              <p className="md:text-[40px] text-[20px] md:mt-[-150px] mt-[-100px] ml-[220px]">
+              <p className="md:text-[40px] w-[80px] text-[20px] md:mt-[-150px] mt-[-100px] ml-[220px]">
                 Hi! (´꒳`)♡
               </p>
 
