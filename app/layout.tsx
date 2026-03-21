@@ -14,11 +14,13 @@ export default function RootLayout({
       <body>
         <div className="bg-white text-black min-w-screen  min-h-screen items-center  flex flex-col  ">
           <Mainnav></Mainnav>
-          <div className={`flex-1 flex w-full  z-19 min-h-full relative`}>
+          <div
+            className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
+          >
             <ContactForm></ContactForm>
             <RegisterForm></RegisterForm>
             <NavigationPanel></NavigationPanel>
-            <div className=" min-w-full">{children}</div>
+            <div className="w-full">{children}</div>
           </div>
         </div>
       </body>

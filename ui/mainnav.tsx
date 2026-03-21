@@ -14,23 +14,26 @@ function Mainnav() {
   } = useContactStore();
 
   return (
-    <main>
-      <div className="border-b-[1px] shadow-xs border-b-gray-300 min-w-screen md:ml-[0px]  min-h-[120px] items-center justify-center   md:px-[50px]  flex flex-col">
-        <div className="flex flex-row w-full  md:max-w-[1300px] max-w-[340px]  h-[100px] flex-1 items-center   mt-[15px] justify-between">
-          <div className="flex flex-row justify-between items-center w-[220px] md:w-[350px] ">
+    <main className="w-full div-resp px-[10px] sm:px-[3px] md:px-[30px]  lg:px-[20px]   ">
+      <div className="  min-w-full max-h-[120px] items-center   flex-1   flex flex-col">
+        <div className="flex flex-row w-full flex-1 items-center   mt-[15px] justify-between">
+          <div className="flex flex-row justify-between items-center ">
             <Link href="/">
               {" "}
-              <img src="/text2.png" className="w-[200px] cursor-pointer" />
+              <img
+                src="/text2.png"
+                className="md:w-[160px] w-[100px]  cursor-pointer"
+              />
             </Link>
             <MainNavigation></MainNavigation>
           </div>
-          <div className="flex flex-row justify-between ml-[10px] md:ml-[30px] items-center min-w-[100px] md:min-w-[180px] pr-[10px] ">
+          <div className="flex flex-row justify-between   items-center  pr-[10px] ">
             <Contact></Contact>
 
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-auto md:px-[20px] mb-[10px] flex-row h-[60px] max-w-[340px] md:max-w-[1300px] md:text-[15px] text-[10px]  md:justify-center items-center">
+        <div className=" flex overflow-auto w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white    mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
           {" "}
           <Link
             href="/english"
@@ -56,9 +59,59 @@ function Mainnav() {
           <Link
             href="/maths"
             onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500 duration-300"
+            className="ml-[20px] hover:text-blue-500  whitespace-nowrap  duration-300"
           >
             Математика
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500    whitespace-nowrap  duration-300"
+          >
+            Программирование
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500    whitespace-nowrap   duration-300"
+          >
+            Инженерия
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500   whitespace-nowrap   duration-300"
+          >
+            Физика
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
+          >
+            Китайский
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
+          >
+            Немецкий
+          </Link>
+          {" "}
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
+          >
+            Анализ данных
+          </Link>
+          <Link
+            href="/maths"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500 whitespace-nowrap   duration-300"
+          >
+            Русский
           </Link>
         </div>
       </div>

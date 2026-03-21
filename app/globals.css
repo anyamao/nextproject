@@ -2,7 +2,18 @@
 @tailwind utilities;
 
 @layer utilities {
+  .div-resp {
+    @apply w-full max-w-[1200px]  p-[10px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full   md:m-[30px] sm:m-[20px] m-[15px];
+  }
+
+  .ord-text {
+    @apply text-[15px];
+  }
+  .smaller-text {
+    @apply text-[12px];
+  }
+
   .text-wrap {
-    @apply bg-white rounded-lg mb-[29px] shadow-md p-[10px] md:p-[50px] border-[1px] border-gray-200;
+    @apply bg-white rounded-lg shadow-md p-[10px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full   md:m-[30px] sm:m-[20px] m-[15px];
   }
 }

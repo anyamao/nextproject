@@ -7,11 +7,11 @@ function Navigation() {
   return (
     <main>
       <div
-        className="cursor-pointer bg-gray-900 text-[10px]   items-center justify-center font-semibold flex flex-row items-center md:px-[15px] px-[12px] md:py-[8px] py-[5px] rounded-full text-white"
+        className="cursor-pointer bg-gray-900  items-center justify-center font-semibold flex flex-row items-center px-[14px]  py-[6px] sm:ml-[20px] rounded-full text-white"
         onClick={toggleNavigation}
       >
-        <Menu className=" w-[15px] md:w-[20px]" />
-        <p className="ml-[10px]">Меню </p>
+        <Menu className=" w-[17px] text-gray-400 " />
+        <p className="ml-[10px] smaller-text">Меню </p>
       </div>
     </main>
   );

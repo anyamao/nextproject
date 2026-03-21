@@ -4,7 +4,7 @@ import { LogIn } from "lucide-react";
 function Contactform() {
   return (
     <div className="cursor-pointer">
-      <LogIn className="     text-gray-800 ml-[20px] w-[15px] md:w-[20px]" />
+      <LogIn className="     text-gray-700  w-[20px] " />
     </div>
   );
 }
