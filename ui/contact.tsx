@@ -7,11 +7,11 @@ function Contact() {
   return (
     <main>
       <div
-        className="cursor-pointer flex flex-row bg-orange-400 text-white px-[15px] py-[10px] text-[15px] rounded-full "
+        className="cursor-pointer items-center justify-center flex flex-row bg-orange-400 text-white px-[12px] py-[8px] text-[12px] rounded-full "
         onClick={toggleContact}
       >
         <MessageCircleMore className="mr-[7px] w-[20px]"></MessageCircleMore>
-        <p>Изменено</p>
+        <p>Написать</p>
       </div>
     </main>
   );

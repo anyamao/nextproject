@@ -60,7 +60,7 @@ function NavigationPanel() {
             </div>
           </div>
         )}
-        <div className="min-h-full shadow-[15px_0_10px_-4px_rgba(0,0,0,0.02)] w-[50px] flex justify-center text-[rgba(0,0,0,0.5)] pt-[20px]  bg-white border-r-[1px] border-r-gray-300">
+        <div className="min-h-full shadow-[15px_0_10px_-4px_rgba(0,0,0,0.02)] md:w-[50px] w-[80px] flex justify-center text-[rgba(0,0,0,0.5)] pt-[20px]  bg-white border-r-[1px] border-r-gray-300">
           <PanelLeft
             onClick={toggleenglishNavigation}
             className="w-[30px] text-purple-500 cursor-pointer"

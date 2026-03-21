@@ -17,20 +17,20 @@ function Mainnav() {
     <main>
       <div className="border-b-[1px] shadow-xs border-b-gray-300 min-w-screen md:ml-[0px] ml-[-40px]  min-h-[120px] items-center justify-center   md:px-[50px]  flex flex-col">
         <div className="flex flex-row w-full  md:max-w-[1300px] max-w-[400px]  h-[100px] flex-1 items-center   mt-[15px] justify-between">
-          <div className="flex flex-row justify-between items-center w-[350px] ">
+          <div className="flex flex-row justify-between items-center w-[250px] md:w-[350px] ">
             <Link href="/">
               {" "}
               <img src="/text2.png" className="w-[200px] cursor-pointer" />
             </Link>
             <MainNavigation></MainNavigation>
           </div>
-          <div className="flex flex-row justify-between ml-[30px] items-center min-w-[180px] pr-[10px] ">
+          <div className="flex flex-row justify-between ml-[10px] md:ml-[30px] items-center min-w-[100px] md:min-w-[180px] pr-[10px] ">
             <Contact></Contact>
 
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-auto md:px-[20px] mb-[10px] flex-row h-[60px] max-w-[400px] md:max-w-[1300px]  md:justify-center items-center">
+        <div className=" flex overflow-auto md:px-[20px] mb-[10px] flex-row h-[60px] max-w-[380px] md:max-w-[1300px]  md:justify-center items-center">
           {" "}
           <Link
             href="/english"
