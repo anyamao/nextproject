@@ -12,9 +12,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="bg-white text-black min-w-screen min-h-screen items-center flex flex-col  ">
+        <div className="bg-white text-black min-w-screen  min-h-screen items-center  flex flex-col  ">
           <Mainnav></Mainnav>
-          <div className={`flex-1 flex min-w-full z-19 min-h-full relative`}>
+          <div className={`flex-1 flex w-full  z-19 min-h-full relative`}>
             <ContactForm></ContactForm>
             <RegisterForm></RegisterForm>
             <NavigationPanel></NavigationPanel>
