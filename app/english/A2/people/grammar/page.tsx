@@ -182,7 +182,7 @@ function page() {
           <a
             href="https://forms.gle/UVDFZdo4zsV92gm79"
             target="_blank"
-            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl w-[350px] h-[80px]"
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl md:w-[350px] w-[270px] h-[60px] md:h-[80px]"
           >
             {" "}
             Take the test!{" "}
