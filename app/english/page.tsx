@@ -7,7 +7,7 @@ function page() {
         </p>
 
         <div className="flex flex-row mt-[20px] border-b-[1px] border-b-gray-200 items-top justify-between">
-          <div className="flex flex-col items-center md:items-end">
+          <div className="flex flex-col items-center md:items-start">
             {" "}
             <p className=" text-[17px]">
               Клуб английского языка{" "}
