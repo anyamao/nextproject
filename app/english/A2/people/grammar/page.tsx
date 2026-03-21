@@ -92,7 +92,7 @@ function page() {
           she, it, that, it, this.<br></br> Лучший способ запомнить это -
           разгвор на английском, так у вас сложется интуитивное понимание.
         </p>
-        <img src="/table1.png" className="w-[900px] mb-[-30px]" />
+        <img src="/table1.png" className="w-[900px] md:mb-[-30px]" />
       </div>
 
       <div className="text-wrap">
@@ -141,7 +141,7 @@ function page() {
           <span className="font-semibold"> Object + to be + Verb(ing). </span>{" "}
           Например - I am playing, we are cooking.
         </p>
-        <img src="/table2.png" className="w-[900px] mb-[-30px]" />
+        <img src="/table2.png" className="w-[900px] md:mb-[-30px]" />
       </div>
       <div className="text-wrap">
         <p className="mt-[10px] text-[25px] font-semibold bg-purple-100">
