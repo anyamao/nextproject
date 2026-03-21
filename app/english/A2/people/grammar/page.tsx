@@ -15,7 +15,7 @@ function page() {
           {" "}
           <ArrowLeft className="text-gray-600"></ArrowLeft>
         </Link>
-        <div className="bg-purple-300 flex items-center justify-center w-[300px] h-[50px] rounded-full text-[20px] font-semibold">
+        <div className="bg-purple-300 flex items-center justify-center w-[250px] h-[50px] rounded-full text-[15px] md:text-[20px] font-semibold">
           {" "}
           A2: People - Grammar
         </div>
