@@ -14,8 +14,10 @@ function Mainnav() {
   } = useContactStore();
 
   return (
-    <main className="w-full div-resp px-[10px] sm:px-[3px] md:px-[30px]  lg:px-[20px]   ">
-      <div className="  min-w-full max-h-[120px] items-center   flex-1   flex flex-col">
+    <main
+      className={`w-full  border-b-[1px] z-20 ${navigationState ? "shadow-none" : "shadow-xs"}  border-gray-200 flex items-center justify-center px-[10px]  `}
+    >
+      <div className="  w-full max-w-[1200px] max-h-[120px] items-center   flex-1   flex flex-col">
         <div className="flex flex-row w-full flex-1 items-center   mt-[15px] justify-between">
           <div className="flex flex-row justify-between items-center ">
             <Link href="/">
@@ -33,7 +35,7 @@ function Mainnav() {
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-auto w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white    mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
+        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white    mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
           {" "}
           <Link
             href="/english"

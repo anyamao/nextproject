@@ -3,17 +3,47 @@
 
 @layer utilities {
   .div-resp {
-    @apply w-full max-w-[1200px]  p-[10px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full   md:m-[30px] sm:m-[20px] m-[15px];
+    @apply w-full max-w-[1000px]  px-[10px] sm:px-[20px] md:px-[30px];
   }
 
   .ord-text {
-    @apply text-[15px];
+    @apply text-[14px];
   }
   .smaller-text {
     @apply text-[12px];
   }
+  .bigger-text {
+    @apply text-[18px];
+  }
 
   .text-wrap {
-    @apply bg-white rounded-lg shadow-md p-[10px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full   md:m-[30px] sm:m-[20px] m-[15px];
+    @apply bg-white rounded-lg shadow-md p-[10px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full max-w-[1000px] my-[20px] mx-[90px]  md:mx-[30px] sm:mx-[20px];
   }
+}
+*::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: 10px !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #888 !important;
+  border-radius: 10px !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #555 !important;
+}
+
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: #ffffff !important;
+}
+
+* {
+  -ms-overflow-style: none !important;
 }

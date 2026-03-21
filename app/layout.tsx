@@ -11,8 +11,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <div className="bg-white text-black min-w-screen  min-h-screen items-center  flex flex-col  ">
+      <body className="overflow-x-hidden ">
+        <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
           <Mainnav></Mainnav>
           <div
             className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
