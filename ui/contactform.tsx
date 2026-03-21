@@ -8,45 +8,34 @@ function Contactform() {
   return (
     <main>
       {contactState && (
-        <div className="w-full z-23 absolute h-full backdrop-blur-md  flex justify-center  flex-1">
-          <div className=" relative md:w-[600px] w-[400px] mt-[200px] ml-[50px] h-[600px]">
-            <div className="text-white md:w-[500px] w-[320px] pl-[25px] flex flex-col  md:h-[460px] h-[360px] bg-orange-400 rounded-lg shadow-lg font-semibold">
-              <div className="w-full relative h-[30px]">
-                <X
-                  onClick={toggleContact}
-                  className="absolute right-0 cursor-pointer  mr-[30px] mt-[30px] top-0"
-                ></X>
-              </div>
+        <div className="w-full z-23 absolute h-full backdrop-blur-xs  flex justify-center  flex-1">
+          <div className="bg-orange-400 relative w-[320px] h-[320px] ord-text text-white rounded-xl flex flex-col mt-[50px] md:mt-[100px] p-[20px]">
+            <div className="w-full flex justify-end text-white">
+              <X className="cursor-pointer" onClick={toggleContact}></X>
+            </div>
+            <div className="flex flex-row">
               <img
                 src="/me"
-                className="md:w-[200px] md:h-[200px] w-[150px] h-[150px] mt-[10px] rounded-full outline-1 outline-white"
+                className=" outline-white outline-[1px] w-[150px] h-[150px] rounded-full"
               />
-              <p className="md:text-[40px] w-[80px] text-[20px] md:mt-[-150px] mt-[-100px] ml-[220px]">
-                Hi! (´꒳`)♡
+              <p className="ord-text text-white font-semibold mt-[30px] w-[150px] ml-[10px]">
+                Привет, я разработчик этого вебсайта!
               </p>
-
-              <p className="mt-[100px] text-[12px] md:text-[20px]">
-                {" "}
-                Я разработчик этого вебсайта, <br></br> рада критике и
-                сотрудничеству!
-              </p>
-              <a className=" md:text-[20px] text-[12px] mt-[10px] border-t-[3px] border-t-orange-500">
-                Напишите мне в tg: anyamaoo
-              </a>
-              <a
-                className="md:text-[20px] text-[12px]"
-                target="_blank"
-                href="https://vk.com/anyamaoo"
-              >
-                {" "}
-                Напишите мне в vk: <br></br> https://vk.com/anyamaoo
-              </a>
             </div>
+            <p className="w-[240px]">
+              Буду рада услышать критику и предложения по поводу вебсайта!
+            </p>
+            <a href="https://" target="_blank">
+              Мой вк: https:
+            </a>
+            <a href="https://" target="_blank">
+              Мой тг: https:
+            </a>
             <img
               src="/hi.png"
-              className=" absolute bottom-0 right-0 mr-[-10px] mb-[100px] md:mb-[0px] md:w-[250px] w-[180px]"
+              className=" absolute bottom-0 mb-[-40px] mr-[-30px] right-0 w-[130px]"
             />
-          </div>
+          </div>{" "}
         </div>
       )}
     </main>

@@ -5,7 +5,7 @@ import NavigationPanel from "./../ui/navigationpanel";
 
 export default async function Home() {
   return (
-    <div className="flex-1 flex flex-col items-center px-[10px] sm:px-[0px] py-[50px]  min-w-full min-h-full relative bg-gray-100 ">
+    <div className="flex-1 flex flex-col items-center px-[10px] sm:px-[0px] py-[30px]  min-w-full min-h-full relative bg-gray-100 ">
       <div className="text-wrap  flex flex-col  ">
         <div className="flex justify-center h-min w-full  border-b-[3px] border-b-teal-500 ">
           <div className="relative">

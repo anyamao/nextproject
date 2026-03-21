@@ -6,13 +6,13 @@ function NavigationPanel() {
   const { englishnavigationState, toggleenglishNavigation } = useContactStore();
 
   return (
-    <main>
-      <div className="flex flex-row absolute  z-10 min-h-full">
+    <main className=" z-20 h-full bg-none">
+      <div className="flex flex-row absolute h-full">
         {englishnavigationState && (
-          <div className="min-h-full w-[300px] pt-[20px] flex flex-col md:pl-[20px]   px-[10px] bg-white">
+          <div className="min-h-full border-r-[1px] sm:border-r-[0px] border-gray-300 w-[260px] pt-[20px] flex flex-col  md:pl-[20px]   px-[10px] bg-white">
             <div className="flex flex-row border-b-gray-200 border-b-[1px]">
               <Link
-                className="text-[15px] font-medium"
+                className="ord-text font-medium"
                 onClick={toggleenglishNavigation}
                 href="/english"
               >
@@ -23,6 +23,7 @@ function NavigationPanel() {
               <Link
                 onClick={toggleenglishNavigation}
                 href="/english/shakespeare/about/"
+                className="ord-text"
               >
                 Кружок английского &apos; Шэкспир&apos;
               </Link>
@@ -31,6 +32,7 @@ function NavigationPanel() {
               <Link
                 onClick={toggleenglishNavigation}
                 href="/english/shakespeare/about/"
+                className="ord-text"
               >
                 ・О кружке
               </Link>
@@ -38,32 +40,45 @@ function NavigationPanel() {
             <div className="flex flex-row ml-[10px]  mt-[8px] ">
               <Link
                 onClick={toggleenglishNavigation}
+                className="ord-text"
                 href="/english/shakespeare/plan/"
               >
                 ・План занятий
               </Link>
             </div>
             <div className="flex flex-row border-b-gray-200 font-medium mt-[20px] border-b-[1px]">
-              <Link onClick={toggleenglishNavigation} href="/english/A2/">
+              <Link
+                onClick={toggleenglishNavigation}
+                href="/english/A2/"
+                className="ord-text"
+              >
                 Уровень английского A1-A2
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[10px] ">
-              <Link onClick={toggleenglishNavigation} href="/english/A2/people">
+              <Link
+                onClick={toggleenglishNavigation}
+                className="ord-text"
+                href="/english/A2/people"
+              >
                 ・Занятие 1 - People
               </Link>
             </div>
             <div className="flex flex-row ml-[10px]  mt-[8px] ">
-              <Link onClick={toggleenglishNavigation} href="">
+              <Link
+                onClick={toggleenglishNavigation}
+                className="ord-text"
+                href=""
+              >
                 ・Занятие 2 - Routines
               </Link>
             </div>
           </div>
         )}
-        <div className="min-h-full z-67   md:w-[50px] w-[20px] flex justify-end pr-[20px] text-[rgba(0,0,0,0.5)] pt-[20px]  bg-white border-r-[1px] border-r-gray-300">
+        <div className=" z-67  w-[50px] h-[60px] bg-purple-200 sm:bg-white sm:min-h-full border-b-[1px] border-b-gray-300 flex justify-end pr-[20px]  pt-[15px]   border-r-[1px] border-r-gray-300">
           <PanelLeft
             onClick={toggleenglishNavigation}
-            className="md:w-[30px] w-[15px] text-purple-500 cursor-pointer"
+            className=" w-[15px] text-purple-500 cursor-pointer"
           ></PanelLeft>
         </div>
       </div>

@@ -27,13 +27,13 @@ const useContactStore = create((set) => ({
   toggleRegister: () =>
     set((state) => ({ registerState: !state.registerState })),
 
-  //mathnavigationState: true,
-  //togglemathNavigation: () =>
-  //set((state) => ({ mathnavigationState: !state.mathnavigationState })),
-  //englishnavigationState: true,
+  mathnavigationState: true,
+  togglemathNavigation: () =>
+    set((state) => ({ mathnavigationState: !state.mathnavigationState })),
+  englishnavigationState: true,
 
-  //toggleenglishNavigation: () =>
-  //set((state) => ({ englishnavigationState: !state.englishnavigationState })),
+  toggleenglishNavigation: () =>
+    set((state) => ({ englishnavigationState: !state.englishnavigationState })),
 }));
 
 export default useContactStore;

@@ -9,15 +9,14 @@ import {
 import Link from "next/link";
 function page() {
   return (
-    <main>
-      <div className="flex flex-row items-center justify-between">
+    <main className=" flex-1 flex   flex-col items-center px-[10px] sm:px-[0px] py-[30px]  w-full h-full relative ">
+      <div className="flex flex-row text-wrap-no items-center    justify-between">
         <Link href="/english/A2/people">
           {" "}
-          <ArrowLeft className="text-gray-600"></ArrowLeft>
+          <ArrowLeft></ArrowLeft>
         </Link>
-        <div className="bg-purple-300 flex items-center justify-center w-[250px] h-[50px] rounded-full text-[15px] md:text-[20px] font-semibold">
-          {" "}
-          A2: People - Grammar
+        <div className="bg-purple-300 flex font-semobild ord-text items-center justify-center w-[180px] h-[40px] rounded-full ord-text font-semibold">
+          A2:People - Grammar
         </div>
       </div>
       <div className="text-wrap mt-[50px] ">
@@ -60,18 +59,14 @@ function page() {
         <p className="inline">
           (Она живет в Лондоне — это факт, она там прописана).
         </p>
-        <div className="flex flex-row mt-[10px] justify-start">
-          <p className="mt-10px ">2) Регулярных действиях/привычках: </p>{" "}
-          <p className="font-semibold inline">
-            {" "}
-            He usually drinks coffee in the morning.{" "}
-          </p>{" "}
-        </div>
-        <div className="flex flex-row  mt-[10px] justify-start">
-          <p> 3) Характере и личности:</p>{" "}
-          <p className="font-semibold">They are very friendly. </p>{" "}
-          <p>(Они дружелюбные по натуре). </p>{" "}
-        </div>
+        <p className="mt-10px ">2) Регулярных действиях/привычках: </p>{" "}
+        <p className="font-semibold inline">
+          {" "}
+          He usually drinks coffee in the morning.{" "}
+        </p>{" "}
+        <p> 3) Характере и личности:</p>{" "}
+        <p className="font-semibold">They are very friendly. </p>{" "}
+        <p>(Они дружелюбные по натуре). </p>{" "}
         <p className="mt-[10px]">
           🔑 Маркеры: always, usually, often, sometimes, never, every day, on
           Mondays.

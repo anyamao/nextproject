@@ -11,7 +11,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="overflow-x-hidden ">
+      <body className="overflow-x-hidden bg-white">
         <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
           <Mainnav></Mainnav>
           <div

@@ -6,12 +6,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="bg-gray-100 relative text-black min-w-screen min-h-screen justify-between  flex flex-row  ">
+    <div className="bg-white text-black  w-full h-full   flex  flex-row  ">
       <EnglishNav></EnglishNav>
-      <div className=" flex justify-center items-center px-[30px]  md:px-[100px] mt-[50px]   flex-1 ">
-        <div className=" border-gray-200 rounded-lg min-h-full flex-1 max-w-[1500px]">
-          {children}
-        </div>
+      <div className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}>
+        {children}
       </div>
     </div>
   );

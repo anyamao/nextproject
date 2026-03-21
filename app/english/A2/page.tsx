@@ -2,14 +2,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 function page() {
   return (
-    <main>
-      <div className="p-[50px] ">
-        <div className="flex flex-row mt-[-50px] items-center justify-between">
+    <main className="flex-1 flex   flex-col items-center px-[10px] sm:px-[0px] py-[30px]  w-full h-full relative ">
+      <div className="text-wrap-no">
+        <div className="flex flex-row items-center w-full justify-between">
           <Link href="/english">
             {" "}
             <ArrowLeft></ArrowLeft>
           </Link>
-          <div className="bg-purple-300 flex font-semobild text-[30px] items-center justify-center w-[60px] h-[60px] rounded-full text-[20px] font-semibold">
+          <div className="bg-purple-300 flex font-semobild ord-text items-center justify-center w-[40px] h-[40px] rounded-full  font-semibold">
             A2
           </div>
         </div>
@@ -22,7 +22,7 @@ function page() {
             <img src="/cover3.png" className="w-[150px]  h-[150px]" />{" "}
           </Link>
           <div className="bg-purple-200 mt-[10px] h-[35px] rotate-7 flex items-center justify-center w-[130px]">
-            <Link href="/english/A1/people" className="rotate-353">
+            <Link href="/english/A1/people" className="rotate-353 bigger-text">
               People
             </Link>
           </div>
@@ -35,7 +35,7 @@ function page() {
             />{" "}
           </div>
           <div className="bg-blue-200 mt-[10px] h-[35px] rotate-355 flex items-center justify-center w-[140px]">
-            <p className="rotate-5">Routines</p>
+            <p className="rotate-5 bigger-text">Routines</p>
           </div>
         </div>
       </div>
