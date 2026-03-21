@@ -11,7 +11,7 @@ function Contact() {
         onClick={toggleContact}
       >
         <MessageCircleMore className="mr-[7px] w-[20px]"></MessageCircleMore>
-        <p>Написать</p>
+        <p>Изменено</p>
       </div>
     </main>
   );
