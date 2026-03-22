@@ -59,42 +59,42 @@ function Mainnav() {
             Английский
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap  duration-300"
           >
             Математика
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500    whitespace-nowrap  duration-300"
           >
             Программирование
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500    whitespace-nowrap   duration-300"
           >
             Инженерия
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500   whitespace-nowrap   duration-300"
           >
             Физика
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
           >
             Китайский
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
           >
@@ -102,14 +102,14 @@ function Mainnav() {
           </Link>
           {" "}
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
           >
             Анализ данных
           </Link>
           <Link
-            href="/maths"
+            href=""
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500 whitespace-nowrap   duration-300"
           >

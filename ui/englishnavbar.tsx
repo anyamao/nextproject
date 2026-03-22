@@ -31,7 +31,7 @@ function NavigationPanel() {
             <div className="flex flex-row ml-[10px]  mt-[10px] ">
               <Link
                 onClick={toggleenglishNavigation}
-                href="/english/shakespeare/about/"
+                href="/english/"
                 className="ord-text"
               >
                 ・О кружке
@@ -41,12 +41,12 @@ function NavigationPanel() {
               <Link
                 onClick={toggleenglishNavigation}
                 className="ord-text"
-                href="/english/shakespeare/plan/"
+                href="/english/"
               >
                 ・План занятий
               </Link>
             </div>
-            <div className="flex flex-row border-b-gray-200 font-medium mt-[20px] border-b-[1px]">
+            <div className="flex flex-row border-b-gra-200 font-medium mt-[20px] border-b-[1px]">
               <Link
                 onClick={toggleenglishNavigation}
                 href="/english/A2/"

@@ -27,7 +27,7 @@ function NavigationPanel() {
               </Link>
               <Link
                 onClick={toggleNavigation}
-                href="/maths"
+                href="/"
                 className="cursor-pointer ord-text mt-[10px] font-semibold"
               >
                 Математика

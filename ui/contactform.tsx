@@ -25,11 +25,11 @@ function Contactform() {
             <p className="w-[240px]">
               Буду рада услышать критику и предложения по поводу вебсайта!
             </p>
-            <a href="https://" target="_blank">
-              Мой вк: https:
+            <a href="https://vk.com/anyamaoo" target="_blank">
+              Мой вк: https:vk.com/anyamaoo
             </a>
-            <a href="https://" target="_blank">
-              Мой тг: https:
+            <a href="" target="_blank">
+              Мой тг: anyamaoo
             </a>
             <img
               src="/hi.png"
