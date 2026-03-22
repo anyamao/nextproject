@@ -3,7 +3,7 @@ import Mainnav from "./../ui/mainnav";
 import ContactForm from "./../ui/contactform";
 import RegisterForm from "./../ui/registerform";
 import NavigationPanel from "./../ui/navigationpanel";
-
+import DatabaseStatus from "../ui/DatabaseStatus";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -14,6 +14,7 @@ export default function RootLayout({
       <body className="overflow-x-hidden bg-white">
         <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
           <Mainnav></Mainnav>
+          <DatabaseStatus></DatabaseStatus>
           <div
             className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
           >
