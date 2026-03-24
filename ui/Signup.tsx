@@ -99,7 +99,7 @@ export default function Signup() {
       <main>
         {registerState && (
           <div className="w-full z-23 absolute h-full backdrop-blur-xs bg-gray-100 flex justify-center  flex-1">
-            <div className="bg-white shadow-xs text-black relative w-[90%] max-w-[500px] h-[450px] ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
+            <div className="bg-white shadow-xs text-black relative w-[90%] max-w-[550px] h-[450px] ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
               <div className="w-full flex justify-end  ">
                 <X
                   className="cursor-pointer w-[17px] h-[17px] text-gray-400"

@@ -22,35 +22,35 @@ export default function ForgotPassword() {
     setLoading(true);
     setError(null);
 
-    // Basic validation
     if (!email.includes("@")) {
       setError("Введите корректный email");
       setLoading(false);
       return;
     }
-
     try {
-      // 🔑 KEY: Supabase handles security automatically
+      // ✅ Get the base URL (works for both localhost and GitHub Pages)
+      const baseUrl = window.location.origin;
+      const redirectUrl = `${baseUrl}/auth/reset-password`;
+
+      console.log("Sending reset email with redirect to:", redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        // Redirect to your callback page after user clicks email link
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: redirectUrl,
       });
 
       if (error) throw error;
 
-      // ✅ Success - don't reveal if email exists (security best practice)
       setSuccess(true);
     } catch (err: unknown) {
       console.error("Password reset error:", err);
       const message =
         err instanceof Error ? err.message : "Ошибка отправки письма";
-      setError(getRussianErrorMessage(message));
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Russian error messages (reuse your helper)
   function getRussianErrorMessage(error: string): string {
     const errorMap: Record<string, string> = {
       "Email not confirmed": "Подтвердите ваш email сначала",
