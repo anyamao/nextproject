@@ -10,7 +10,6 @@ interface ContactFormData {
 }
 
 interface ContactState {
-  // --- UI States ---
   contactState: boolean;
   setContactState: (state: boolean) => void;
   toggleContact: () => void;
@@ -46,7 +45,6 @@ interface ContactState {
 }
 
 const useContactStore = create<ContactState>((set) => ({
-  // --- UI States ---
   contactState: false,
   setContactState: (state) => set({ contactState: state }),
   toggleContact: () => set((state) => ({ contactState: !state.contactState })),
