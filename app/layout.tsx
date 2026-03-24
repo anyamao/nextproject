@@ -8,6 +8,7 @@ import DatabaseStatus from "../ui/DatabaseStatus";
 import Signup from "../ui/Signup";
 import Login from "../ui/Login";
 import ProfileNavigation from "../ui/profile";
+import ForgotPassword from "../ui/ForgotPassword";
 import { useAuthListener } from "@/hooks/useAuthListener";
 export default function RootLayout({
   children,
@@ -30,6 +31,7 @@ export default function RootLayout({
             <Signup></Signup>
             <ContactForm></ContactForm>
             <NavigationPanel></NavigationPanel>
+            <ForgotPassword></ForgotPassword>
             <div className="w-full">{children}</div>
           </div>
         </div>

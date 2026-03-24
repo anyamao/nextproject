@@ -16,6 +16,7 @@ export default function Signup() {
     togglePassword,
     openLogin,
     openRegister,
+    toggleforgotpassword,
   } = useContactStore();
   const [formData, setFormData] = useState({
     email: "",
@@ -131,7 +132,13 @@ export default function Signup() {
                   ></EyeOff>
                 </div>
                 <div className="flex items-end justify-end">
-                  <p className="  text-blue-700 smaller-text cursor-pointer font-semibold mt-[10px]">
+                  <p
+                    onClick={() => {
+                      toggleLogin();
+                      toggleforgotpassword();
+                    }}
+                    className="  text-blue-700 smaller-text cursor-pointer font-semibold mt-[10px]"
+                  >
                     Забыли пароль?
                   </p>
                 </div>
