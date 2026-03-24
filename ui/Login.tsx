@@ -26,6 +26,24 @@ export default function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null); // Clear errors on type
   };
+  function getRussianErrorMessage(error: string): string {
+    const errorMap: Record<string, string> = {
+      "User already registered": "Этот email уже зарегистрирован",
+      "email rate limit exceeded": "Слишком много попыток. Подождите 1 час",
+      "Invalid login credentials": "Неверный email или пароль",
+      "Email not confirmed": "Подтвердите ваш email",
+
+      'duplicate key value violates unique constraint "profiles_username_key"':
+        "Этот юзернейм уже занят",
+      'new row for relation "profiles" violates check constraint "username_length"':
+        "Юзернейм должен быть минимум 3 символа",
+
+      "Failed to sign up": "Не удалось зарегистрироваться. Попробуйте позже",
+      "Failed to log in": "Не удалось войти. Проверьте данные",
+    };
+
+    return errorMap[error] || "Произошла ошибка. Попробуйте ещё раз";
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +60,12 @@ export default function Signup() {
       setSuccess(true);
       router.refresh();
     } catch (err: unknown) {
-      setError("Failed to sign up");
+      const rawMessage =
+        err instanceof Error ? err.message : "Failed to log in";
+
+      const russianMessage = getRussianErrorMessage(rawMessage);
+
+      setError(russianMessage);
     } finally {
       setLoading(false);
     }
@@ -56,7 +79,7 @@ export default function Signup() {
     <main>
       {loginState && (
         <div className="w-full z-23 overflow-x-hidden absolute h-full backdrop-blur-xs bg-gray-100 flex justify-center  flex-1">
-          <div className="bg-white shadow-xs text-black relative w-[80%] max-w-[500px] h-[520px]  ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
+          <div className="bg-white shadow-xs text-black relative w-[80%] max-w-[500px] h-[430px]  ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
             <div className="w-full flex justify-end  ">
               <X
                 className="cursor-pointer w-[17px] h-[17px] text-gray-400"
@@ -114,11 +137,13 @@ export default function Signup() {
                 </div>
               </div>
 
-              {error && <p>{error}</p>}
+              <p className="h-[15px] smaller-text text-center text-red-700">
+                {error || ""}
+              </p>
 
               <button
                 type="submit"
-                className="w-[80%] h-[40px] mt-[25px] bg-purple-500 text-white rounded-lg"
+                className="w-[80%] h-[40px] mt-[30px] bg-purple-500 text-white rounded-lg"
                 disabled={loading}
               >
                 {loading ? "Входим.." : "Войти"}

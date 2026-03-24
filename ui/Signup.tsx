@@ -4,6 +4,26 @@ import { supabase } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
 import { X, Eye, EyeOff } from "lucide-react";
+
+function getRussianErrorMessage(error: string): string {
+  const errorMap: Record<string, string> = {
+    "User already registered": "Этот email уже зарегистрирован",
+    "email rate limit exceeded": "Слишком много попыток. Подождите 1 час",
+    "Invalid login credentials": "Неверный email или пароль",
+    "Email not confirmed": "Подтвердите ваш email",
+
+    'duplicate key value violates unique constraint "profiles_username_key"':
+      "Этот юзернейм уже занят",
+    'new row for relation "profiles" violates check constraint "username_length"':
+      "Юзернейм должен быть минимум 3 символа",
+
+    "Failed to sign up": "Не удалось зарегистрироваться. Попробуйте позже",
+    "Failed to log in": "Не удалось войти. Проверьте данные",
+  };
+
+  // Return mapped message or fallback
+  return errorMap[error] || "Произошла ошибка. Попробуйте ещё раз";
+}
 export default function Signup() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -60,7 +80,15 @@ export default function Signup() {
 
       setSuccess(true);
     } catch (err: unknown) {
-      setError("Failed to sign up");
+      const rawMessage =
+        err instanceof Error ? err.message : "Failed to sign up";
+
+      // 3. Map to Russian user-friendly message
+      const russianMessage = getRussianErrorMessage(rawMessage);
+
+      // 4. Set the display error
+      setError(russianMessage);
+      setError("Эмейл или юзернейм уже используется");
     } finally {
       setLoading(false);
     }
@@ -71,7 +99,7 @@ export default function Signup() {
       <main>
         {registerState && (
           <div className="w-full z-23 absolute h-full backdrop-blur-xs bg-gray-100 flex justify-center  flex-1">
-            <div className="bg-white shadow-xs text-black relative w-[90%] max-w-[500px] h-[410px] ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
+            <div className="bg-white shadow-xs text-black relative w-[90%] max-w-[500px] h-[450px] ord-text rounded-xl flex flex-col items-center  mt-[50px] md:mt-[100px] p-[20px]">
               <div className="w-full flex justify-end  ">
                 <X
                   className="cursor-pointer w-[17px] h-[17px] text-gray-400"
@@ -86,11 +114,11 @@ export default function Signup() {
                     {formData.email}
                   </span>
                 </p>
-                <p>
+                <div className="mt-[10px] ord-text bg-purple-100  rounded-xl p-[10px] flex items-center justify-center text-center ">
                   {" "}
                   После подтверждения перезагрузите страницу и войдите на
                   вебсайт с созданным паролем
-                </p>
+                </div>
                 <img
                   src="/congratulations.jpg"
                   className="mt-[20px] w-[300px]"
@@ -180,11 +208,13 @@ export default function Signup() {
                 </div>
               </div>
 
-              {error && <p>{error}</p>}
+              <p className="h-[15px] smaller-text mt-[15px] text-center text-red-700">
+                {error || ""}
+              </p>
 
               <button
                 type="submit"
-                className="w-[80%] h-[40px] mt-[25px] bg-purple-500 text-white rounded-lg"
+                className="w-[80%] h-[40px] mt-[20px] bg-purple-500 text-white rounded-lg"
                 disabled={loading}
               >
                 {loading ? "Регестрируем.." : "Зарегестрироваться"}
