@@ -1,40 +1,27 @@
 "use client";
 import Link from "next/link";
 import useContactStore from "@/store/states";
+import { LogOut } from "lucide-react";
+import LogoutButton from "../ui/LogoutButton";
 function ProfilePanel() {
-  const { navigationState, toggleNavigation } = useContactStore();
+  const { profilenavigationState, toggleprofilenavigation } = useContactStore();
 
   return (
     <main>
-      {navigationState && (
-        <div className="min-w-full absolute z-23  min-h-full flex flex-col  transition:all duration-300 backdrop-blur-xs flex-1">
-          <div className="bg-red-500 shadow-lg w-full items-center blur-none  flex flex-col p-[10px] px-[20px]  h-[200px]">
-            <div className="max-w-[1300px] mt-[20px] w-full flex flex-col ">
-              <Link
-                onClick={toggleNavigation}
-                href="/"
-                className="cursor-pointer ord-text font-semibold"
-              >
-                Домой
-              </Link>
-
-              <Link
-                onClick={toggleNavigation}
-                href="/english"
-                className="cursor-pointer ord-text mt-[10px] font-semibold"
-              >
-                Английский
-              </Link>
-              <Link
-                onClick={toggleNavigation}
-                href="/"
-                className="cursor-pointer ord-text mt-[10px] font-semibold"
-              >
-                Математика
-              </Link>
+      {profilenavigationState && (
+        <div className="cursor-pointer p-[15px]  bg-white z-30 border-[1px] border-gray-300 w-[250px] h-[400px] absolute   right-0 top-0 mt-[60px] mr-[10px] sm:mt-[70px] shadow-md flex flex-col items-center text-black   rounded-xl ">
+          <div className="flex flex-row hidden items-center py-[10px] border-b-[1px] w-full border-gray-300 ">
+            <img
+              src="/people1.png"
+              className="w-[50px] h-[50px] rounded-full"
+            />
+            <div className="flex flex-col ml-[10px]">
+              <p className="font-semibold">maotop</p> <p>Аня </p>
             </div>
           </div>
-          <div className="flex-1 w-full h-full blur-xs">.</div>
+          <div className="flex flex-row items-center py-[10px] px-[10px] border-b-[1px] h-[60px] w-full border-gray-300 ">
+            <LogoutButton></LogoutButton>
+          </div>
         </div>
       )}
     </main>

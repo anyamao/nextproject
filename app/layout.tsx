@@ -7,6 +7,7 @@ import NavigationPanel from "./../ui/navigationpanel";
 import DatabaseStatus from "../ui/DatabaseStatus";
 import Signup from "../ui/Signup";
 import Login from "../ui/Login";
+import ProfileNavigation from "../ui/profile";
 import { useAuthListener } from "@/hooks/useAuthListener";
 export default function RootLayout({
   children,
@@ -19,8 +20,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="overflow-x-hidden bg-white">
         <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
+          <ProfileNavigation></ProfileNavigation>
           <Mainnav></Mainnav>
-          <DatabaseStatus></DatabaseStatus>
+
           <div
             className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
           >

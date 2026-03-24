@@ -49,6 +49,7 @@ export default function Signup() {
   };
 
   if (success) {
+    window.location.reload();
   }
 
   return (
