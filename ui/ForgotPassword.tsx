@@ -30,7 +30,7 @@ export default function ForgotPassword() {
     try {
       // ✅ Get the base URL (works for both localhost and GitHub Pages)
       const baseUrl = window.location.origin;
-      const redirectUrl = `${baseUrl}/auth/reset-password`;
+      const redirectUrl = `${baseUrl}/reset-password`;
 
       console.log("Sending reset email with redirect to:", redirectUrl);
 
