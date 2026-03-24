@@ -1,52 +1,44 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { getSupabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 export default function DatabaseStatus() {
-  const [status, setStatus] = useState("checking");
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const checkDatabase = async () => {
-      const supabase = getSupabase();
+    async function check() {
+      // Try to fetch from profiles table
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .limit(1);
 
-      if (!supabase) {
-        setStatus("not-configured");
-        return;
+      if (error) {
+        setMessage(error.message);
+      } else {
+        setMessage(`Success! Found ${data?.length} row(s)`);
       }
-
-      try {
-        const { error } = await supabase
-          .from("_test")
-          .select("count")
-          .limit(1)
-          .maybeSingle();
-
-        if (error && error.code === "42P01") {
-          setStatus("connected-no-tables");
-        } else if (error) {
-          setStatus("error");
-          setError(error.message);
-        } else {
-          setStatus("connected");
-        }
-      } catch (err) {
-        setStatus("error");
-        setError(err.message);
-      }
-    };
-
-    checkDatabase();
+    }
+    check();
   }, []);
 
+  if (process.env.NEXT_PUBLIC_DEBUG_MODE !== "true") return null;
+
   return (
-    <div style={{ fontSize: "12px", color: "#666", padding: "4px" }}>
-      {status === "checking" && "📡 Checking database connection..."}
-      {status === "not-configured" && "⚙️ Database not configured"}
-      {status === "connected" && "✅ Database connected"}
-      {status === "connected-no-tables" && "✅ Database ready (tables pending)"}
-      {status === "error" && `⚠️ Database: ${error}`}
+    <div
+      style={{
+        position: "fixed",
+        bottom: 10,
+        right: 10,
+        padding: 10,
+        background: status === "error" ? "#fee" : "#efe",
+        border: "1px solid #ccc",
+        fontSize: 12,
+        zIndex: 9999,
+      }}
+    >
+      <strong>DB Status:</strong> {status} <br />
+      {message}
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import Mainnav from "./../ui/mainnav";
 import ContactForm from "./../ui/contactform";
-import RegisterForm from "./../ui/registerform";
 import NavigationPanel from "./../ui/navigationpanel";
 
 export default async function Home() {

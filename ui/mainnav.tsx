@@ -6,12 +6,8 @@ import useContactStore from "@/store/states";
 import Link from "next/link";
 import Image from "next/image";
 function Mainnav() {
-  const {
-    navigationState,
-    closeNavigation,
-    closeEverything,
-    toggleNavigation,
-  } = useContactStore();
+  const { navigationState, closeEverything, toggleNavigation } =
+    useContactStore();
 
   return (
     <main

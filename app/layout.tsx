@@ -1,14 +1,20 @@
+"use client";
+
 import "./globals.css";
 import Mainnav from "./../ui/mainnav";
 import ContactForm from "./../ui/contactform";
-import RegisterForm from "./../ui/registerform";
 import NavigationPanel from "./../ui/navigationpanel";
 import DatabaseStatus from "../ui/DatabaseStatus";
+import Signup from "../ui/Signup";
+import Login from "../ui/Login";
+import { useAuthListener } from "@/hooks/useAuthListener";
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useAuthListener();
+
   return (
     <html lang="en">
       <body className="overflow-x-hidden bg-white">
@@ -18,8 +24,9 @@ export default function RootLayout({
           <div
             className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
           >
+            <Login></Login>
+            <Signup></Signup>
             <ContactForm></ContactForm>
-            <RegisterForm></RegisterForm>
             <NavigationPanel></NavigationPanel>
             <div className="w-full">{children}</div>
           </div>
