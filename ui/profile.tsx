@@ -1,7 +1,12 @@
 "use client";
 import Link from "next/link";
 import useContactStore from "@/store/states";
-import { LogOut } from "lucide-react";
+import {
+  LogOut,
+  SlidersHorizontal,
+  UserRoundPen,
+  GraduationCap,
+} from "lucide-react";
 import LogoutButton from "../ui/LogoutButton";
 function ProfilePanel() {
   const { profilenavigationState, toggleprofilenavigation } = useContactStore();
@@ -9,7 +14,7 @@ function ProfilePanel() {
   return (
     <main>
       {profilenavigationState && (
-        <div className="cursor-pointer p-[15px]  bg-white z-30 border-[1px] border-gray-300 w-[250px] h-[400px] absolute   right-0 top-0 mt-[60px] mr-[10px] sm:mt-[70px] shadow-md flex flex-col items-center text-black   rounded-xl ">
+        <div className="cursor-pointer p-[15px]  bg-white z-30 border-[1px] border-gray-300 w-[250px] h-[270px] absolute   right-0 top-0 mt-[60px] mr-[10px] sm:mt-[70px] shadow-md flex flex-col items-center text-black   rounded-xl ">
           <div className="flex flex-row hidden items-center py-[10px] border-b-[1px] w-full border-gray-300 ">
             <img
               src="/people1.jpg"
@@ -21,6 +26,24 @@ function ProfilePanel() {
           </div>
           <div className="flex flex-row items-center py-[10px] px-[10px] border-b-[1px] h-[60px] w-full border-gray-300 ">
             <LogoutButton></LogoutButton>
+          </div>
+          <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
+            <button className="flex items-center ">
+              <UserRoundPen className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Настройка профиля</span>
+            </button>
+          </div>
+          <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
+            <button className="flex items-center ">
+              <SlidersHorizontal className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Настройка вебсайта</span>
+            </button>
+          </div>
+          <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
+            <button className="flex items-center ">
+              <GraduationCap className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Мои курсы</span>
+            </button>
           </div>
         </div>
       )}

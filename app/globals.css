@@ -24,6 +24,9 @@
   .text-wrap-no {
     @apply rounded-lg  p-[20px] sm:p-[20px] md:p-[30px]   w-full max-w-[1000px] my-[20px] mx-[90px]  md:mx-[30px] sm:mx-[20px];
   }
+  .footer {
+    @apply rounded-lg  p-[20px] sm:p-[20px] md:p-[30px]   w-full max-w-[1000px] my-[20px] mx-[90px]  md:mx-[30px] sm:mx-[20px];
+  }
 }
 *::-webkit-scrollbar {
   width: 8px !important;

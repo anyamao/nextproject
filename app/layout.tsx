@@ -10,6 +10,7 @@ import Login from "../ui/Login";
 import ProfileNavigation from "../ui/profile";
 import ForgotPassword from "../ui/ForgotPassword";
 import { useAuthListener } from "@/hooks/useAuthListener";
+import Footer from "../ui/footer";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +25,7 @@ export default function RootLayout({
           <Mainnav></Mainnav>
           <ProfileNavigation></ProfileNavigation>
           <div
-            className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
+            className={`flex-1 flex flex-col w-full  bg-gray-100 z-19 h-full relative`}
           >
             <Login></Login>
             <Signup></Signup>
@@ -32,6 +33,7 @@ export default function RootLayout({
             <NavigationPanel></NavigationPanel>
             <ForgotPassword></ForgotPassword>
             <div className="w-full">{children}</div>
+            <Footer></Footer>
           </div>
         </div>
       </body>

@@ -149,10 +149,8 @@ export default function ResetPassword() {
   // RENDER: Password Reset Form
   // ─────────────────────────────────────────────────────────────
   return (
-    // ✅ Full viewport overlay with proper z-index
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50/95 backdrop-blur-sm p-4">
       <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full relative">
-        {/* Debug version tag - remove in production */}
         <span className="absolute top-2 right-3 text-xs text-gray-300">
           {DEBUG_VERSION}
         </span>
@@ -163,7 +161,6 @@ export default function ResetPassword() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* New Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Новый пароль
@@ -209,14 +206,12 @@ export default function ResetPassword() {
             />
           </div>
 
-          {/* Form Errors */}
           {error && formData.password && (
             <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
               {error}
             </p>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
