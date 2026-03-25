@@ -21,9 +21,8 @@ export default function RootLayout({
     <html lang="en">
       <body className="overflow-x-hidden bg-white">
         <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
-          <ProfileNavigation></ProfileNavigation>
           <Mainnav></Mainnav>
-
+          <ProfileNavigation></ProfileNavigation>
           <div
             className={`flex-1 flex w-full  bg-gray-100 z-19 h-full relative`}
           >
