@@ -6,6 +6,8 @@ import {
   SlidersHorizontal,
   UserRoundPen,
   GraduationCap,
+  Trophy,
+  User,
 } from "lucide-react";
 import LogoutButton from "../ui/LogoutButton";
 function ProfilePanel() {
@@ -28,21 +30,27 @@ function ProfilePanel() {
             <LogoutButton></LogoutButton>
           </div>
           <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
-            <button className="flex items-center ">
+            <a className="flex items-center " href="/account">
               <UserRoundPen className="w-[17px] h-[17px] text-gray-500" />
-              <span className="ml-[10px] smaller-text">Настройка профиля</span>
-            </button>
+              <span className="ml-[10px] smaller-text">Настройки</span>
+            </a>
           </div>
           <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
             <button className="flex items-center ">
-              <SlidersHorizontal className="w-[17px] h-[17px] text-gray-500" />
-              <span className="ml-[10px] smaller-text">Настройка вебсайта</span>
+              <User className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Профиль</span>
             </button>
           </div>
           <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
             <button className="flex items-center ">
               <GraduationCap className="w-[17px] h-[17px] text-gray-500" />
               <span className="ml-[10px] smaller-text">Мои курсы</span>
+            </button>
+          </div>
+          <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
+            <button className="flex items-center ">
+              <Trophy className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Мои достижения</span>
             </button>
           </div>
         </div>

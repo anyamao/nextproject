@@ -20,8 +20,8 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className="overflow-x-hidden bg-white">
-        <div className="bg-white text-black   min-w-screen  min-h-screen items-center  flex flex-col  ">
+      <body className="overflow-x-hidden bg-gray-100">
+        <div className="bg-gray-100 text-black   min-w-full  min-h-full items-center  flex flex-col  ">
           <Mainnav></Mainnav>
           <ProfileNavigation></ProfileNavigation>
           <div
@@ -32,9 +32,9 @@ export default function RootLayout({
             <ContactForm></ContactForm>
             <NavigationPanel></NavigationPanel>
             <ForgotPassword></ForgotPassword>
-            <div className="w-full">{children}</div>
-            <Footer></Footer>
+            <div className="w-full  ">{children}</div>
           </div>
+          <Footer></Footer>
         </div>
       </body>
     </html>
