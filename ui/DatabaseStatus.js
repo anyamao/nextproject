@@ -7,7 +7,6 @@ export default function DatabaseStatus() {
 
   useEffect(() => {
     async function check() {
-      // Try to fetch from profiles table
       const { data, error } = await supabase
         .from("profiles")
         .select("id")

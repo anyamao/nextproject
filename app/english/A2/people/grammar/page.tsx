@@ -1,3 +1,4 @@
+"use client";
 import {
   ArrowLeft,
   BookOpenText,
@@ -7,7 +8,17 @@ import {
   Speech,
 } from "lucide-react";
 import Link from "next/link";
-function page() {
+import { useRouter } from "next/navigation";
+function Page() {
+  const router = useRouter();
+
+  const TEST_ID = "63eaf1f3-52c5-46eb-aa88-ee2ebc2df799"; // Replace with actual test ID
+
+  const handleTakeTest = () => {
+    // Pass returnUrl so test knows where to send user back
+    const returnUrl = encodeURIComponent(window.location.pathname);
+    router.push(`/tests?id=${TEST_ID}&returnUrl=${returnUrl}`);
+  };
   return (
     <main className=" flex-1 flex   flex-col items-center px-[10px] sm:px-[0px] py-[30px]  w-full h-full relative ">
       <div className="flex flex-row text-wrap-no items-center    justify-between">
@@ -175,8 +186,7 @@ function page() {
       <div className="text-wrap ">
         <div className="flex mt-[30px]  justify-center">
           <a
-            href="https://forms.gle/UVDFZdo4zsV92gm79"
-            target="_blank"
+            onClick={handleTakeTest}
             className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl md:w-[350px] w-[270px] h-[60px] md:h-[80px]"
           >
             {" "}
@@ -188,4 +198,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;

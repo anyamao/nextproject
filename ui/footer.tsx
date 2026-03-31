@@ -24,7 +24,7 @@ function footer() {
           <p className="text-white font-semibold mt-[10px]">Контакты</p>
           <p className="text-gray-300  mt-[10px]">vk: anyamaoo</p>
           <p className="text-gray-300  mt-[10px]">tg: anyamaoo</p>
-          <p className="text-gray-300  mt-[10px]">email: babyshkino_varenye</p>
+          <p className="text-gray-300  mt-[10px]">email: anyamaoo@gmail.com</p>
         </div>
       </div>
     </div>

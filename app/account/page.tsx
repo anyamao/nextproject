@@ -140,12 +140,15 @@ export default function AccountPage() {
       <div className="text-wrap flex w-full ">
         {/* Avatar Section */}
         <div className="flex flex-col w-full justify-center md:flex-row items-start gap-6 mb-8 pb-8 border-b border-gray-200">
-          <div className="flex flex-col">
+          <div className="flex flex-col items-center">
             <img
               src="/aiclose.png"
               alt="Avatar"
               className="w-[250px] h-[250px] rounded-full border-4 border-white shadow-lg"
             />
+            <div className="flex items-center justify-center mt-[10px] shadow-xs  bg-blue-500 rounded-lg w-[210px] h-[50px] cursor-pointer transition-all duration-300 hover:bg-blue-400 text-white font-semibold">
+              Переодеть Мао
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col w-full">

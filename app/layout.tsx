@@ -25,7 +25,7 @@ export default function RootLayout({
           <Mainnav></Mainnav>
           <ProfileNavigation></ProfileNavigation>
           <div
-            className={`flex-1 flex flex-col w-full  bg-gray-100 z-19 h-full relative`}
+            className={`flex-1 flex flex-col w-full mt-[120px]  bg-gray-100 z-19 h-full relative`}
           >
             <Login></Login>
             <Signup></Signup>

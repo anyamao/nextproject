@@ -6,10 +6,10 @@ function NavigationPanel() {
   const { englishnavigationState, toggleenglishNavigation } = useContactStore();
 
   return (
-    <main className=" z-20 h-full  bg-none absolute ">
-      <div className="flex flex-row  absolute bg-white h-full ">
+    <main className=" z-20 h-full  bg-none absolute  ">
+      <div className="flex flex-row   absolute bg-white h-full ">
         {englishnavigationState && (
-          <div className="min-h-full  border-r-[1px] sm:border-r-[0px] bg-white z-30 border-gray-300 w-[260px] pt-[20px] flex flex-col  md:pl-[20px]   px-[10px] bg-white">
+          <div className="  border-r-[1px] sm:border-r-[0px] bg-white z-30 border-gray-300 w-[260px] pt-[30px] flex flex-col  md:pl-[20px]   px-[10px] bg-white">
             <div className="flex flex-row border-b-gray-200 border-b-[1px]">
               <Link
                 className="ord-text font-medium"
@@ -75,11 +75,11 @@ function NavigationPanel() {
             </div>
           </div>
         )}
-        <div className=" z-67   w-[50px] h-full bg-white sm:bg-white sm:min-h-full border-b-[1px] border-b-gray-300 flex justify-end pr-[20px]  pt-[15px]   border-r-[1px] border-r-gray-300">
-          <PanelLeft
-            onClick={toggleenglishNavigation}
-            className=" w-[15px] text-purple-500 cursor-pointer"
-          ></PanelLeft>
+        <div
+          onClick={toggleenglishNavigation}
+          className=" z-67   w-[50px] cursor-pointer h-full bg-white sm:bg-white sm:min-h-full border-b-[1px] border-b-gray-300 flex justify-end pr-[20px]  pt-[20px]   border-r-[1px] border-r-gray-300"
+        >
+          <PanelLeft className=" w-[15px] text-purple-500 cursor-pointer"></PanelLeft>
         </div>
       </div>
     </main>

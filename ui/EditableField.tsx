@@ -131,7 +131,6 @@ export default function EditableField({
           </div>
         </div>
       ) : (
-        // Display Mode
         <div className="bg-white border border-gray-200 h-[60px] rounded-xl p-4 min-h-[50px]">
           <p className={value ? "text-gray-800" : "text-gray-400 italic"}>
             {displayValue}

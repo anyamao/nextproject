@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Trophy,
   User,
+  MoonStar,
 } from "lucide-react";
 import LogoutButton from "../ui/LogoutButton";
 function ProfilePanel() {
@@ -36,22 +37,31 @@ function ProfilePanel() {
             </a>
           </div>
           <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
-            <button className="flex items-center ">
+            <a className="flex items-center " href="/account">
+              <MoonStar className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">
+                Поставить темную тему
+              </span>
+            </a>
+          </div>
+
+          <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
+            <a className="flex items-center ">
               <User className="w-[17px] h-[17px] text-gray-500" />
               <span className="ml-[10px] smaller-text">Профиль</span>
-            </button>
+            </a>
           </div>
-          <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
-            <button className="flex items-center ">
+          <div className="flex flex-row cursor-pointer items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
+            <a className="flex items-center ">
               <GraduationCap className="w-[17px] h-[17px] text-gray-500" />
               <span className="ml-[10px] smaller-text">Мои курсы</span>
-            </button>
+            </a>
           </div>
           <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
-            <button className="flex items-center ">
+            <a className="flex items-center ">
               <Trophy className="w-[17px] h-[17px] text-gray-500" />
               <span className="ml-[10px] smaller-text">Мои достижения</span>
-            </button>
+            </a>
           </div>
         </div>
       )}

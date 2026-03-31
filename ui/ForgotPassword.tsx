@@ -28,7 +28,6 @@ export default function ForgotPassword() {
       return;
     }
     try {
-      // ✅ Get the base URL (works for both localhost and GitHub Pages)
       const baseUrl = window.location.origin;
       const redirectUrl = `${baseUrl}/reset-password`;
 
@@ -60,7 +59,6 @@ export default function ForgotPassword() {
     return errorMap[error] || "Произошла ошибка. Попробуйте ещё раз";
   }
 
-  // Success view
   if (success) {
     return (
       <main>
@@ -105,7 +103,6 @@ export default function ForgotPassword() {
     );
   }
 
-  // Form view
   return (
     <main>
       {forgotpasswordState && (

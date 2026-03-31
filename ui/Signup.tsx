@@ -21,7 +21,6 @@ function getRussianErrorMessage(error: string): string {
     "Failed to log in": "Не удалось войти. Проверьте данные",
   };
 
-  // Return mapped message or fallback
   return errorMap[error] || "Произошла ошибка. Попробуйте ещё раз";
 }
 export default function Signup() {
@@ -83,10 +82,8 @@ export default function Signup() {
       const rawMessage =
         err instanceof Error ? err.message : "Failed to sign up";
 
-      // 3. Map to Russian user-friendly message
       const russianMessage = getRussianErrorMessage(rawMessage);
 
-      // 4. Set the display error
       setError(russianMessage);
       setError("Эмейл или юзернейм уже используется");
     } finally {
