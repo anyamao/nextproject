@@ -118,7 +118,7 @@ export default function AccountPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh] bg-gray-100">
+      <div className="flex-1 flex items-center justify-center min-h-[1300px] bg-gray-100">
         <div className="text-center">
           <Loader2 className="animate-spin w-8 h-8 mx-auto mb-4 text-purple-500" />
           <p className="text-gray-600">Загрузка профиля...</p>

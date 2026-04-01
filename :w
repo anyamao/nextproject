@@ -255,8 +255,8 @@ function Page() {
             </div>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-between mt-[10px] sm:mt-[0px]">
-          <div className=" flex sm:hidden  flex flex-col p-[15px] mr-[10px] items-center justify-center  border-r-gray-300 ">
+        <div className="flex flex-row items-center justify-between">
+          <div className=" flex sm:hidden  flex flex-col p-[15px] sm:pl-[40px] items-center  border-r-gray-300 ">
             <div className="font-semibold smaller-text">Поделиться</div>
             <div className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400">
               <Copy className="w-[15px] h-[15px]  text-gray-700" />
@@ -267,16 +267,6 @@ function Page() {
             <p>Следующий урок</p>
             <ArrowRight className="text-white w-[20px] ml-[10px] h-[20px] " />
           </div>
-        </div>
-      </div>
-      <div className="text-wrap-no flex flex-col">
-        <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
-          Комментарии
-        </p>
-        <div className="flex flex-row items-center">
-          {" "}
-          <img src="/aiclose.png" className="w-[40px] h-[40px] rounded-full" />
-          <p>Оставить комментарий</p>
         </div>
       </div>
     </main>

@@ -7,7 +7,7 @@ function NavigationPanel() {
 
   return (
     <main className=" z-20 h-full  bg-none absolute  ">
-      <div className="flex flex-row   absolute bg-white h-full ">
+      <div className="flex flex-row fixed sm:static  absolute h-full ">
         {englishnavigationState && (
           <div className="  border-r-[1px] sm:border-r-[0px] bg-white z-30 border-gray-300 w-[260px] pt-[30px] flex flex-col  md:pl-[20px]   px-[10px] bg-white">
             <div className="flex flex-row border-b-gray-200 border-b-[1px]">
@@ -77,7 +77,7 @@ function NavigationPanel() {
         )}
         <div
           onClick={toggleenglishNavigation}
-          className=" z-67   w-[50px] cursor-pointer h-full bg-white sm:bg-white sm:min-h-full border-b-[1px] border-b-gray-300 flex justify-end pr-[20px]  pt-[20px]   border-r-[1px] border-r-gray-300"
+          className=" z-67   w-[50px] cursor-pointer h-[60px] bg-purple-200   sm:bg-white sm:bg-white sm:min-h-full border-b-[1px] border-b-gray-300 flex justify-end pr-[20px]  pt-[20px]   border-r-[1px] border-r-gray-300"
         >
           <PanelLeft className=" w-[15px] text-purple-500 cursor-pointer"></PanelLeft>
         </div>

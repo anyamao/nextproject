@@ -4,6 +4,7 @@ import Register from "./register";
 import MainNavigation from "./mainnavigation";
 import useContactStore from "@/store/states";
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import Image from "next/image";
 function Mainnav() {
   const { navigationState, closeEverything, toggleNavigation } =
@@ -27,7 +28,10 @@ function Mainnav() {
           </div>
           <div className="flex flex-row justify-between   items-center  pr-[10px] ">
             <Contact></Contact>
-
+            <div className="flex hidden sm:block items-center justify-center p-[7px] bg-orange-100 rounded-full mr-[15px]">
+              <Flame className="text-orange-400 w-[20px]"></Flame>
+              <p className="text-orange-900 pr-[5px] smaller-text">12</p>
+            </div>
             <Register></Register>
           </div>
         </div>
