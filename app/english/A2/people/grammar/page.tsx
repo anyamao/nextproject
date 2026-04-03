@@ -1,4 +1,8 @@
 "use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useLesson } from "@/hooks/useLesson";
 import {
   ArrowLeft,
   BookOpenText,
@@ -10,19 +14,132 @@ import {
   ThumbsUp,
   ThumbsDown,
   ArrowRight,
+  Loader2,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+import { supabase } from "@/lib/supabase";
+import useContactStore from "@/store/states";
+
+type TestResult = {
+  score: number;
+  passed: boolean;
+  completed_at: string | null;
+};
 function Page() {
   const router = useRouter();
+  const { user, isAuthenticated } = useContactStore();
+  const TEST_ID = "63eaf1f3-52c5-46eb-aa88-ee2ebc2df799";
 
-  const TEST_ID = "63eaf1f3-52c5-46eb-aa88-ee2ebc2df799"; // Replace with actual test ID
-
+  const [result, setResult] = useState<TestResult | null>(null);
+  const [loadingResult, setLoadingResult] = useState(true);
+  const [copySuccess, setCopySuccess] = useState(false);
   const handleTakeTest = () => {
-    // Pass returnUrl so test knows where to send user back
     const returnUrl = encodeURIComponent(window.location.pathname);
     router.push(`/tests?id=${TEST_ID}&returnUrl=${returnUrl}`);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setLoadingResult(false);
+      return;
+    }
+
+    const fetchResult = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("test_results")
+          .select("score, passed, completed_at")
+          .eq("user_id", user.id)
+          .eq("test_id", TEST_ID)
+          .order("score", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          // PGRST116 = no rows
+          throw error;
+        }
+
+        if (data) {
+          setResult({
+            score: data.score,
+            passed: data.passed,
+            completed_at: data.completed_at,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching test result:", err);
+      } finally {
+        setLoadingResult(false);
+      }
+    };
+
+    fetchResult();
+  }, [user, isAuthenticated, TEST_ID]);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const getResultBadge = () => {
+    if (!isAuthenticated) {
+      return {
+        color: "gray",
+        text: "—",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    }
+
+    if (loadingResult) {
+      return {
+        color: "gray",
+        text: "...",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    }
+
+    if (!result) {
+      return {
+        color: "gray",
+        text: "—",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    }
+
+    if (result.passed) {
+      return {
+        color: "green",
+        text: `${result.score}%`,
+        border: "border-green-500",
+        bg: "bg-green-200",
+        textColor: "text-green-900",
+      };
+    }
+
+    return {
+      color: "red",
+      text: `${result.score}%`,
+      border: "border-red-500",
+      bg: "bg-red-200",
+      textColor: "text-red-900",
+    };
+  };
+
+  const badge = getResultBadge();
   return (
     <main className=" flex-1 flex   flex-col items-center px-[10px] sm:px-[0px] py-[30px]  w-full h-full relative ">
       <div className="flex flex-row text-wrap-no items-center    justify-between">
@@ -35,32 +152,41 @@ function Page() {
         </div>
       </div>
       <div className="  text-wrap-no  flex flex-col relative sm:flex-row items-center justify-between">
-        <div className="bg-white flex ml-[-25px] hidden sm:block sm:flex sm:flex-row p-[15px] items-center shadow-xs rounded-lg">
+        <div className="bg-white flex ml-[-25px] p-[15px] items-center shadow-xs rounded-lg w-full sm:w-auto">
           <div className="font-semibold smaller-text">Поделитесь уроком</div>
-          <div className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400">
-            <Copy className="w-[15px] h-[15px]  text-gray-700" />
-          </div>
+          <button
+            onClick={handleCopyLink}
+            className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400 hover:bg-gray-50 transition relative"
+            title="Скопировать ссылку"
+          >
+            {copySuccess ? (
+              <Check className="w-[15px] h-[15px] text-green-600" />
+            ) : (
+              <Copy className="w-[15px] h-[15px] text-gray-700" />
+            )}
+            {copySuccess && (
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                Скопировано!
+              </span>
+            )}
+          </button>
         </div>
-        <div className="bg-white hidden flex ml-[-25px] flex-row p-[15px] items-center shadow-xs rounded-lg">
+        <div className="bg-white flex ml-[-25px] flex-row p-[15px] items-center shadow-xs rounded-lg w-full sm:w-auto justify-between sm:justify-start">
           <div className="font-semibold smaller-text">
-            Пройдите тест, чтобы узнать свой результат
+            {loadingResult && !isAuthenticated
+              ? "Загрузка..."
+              : !isAuthenticated
+                ? "Войдите, чтобы видеть результат"
+                : !result
+                  ? "Пройдите тест, чтобы узнать свой результат"
+                  : result.passed
+                    ? `Ваш результат по уроку - ${result.score}%! Так держать!`
+                    : `Ваш результат по уроку - ${result.score}%! Вы можете лучше`}
           </div>
-          <div className="rounded-full ml-[15px] w-[25px] h-[25px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400"></div>
-        </div>
-        <div className="bg-white  flex ml-[-25px] flex-row p-[15px] items-center shadow-xs rounded-lg">
-          <div className="font-semibold smaller-text">
-            Ваш результат по уроку - 75%! Так держать!
-          </div>
-          <div className="rounded-full smaller-text  ml-[15px] w-[35px] h-[35px] cursor-pointer items-center justify-center flex border-[1px] border-green-500 bg-green-200 text-green-900">
-            75%
-          </div>
-        </div>
-        <div className="bg-white  flex ml-[-25px] flex-row p-[15px] items-center shadow-xs rounded-lg">
-          <div className="font-semibold smaller-text">
-            Ваш результат по уроку - 34%! Вы можете лучше
-          </div>
-          <div className="rounded-full smaller-text  ml-[15px] w-[35px] h-[35px] cursor-pointer items-center justify-center flex border-[1px] border-red-500 bg-red-200 text-red-900">
-            34%
+          <div
+            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${badge.border} ${badge.bg} ${badge.textColor}`}
+          >
+            {badge.text}
           </div>
         </div>
       </div>
@@ -225,44 +351,32 @@ function Page() {
             className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px]  hover:shadow-md transition-all hover: flex text-[20px] items-center justify-center font-semibold rounded-xl md:w-[350px] w-[270px] h-[60px] md:h-[80px]"
           >
             {" "}
-            Take the test!{" "}
+            {result?.passed ? "Пройти тест ещё раз" : "Пройти тест!"}
           </a>
         </div>
       </div>
       <div className="  text-wrap  flex flex-col sm:flex-row  relative items-center justify-between">
-        <div className="flex flex-col items-center justify-center sm:justify-start sm:flex-row w-full ">
-          <div className="  flex  flex-col  border-r-gray-300 sm:border-r-[1px] sm:pr-[40px] items-center ">
+        <div className="flex flex-col items-center justify-center sm:justify-start sm:flex-row w-full">
+          <div className="flex flex-col border-r-gray-300 sm:border-r-[1px] sm:pr-[40px] items-center">
             <div className="font-semibold ord-text mb-[10px]">
               Как вам урок?
             </div>
             <div className="flex flex-row">
-              <div className="rounded-full smaller-text  ml-[15px] p-[3px] px-[10px]  cursor-pointer items-center justify-center flex border-[1px] border-gray-400 ">
+              <button className="rounded-full smaller-text ml-[15px] p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 hover:bg-gray-50 transition">
                 <p>Понятно</p>
                 <ThumbsUp className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
                 <p className="ml-[5px]">10</p>
-              </div>
-              <div className="rounded-full smaller-text  ml-[15px] p-[3px] px-[10px]  cursor-pointer items-center justify-center flex border-[1px] border-gray-400 ">
+              </button>
+              <button className="rounded-full smaller-text ml-[15px] p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 hover:bg-gray-50 transition">
                 <p>Не понятно</p>
-                <ThumbsUp className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
+                <ThumbsDown className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
                 <p className="ml-[5px]">3</p>
-              </div>
-            </div>
-          </div>
-          <div className=" flex hidden sm:flex flex flex-col p-[15px] sm:pl-[40px] items-center  border-r-gray-300 ">
-            <div className="font-semibold smaller-text">Поделитесь уроком</div>
-            <div className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400">
-              <Copy className="w-[15px] h-[15px]  text-gray-700" />
+              </button>
             </div>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-between mt-[10px] sm:mt-[0px]">
-          <div className=" flex sm:hidden  flex flex-col p-[15px] mr-[10px] items-center justify-center  border-r-gray-300 ">
-            <div className="font-semibold smaller-text">Поделиться</div>
-            <div className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400">
-              <Copy className="w-[15px] h-[15px]  text-gray-700" />
-            </div>
-          </div>
 
+        <div className="flex flex-row items-center justify-between mt-[10px] sm:mt-[0px]">
           <div className="bg-purple-600 rounded-xl w-[200px] sm:w-[250px] flex flex-row items-center  hover:translate-y-[-5px]  hover:shadow-md transition-all  justify-center text-white p-[10px] px-[20px]">
             <p>Следующий урок</p>
             <ArrowRight className="text-white w-[20px] ml-[10px] h-[20px] " />
@@ -276,7 +390,11 @@ function Page() {
         <div className="flex flex-row items-center">
           {" "}
           <img src="/aiclose.png" className="w-[40px] h-[40px] rounded-full" />
-          <p>Оставить комментарий</p>
+          <input
+            type="text"
+            placeholder="Оставить комментарий"
+            className="ml-[10px] flex-1 border-b border-gray-300 pb-2 outline-none focus:border-purple-500 transition"
+          />
         </div>
       </div>
     </main>
