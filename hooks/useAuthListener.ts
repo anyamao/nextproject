@@ -1,43 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
-import { supabase } from "../lib/supabase";
-import useContactStore from "@/store/states";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-export function useAuthListener(): void {
-  const { setUser } = useContactStore();
+export function useAuthListener() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const checkSession = async (): Promise<void> => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error("Session check error:", error.message);
-          return;
-        }
-
-        setUser(session?.user ?? null);
-      } catch (err) {
-        console.error("Unexpected session error:", err);
-      }
-    };
-
-    checkSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("🔐 Auth Event:", event);
-
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setUser]);
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  return { user, loading };
 }

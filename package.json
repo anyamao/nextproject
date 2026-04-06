@@ -11,7 +11,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.99.3",
+    "@types/dompurify": "^3.2.0",
+    "dompurify": "^3.3.3",
     "lucide-react": "^0.577.0",
     "next": "16.1.7",
     "react": "19.2.3",

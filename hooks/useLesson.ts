@@ -125,39 +125,11 @@ export function useLesson(slug: string) {
     }
   };
 
-  const addComment = async (content: string) => {
-    if (!user || !lesson) return;
-
-    const { data: comment, error } = await supabase
-      .from("comments")
-      .insert({
-        lesson_id: lesson.id,
-        user_id: user.id,
-        content: content.trim(),
-      })
-      .select()
-      .single();
-
-    if (!error && comment) {
-      setComments((prev) => [
-        {
-          id: comment.id,
-          user_id: user.id,
-          content: comment.content,
-          created_at: comment.created_at,
-          user_email: user.email?.split("@")[0] || "Вы",
-        },
-        ...prev,
-      ]);
-    }
-  };
-
   return {
     lesson,
     comments,
     loading,
     userFeedback,
     submitFeedback,
-    addComment,
   };
 }
