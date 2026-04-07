@@ -13,14 +13,15 @@ import {
   Send,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import useContactStore from "@/store/states";
 import { supabase } from "@/lib/supabase";
 
-// Types
+// ─────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────
 type TestResult = {
   score: number;
-  passed: boolean;
   completed_at: string | null;
 };
 
@@ -59,6 +60,235 @@ interface LessonClientProps {
   params: { level: string; category: string; lesson: string };
 }
 
+// ─────────────────────────────────────────────────────────────
+// COMMENT ITEM COMPONENT (OUTSIDE LessonClient to prevent re-render issues)
+// ─────────────────────────────────────────────────────────────
+//
+//
+type User = {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    username?: string;
+  };
+};
+type CommentItemProps = {
+  comment: Comment;
+  depth?: number;
+  user: User | null;
+  isAuthenticated: boolean;
+  editingCommentId: string | null;
+  editContent: string;
+  replyingTo: string | null;
+  replyContent: string;
+  onEdit: (id: string, content: string) => void;
+  onDelete: (id: string) => void;
+  onReply: (id: string, content: string) => void;
+  onLike: (id: string, type: "like" | "dislike") => void;
+  setEditingCommentId: (id: string | null) => void;
+  setEditContent: (content: string) => void;
+  setReplyingTo: (id: string | null) => void;
+  setReplyContent: (content: string) => void;
+};
+
+const CommentItem = ({
+  comment,
+  depth = 0,
+  user,
+  isAuthenticated,
+  editingCommentId,
+  editContent,
+  replyingTo,
+  replyContent,
+  onEdit,
+  onDelete,
+  onReply,
+  onLike,
+  setEditingCommentId,
+  setEditContent,
+  setReplyingTo,
+  setReplyContent,
+}: CommentItemProps) => {
+  const isOwner = user?.id === comment.user_id;
+  const isReplying = replyingTo === comment.id;
+  const isEditing = editingCommentId === comment.id;
+
+  return (
+    <div
+      className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
+    >
+      <div className="flex gap-3 p-4 bg-white rounded-lg shadow-sm">
+        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
+          {comment.user_email?.[0]?.toUpperCase() || "U"}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium text-sm">{comment.user_email}</span>
+            <span className="text-xs text-gray-400">
+              {new Date(comment.created_at).toLocaleDateString("ru-RU")}
+            </span>
+            {comment.updated_at &&
+              comment.updated_at !== comment.created_at && (
+                <span className="text-xs text-gray-400">(изменено)</span>
+              )}
+          </div>
+
+          {isEditing ? (
+            <div className="mt-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+                rows={3}
+                autoFocus
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => onEdit(comment.id, editContent)}
+                  className="px-3 py-1 bg-green-500 text-white rounded text-sm"
+                >
+                  Сохранить
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditContent("");
+                  }}
+                  className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-700">{comment.content}</p>
+          )}
+
+          <div className="flex items-center gap-4 mt-3">
+            {isAuthenticated && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onLike(comment.id, "like")}
+                  className={`flex items-center gap-1 text-sm ${
+                    comment.user_liked === "like"
+                      ? "text-blue-600"
+                      : "text-gray-500 hover:text-blue-600"
+                  }`}
+                >
+                  <ThumbsUp size={14} />
+                  <span>{comment.likes_count}</span>
+                </button>
+                <button
+                  onClick={() => onLike(comment.id, "dislike")}
+                  className={`flex items-center gap-1 text-sm ${
+                    comment.user_liked === "dislike"
+                      ? "text-red-600"
+                      : "text-gray-500 hover:text-red-600"
+                  }`}
+                >
+                  <ThumbsDown size={14} />
+                  <span>{comment.dislikes_count}</span>
+                </button>
+              </div>
+            )}
+
+            {isAuthenticated && !isReplying && (
+              <button
+                onClick={() => {
+                  setReplyingTo(comment.id);
+                  setReplyContent("");
+                }}
+                className="text-sm text-gray-500 hover:text-purple-600"
+              >
+                Ответить
+              </button>
+            )}
+
+            {isOwner && !isEditing && (
+              <div className="flex gap-2 ml-auto">
+                <button
+                  onClick={() => {
+                    setEditingCommentId(comment.id);
+                    setEditContent(comment.content);
+                  }}
+                  className="text-sm text-gray-500 hover:text-blue-600"
+                >
+                  Редактировать
+                </button>
+                <button
+                  onClick={() => onDelete(comment.id)}
+                  className="text-sm text-gray-500 hover:text-red-600"
+                >
+                  Удалить
+                </button>
+              </div>
+            )}
+          </div>
+
+          {isAuthenticated && isReplying && (
+            <div className="mt-3">
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="Написать ответ..."
+                className="w-full p-2 border rounded-lg"
+                rows={2}
+                autoFocus
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => onReply(comment.id, replyContent)}
+                  className="px-3 py-1 bg-purple-500 text-white rounded text-sm"
+                >
+                  Отправить
+                </button>
+                <button
+                  onClick={() => {
+                    setReplyingTo(null);
+                    setReplyContent("");
+                  }}
+                  className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-2 space-y-2">
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              depth={depth + 1}
+              user={user}
+              isAuthenticated={isAuthenticated}
+              editingCommentId={editingCommentId}
+              editContent={editContent}
+              replyingTo={replyingTo}
+              replyContent={replyContent}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onReply={onReply}
+              onLike={onLike}
+              setEditingCommentId={setEditingCommentId}
+              setEditContent={setEditContent}
+              setReplyingTo={setReplyingTo}
+              setReplyContent={setReplyContent}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// MAIN LESSON CLIENT COMPONENT
+// ─────────────────────────────────────────────────────────────
 export default function LessonClient({
   initialLesson,
   initialSlug,
@@ -87,52 +317,95 @@ export default function LessonClient({
   const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
     null,
   );
+
   const TEST_ID = lesson?.test_id || undefined;
+  const lessonName = initialSlug?.split("/").pop() || "";
 
   // ─────────────────────────────────────────────────────────────
-  // Fetch comments with replies and user likes
+  // HELPER: Count all comments including replies
   // ─────────────────────────────────────────────────────────────
+  const countAllComments = (commentsList: Comment[]): number => {
+    return commentsList.reduce((total, comment) => {
+      return (
+        total + 1 + (comment.replies ? countAllComments(comment.replies) : 0)
+      );
+    }, 0);
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // FETCH COMMENTS
+  // ─────────────────────────────────────────────────────────────
+
+  // ✅ Keep this useEffect (fetches counts on page load)
+
+  // Add this useEffect after your state declarations
+
+  // Helper to fetch live counts directly from lesson_feedback
+  const syncFeedbackCounts = async (lessonId: string) => {
+    try {
+      const [clearRes, unclearRes] = await Promise.all([
+        supabase
+          .from("lesson_feedback")
+          .select("*", { count: "exact", head: true })
+          .eq("lesson_id", lessonId)
+          .eq("feedback_type", "clear"),
+        supabase
+          .from("lesson_feedback")
+          .select("*", { count: "exact", head: true })
+          .eq("lesson_id", lessonId)
+          .eq("feedback_type", "unclear"),
+      ]);
+
+      if (clearRes.error) throw clearRes.error;
+      if (unclearRes.error) throw unclearRes.error;
+
+      setLesson((prev) => ({
+        ...prev,
+        clear_count: clearRes.count ?? 0,
+        unclear_count: unclearRes.count ?? 0,
+      }));
+    } catch (err) {
+      console.error("Failed to sync feedback counts:", err);
+    }
+  };
+
+  // Fetch live counts when component mounts or lesson changes
+  useEffect(() => {
+    if (lesson?.id) {
+      syncFeedbackCounts(lesson.id);
+    }
+  }, [lesson?.id]);
 
   useEffect(() => {
-    // Guard clause
     if (!lesson?.id) return;
 
     const fetchComments = async () => {
       try {
-        console.log("🔍 Fetching comments for lesson:", lesson.id);
-
         const { data: commentsData, error } = await supabase
           .from("comments")
           .select(
             `
-          id,
-          user_id,
-          content,
-          created_at,
-          updated_at,
-          parent_id,
-          likes_count,
-          dislikes_count
-        `,
+            id,
+            user_id,
+            content,
+            created_at,
+            updated_at,
+            parent_id,
+            likes_count,
+            dislikes_count
+          `,
           )
           .eq("lesson_id", lesson.id)
           .eq("is_deleted", false)
           .order("created_at", { ascending: true });
 
-        if (error) {
-          console.error("❌ Error fetching comments:", error);
-          throw error;
-        }
-
+        if (error) throw error;
         if (!commentsData) {
-          console.warn("⚠️ No comments data returned");
           setComments([]);
           return;
         }
 
-        console.log("🔍 Fetched comments:", commentsData.length);
-
-        // Fetch user's likes if authenticated
+        // Fetch user's likes
         let userLikes: { comment_id: string; like_type: string }[] = [];
         if (isAuthenticated && user) {
           const commentIds = commentsData.map((c) => c.id);
@@ -143,25 +416,7 @@ export default function LessonClient({
             .eq("user_id", user.id);
 
           userLikes = likesData || [];
-          console.log("🔍 User likes:", userLikes.length);
         }
-
-        // Transform to Comment type with proper username
-        const commentsWithUsers: Comment[] = commentsData.map((c) => {
-          return {
-            id: c.id,
-            user_id: c.user_id,
-            content: c.content,
-            created_at: c.created_at,
-            updated_at: c.updated_at,
-            parent_id: c.parent_id,
-            likes_count: c.likes_count || 0,
-            dislikes_count: c.dislikes_count || 0,
-            user_email: "User", // Will be updated below
-            replies: [],
-            user_liked: null,
-          };
-        });
 
         // Fetch usernames from profiles
         const userIds = [...new Set(commentsData.map((c) => c.user_id))];
@@ -170,7 +425,6 @@ export default function LessonClient({
           .select("id, username")
           .in("id", userIds);
 
-        // Create map of user_id → username
         const usernameMap = new Map<string, string>();
         if (profilesData) {
           profilesData.forEach((profile) => {
@@ -180,21 +434,54 @@ export default function LessonClient({
           });
         }
 
-        // Update comments with usernames
-        commentsWithUsers.forEach((comment) => {
-          const username = usernameMap.get(comment.user_id);
-          comment.user_email =
-            username || `User${comment.user_id.split("-")[0]}`;
+        // Transform comments
+        const commentsWithUsers: Comment[] = commentsData.map((c) => {
+          const username = usernameMap.get(c.user_id);
+          const userLike = userLikes.find((l) => l.comment_id === c.id);
 
-          // Set user's like status
-          const userLike = userLikes.find((l) => l.comment_id === comment.id);
-          comment.user_liked = userLike?.like_type as "like" | "dislike" | null;
+          return {
+            id: c.id,
+            user_id: c.user_id,
+            content: c.content,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+            parent_id: c.parent_id,
+            likes_count: c.likes_count || 0,
+            dislikes_count: c.dislikes_count || 0,
+            user_email: username || `User${c.user_id.split("-")[0]}`,
+            replies: [],
+            user_liked: userLike?.like_type as "like" | "dislike" | null,
+          };
         });
 
         // Nest replies
-        const nestedComments = nestComments(commentsWithUsers);
-        console.log("✅ Comments fetched and nested:", nestedComments.length);
-        setComments(nestedComments);
+        const nestComments = (comments: Comment[]): Comment[] => {
+          const commentMap = new Map<string, Comment>();
+          const rootComments: Comment[] = [];
+
+          comments.forEach((c) => {
+            commentMap.set(c.id, { ...c, replies: [] });
+          });
+
+          comments.forEach((c) => {
+            const comment = commentMap.get(c.id);
+            if (!comment) return;
+
+            if (c.parent_id) {
+              const parent = commentMap.get(c.parent_id);
+              if (parent) {
+                if (!parent.replies) parent.replies = [];
+                parent.replies.push(comment);
+              }
+            } else {
+              rootComments.push(comment);
+            }
+          });
+
+          return rootComments;
+        };
+
+        setComments(nestComments(commentsWithUsers));
       } catch (err) {
         console.error("❌ Exception fetching comments:", err);
       } finally {
@@ -202,43 +489,11 @@ export default function LessonClient({
       }
     };
 
-    // Helper to nest comments
-    const nestComments = (comments: Comment[]): Comment[] => {
-      const commentMap = new Map<string, Comment>();
-      const rootComments: Comment[] = [];
-
-      // Create map of all comments
-      comments.forEach((c) => {
-        commentMap.set(c.id, {
-          ...c,
-          replies: [],
-        });
-      });
-
-      // Nest replies under parents
-      comments.forEach((c) => {
-        const comment = commentMap.get(c.id);
-        if (!comment) return;
-
-        if (c.parent_id) {
-          const parent = commentMap.get(c.parent_id);
-          if (parent) {
-            if (!parent.replies) parent.replies = [];
-            parent.replies.push(comment);
-          }
-        } else {
-          rootComments.push(comment);
-        }
-      });
-
-      return rootComments;
-    };
-
     fetchComments();
   }, [lesson?.id, user, isAuthenticated]);
 
   // ─────────────────────────────────────────────────────────────
-  // Fetch test result
+  // FETCH TEST RESULT
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated || !user || !TEST_ID) {
@@ -250,7 +505,7 @@ export default function LessonClient({
       try {
         const { data, error } = await supabase
           .from("test_results")
-          .select("score, passed, completed_at")
+          .select("score, completed_at")
           .eq("user_id", user.id)
           .eq("test_id", TEST_ID)
           .order("score", { ascending: false })
@@ -261,7 +516,6 @@ export default function LessonClient({
         if (data)
           setResult({
             score: data.score,
-            passed: data.passed,
             completed_at: data.completed_at,
           });
       } catch (err) {
@@ -273,31 +527,17 @@ export default function LessonClient({
 
     fetchResult();
   }, [user, isAuthenticated, TEST_ID]);
-  if (!initialLesson || !initialSlug) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
-        <p className="ml-4 text-gray-600">Загрузка урока...</p>
-      </div>
-    );
-  }
-  // ─────────────────────────────────────────────────────────────
-  // Handlers
-  // ─────────────────────────────────────────────────────────────
-  const countAllComments = (comments: Comment[]): number => {
-    return comments.reduce((total, comment) => {
-      return (
-        total + 1 + (comment.replies ? countAllComments(comment.replies) : 0)
-      );
-    }, 0);
-  };
 
+  // ─────────────────────────────────────────────────────────────
+  // HANDLERS
+  // ─────────────────────────────────────────────────────────────
   const handleTakeTest = () => {
     if (!TEST_ID) return;
     const returnUrl = encodeURIComponent(window.location.pathname);
     router.push(`/tests?id=${TEST_ID}&returnUrl=${returnUrl}`);
+    console.log("🔍 Test ID:", TEST_ID);
+    console.log("🔍 Lesson test_id:", lesson?.test_id);
   };
-
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -309,38 +549,30 @@ export default function LessonClient({
   };
 
   const submitFeedback = async (type: "clear" | "unclear") => {
-    if (!user) return;
+    if (!user) {
+      alert("Пожалуйста, войдите чтобы оставить отзыв");
+      return;
+    }
 
     try {
-      const { error } = await supabase.from("lesson_feedback").upsert(
-        {
-          lesson_id: lesson?.id,
-          user_id: user.id,
-          feedback_type: type,
-        },
-        { onConflict: "lesson_id,user_id" },
-      );
+      // 1. Save/Update vote in lesson_feedback
+      const { error: upsertError } = await supabase
+        .from("lesson_feedback")
+        .upsert(
+          { lesson_id: lesson.id, user_id: user.id, feedback_type: type },
+          { onConflict: "lesson_id,user_id" },
+        );
 
-      if (!error) {
-        setUserFeedback(type);
+      if (upsertError) throw upsertError;
 
-        // Re-fetch lesson to get updated counts
-        const { data: updatedLesson, error: fetchError } = await supabase
-          .from("lessons")
-          .select("clear_count, unclear_count")
-          .eq("id", lesson?.id)
-          .single();
+      // 2. Update UI state
+      setUserFeedback(type);
 
-        if (updatedLesson && !fetchError) {
-          setLesson((prev) => ({
-            ...prev,
-            clear_count: updatedLesson.clear_count,
-            unclear_count: updatedLesson.unclear_count,
-          }));
-        }
-      }
+      // 3. Immediately refetch accurate counts from DB
+      await syncFeedbackCounts(lesson.id);
     } catch (err) {
-      console.error("Error submitting feedback:", err);
+      console.error("❌ Error saving feedback:", err);
+      alert("Не удалось сохранить отзыв");
     }
   };
 
@@ -359,9 +591,11 @@ export default function LessonClient({
         .single();
 
       if (!error && comment) {
+        const username =
+          user?.user_metadata?.username || `User${user.id.split("-")[0]}`;
         const newCommentObj: Comment = {
           ...comment,
-          user_email: user.email?.split("@")[0] || "Вы",
+          user_email: username,
           replies: [],
           user_liked: null,
         };
@@ -380,7 +614,6 @@ export default function LessonClient({
     setSendingComment(false);
   };
 
-  // NEW: Edit comment
   const handleEditComment = async (commentId: string, newContent: string) => {
     if (!newContent.trim()) return;
 
@@ -407,7 +640,6 @@ export default function LessonClient({
     }
   };
 
-  // NEW: Delete comment
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Удалить этот комментарий и все ответы?")) return;
 
@@ -439,9 +671,8 @@ export default function LessonClient({
     }
   };
 
-  // NEW: Add reply
-  const handleAddReply = async (parentCommentId: string) => {
-    if (!replyContent.trim() || !user) return;
+  const handleAddReply = async (parentCommentId: string, content: string) => {
+    if (!content.trim() || !user) return;
 
     try {
       const { data: reply, error } = await supabase
@@ -449,7 +680,7 @@ export default function LessonClient({
         .insert({
           lesson_id: lesson.id,
           user_id: user.id,
-          content: replyContent.trim(),
+          content: content.trim(),
           parent_id: parentCommentId,
         })
         .select()
@@ -479,9 +710,11 @@ export default function LessonClient({
         });
       };
 
+      const username =
+        user?.user_metadata?.username || `User${user.id.split("-")[0]}`;
       const newReply: Comment = {
         ...reply,
-        user_email: user.email?.split("@")[0] || "Вы",
+        user_email: username,
         replies: [],
         user_liked: null,
       };
@@ -494,7 +727,6 @@ export default function LessonClient({
     }
   };
 
-  // NEW: Like/Dislike comment
   const handleLikeComment = async (
     commentId: string,
     type: "like" | "dislike",
@@ -506,7 +738,6 @@ export default function LessonClient({
       const existingLike = currentComment?.user_liked;
 
       if (existingLike === type) {
-        // Unlike
         const { error } = await supabase
           .from("comment_likes")
           .delete()
@@ -535,7 +766,6 @@ export default function LessonClient({
           }),
         );
       } else {
-        // Upsert like/dislike
         const { error } = await supabase.from("comment_likes").upsert(
           {
             comment_id: commentId,
@@ -560,7 +790,7 @@ export default function LessonClient({
                       ? c.likes_count + 1
                       : c.likes_count + 1
                     : existingLike === "like"
-                      ? c.likes_count - 1
+                      ? Math.max(0, c.likes_count - 1)
                       : c.likes_count,
                 dislikes_count:
                   type === "dislike"
@@ -568,7 +798,7 @@ export default function LessonClient({
                       ? c.dislikes_count + 1
                       : c.dislikes_count + 1
                     : existingLike === "dislike"
-                      ? c.dislikes_count - 1
+                      ? Math.max(0, c.dislikes_count - 1)
                       : c.dislikes_count,
                 user_liked: type,
               };
@@ -604,212 +834,31 @@ export default function LessonClient({
         bg: "bg-gray-100",
         textColor: "text-gray-500",
       };
-    if (result.passed)
-      return {
-        text: `${result.score}%`,
-        border: "border-green-500",
-        bg: "bg-green-200",
-        textColor: "text-green-900",
-      };
     return {
       text: `${result.score}%`,
-      border: "border-red-500",
-      bg: "bg-red-200",
-      textColor: "text-red-900",
+      border: "border-green-500",
+      bg: "bg-green-200",
+      textColor: "text-green-900",
     };
   };
 
   const badge = getResultBadge();
-  const lessonName = initialSlug?.split("/").pop() || ""; // ✅ Safe with optional chaining
-  // ─────────────────────────────────────────────────────────────
-  // CommentItem Component
-  // ─────────────────────────────────────────────────────────────
-  const CommentItem = ({
-    comment,
-    depth = 0,
-  }: {
-    comment: Comment;
-    depth?: number;
-  }) => {
-    const isOwner = user?.id === comment.user_id;
-    const isReplying = replyingTo === comment.id;
-    const isEditing = editingCommentId === comment.id;
-
-    return (
-      <div
-        className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
-      >
-        <div className="flex gap-3 p-4 bg-white rounded-lg shadow-sm">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
-            {comment.user_email?.[0]?.toUpperCase() || "А"}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-medium text-sm">{comment.user_email}</span>
-              <span className="text-xs text-gray-400">
-                {new Date(comment.created_at).toLocaleDateString("ru-RU")}
-              </span>
-              {comment.updated_at &&
-                comment.updated_at !== comment.created_at && (
-                  <span className="text-xs text-gray-400">(изменено)</span>
-                )}
-            </div>
-
-            {isEditing ? (
-              <div className="mt-2">
-                <textarea
-                  // ✅ Add stable key to prevent re-mounting
-                  key={`edit-${comment.id}`}
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  rows={3}
-                  // ✅ Auto-focus when editing starts
-                  autoFocus
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleEditComment(comment.id, editContent)}
-                    className="px-3 py-1 bg-green-500 text-white rounded text-sm"
-                  >
-                    Сохранить
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingCommentId(null);
-                      setEditContent("");
-                    }}
-                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-700">{comment.content}</p>
-            )}
-            <div className="flex items-center gap-4 mt-3">
-              {isAuthenticated && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleLikeComment(comment.id, "like")}
-                    className={`flex items-center gap-1 text-sm ${
-                      comment.user_liked === "like"
-                        ? "text-blue-600"
-                        : "text-gray-500 hover:text-blue-600"
-                    }`}
-                  >
-                    <ThumbsUp size={14} />
-                    <span>{comment.likes_count}</span>
-                  </button>
-                  <button
-                    onClick={() => handleLikeComment(comment.id, "dislike")}
-                    className={`flex items-center gap-1 text-sm ${
-                      comment.user_liked === "dislike"
-                        ? "text-red-600"
-                        : "text-gray-500 hover:text-red-600"
-                    }`}
-                  >
-                    <ThumbsDown size={14} />
-                    <span>{comment.dislikes_count}</span>
-                  </button>
-                </div>
-              )}
-
-              {isAuthenticated && !isReplying && (
-                <button
-                  onClick={() => {
-                    setReplyingTo(comment.id);
-                    setReplyContent("");
-                  }}
-                  className="text-sm text-gray-500 hover:text-purple-600"
-                >
-                  Ответить
-                </button>
-              )}
-
-              {isOwner && !isEditing && (
-                <div className="flex gap-2 ml-auto">
-                  <button
-                    onClick={() => {
-                      setEditingCommentId(comment.id);
-                      setEditContent(comment.content);
-                    }}
-                    className="text-sm text-gray-500 hover:text-blue-600"
-                  >
-                    Редактировать
-                  </button>
-                  <button
-                    onClick={() => handleDeleteComment(comment.id)}
-                    className="text-sm text-gray-500 hover:text-red-600"
-                  >
-                    Удалить
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {isAuthenticated && isReplying && (
-              <div className="mt-3">
-                <textarea
-                  // ✅ Add stable key
-                  key={`reply-${comment.id}`}
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder="Написать ответ..."
-                  className="w-full p-2 border rounded-lg"
-                  rows={2}
-                  // ✅ Auto-focus
-                  autoFocus
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleAddReply(comment.id)}
-                    className="px-3 py-1 bg-purple-500 text-white rounded text-sm"
-                  >
-                    Отправить
-                  </button>
-                  <button
-                    onClick={() => {
-                      setReplyingTo(null);
-                      setReplyContent("");
-                    }}
-                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-2 space-y-2">
-            {comment.replies.map((reply) => (
-              <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   // ─────────────────────────────────────────────────────────────
-  // Main Render
+  // MAIN RENDER
   // ─────────────────────────────────────────────────────────────
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between w-full mb-6">
         <Link
-          href={`/english/${lesson?.level}/${lesson?.category}`}
+          href={`/english/${lesson.level}/${lesson.category}`}
           className="text-gray-600 hover:text-purple-600 transition"
         >
           <ArrowLeft className="w-6 h-6 cursor-pointer" />
         </Link>
         <div className="bg-purple-100 px-4 py-2 rounded-full text-sm font-medium text-purple-700 capitalize">
-          {lesson?.level.toUpperCase()}: {lesson?.category} — {lessonName}
+          {lesson.level.toUpperCase()}: {lesson.category} — {lessonName}
         </div>
         <div className="w-6" />
       </div>
@@ -843,12 +892,12 @@ export default function LessonClient({
               ? "Войдите, чтобы видеть результат"
               : !result
                 ? "Пройдите тест, чтобы узнать свой результат"
-                : result.passed
+                : result.score >= 75
                   ? `Ваш результат - ${result.score}%! Так держать!`
                   : `Ваш результат - ${result.score}%! Вы можете лучше`}
           </div>
           <div
-            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${badge.border} ${badge.bg} ${badge.textColor}`}
+            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${result ? (result.score >= 75 ? "text-green-900 bg-green-200 border-green-600" : "border-red-700 text-red-900 bg-red-200") : ""}`}
           >
             {badge.text}
           </div>
@@ -857,61 +906,63 @@ export default function LessonClient({
 
       {/* Lesson Content */}
       <article
-        className="text-wrap mt-[50px] prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: lesson?.content }}
+        className="flex flex-col items-center"
+        dangerouslySetInnerHTML={{ __html: lesson.content }}
       />
 
       {/* Test Button */}
-      {TEST_ID && (
-        <div className="text-wrap mt-[30px] flex justify-center">
+      <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row">
+        {TEST_ID && (
           <button
             onClick={handleTakeTest}
-            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[20px] items-center justify-center font-semibold rounded-xl md:w-[350px] w-[270px] h-[60px] md:h-[80px]"
+            className="bg-purple-900 sm:hidden block cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[20px] items-center justify-center font-semibold rounded-xl w-[200px] max-h-[40px]"
           >
-            {result?.passed ? "Пройти тест ещё раз" : "Пройти тест!"}
+            <p> {result ? "Перепройти тест" : "Пройти тест"}</p>
           </button>
-        </div>
-      )}
+        )}
 
-      {/* Feedback Buttons */}
-      <div className="text-wrap flex flex-col sm:flex-row items-center justify-between w-full mt-[30px]">
+        {/* Feedback Buttons */}
         <div className="flex flex-col items-center">
           <div className="font-semibold ord-text mb-[10px]">Как вам урок?</div>
           <div className="flex flex-row gap-3">
             <button
               onClick={() => submitFeedback("clear")}
-              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] transition ${
-                userFeedback === "clear"
-                  ? "bg-green-100 border-green-300 text-green-700"
-                  : "border-gray-400 hover:bg-gray-50"
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:border-black  hover:text-white duration-300 ${
+                userFeedback === "clear" ? "" : ""
               }`}
             >
               <p>Понятно</p>
-              <ThumbsUp className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{lesson?.clear_count}</p>
+              <ThumbsUp className=" ml-[5px] w-[15px] h-[15px]" />
+              <p className="ml-[5px]">{lesson.clear_count}</p>
             </button>
             <button
               onClick={() => submitFeedback("unclear")}
-              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] transition ${
-                userFeedback === "unclear"
-                  ? "bg-red-100 border-red-300 text-red-700"
-                  : "border-gray-400 hover:bg-gray-50"
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:border-black  hover:text-white duration-300  ${
+                userFeedback === "unclear" ? "" : ""
               }`}
             >
               <p>Не понятно</p>
-              <ThumbsDown className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{lesson?.unclear_count}</p>
+              <ThumbsDown className=" ml-[5px] w-[15px] h-[15px]" />
+              <p className="ml-[5px]">{lesson.unclear_count}</p>
             </button>
           </div>
         </div>
+        {TEST_ID && (
+          <button
+            onClick={handleTakeTest}
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[16px] items-center justify-center font-semibold rounded-xl h-[60px] w-[250px]"
+          >
+            <p> {result ? "Перепройти тест" : "Пройти тест"}</p>
+          </button>
+        )}
 
         {/* Next Lesson */}
         <Link
-          href={`/english/${lesson?.level}/${lesson?.category}/vocabulary`}
-          className="bg-purple-600 rounded-xl w-[200px] sm:w-[250px] flex flex-row items-center hover:translate-y-[-5px] hover:shadow-md transition-all justify-center text-white p-[10px] px-[20px] mt-[10px] sm:mt-0"
+          href={`/english/${lesson.level}/${lesson.category}/vocabulary`}
+          className="bg-gray-300 rounded-xl border-[1px] border-gray-400 w-[200px] flex flex-row items-center hover:translate-y-[-5px] hover:shadow-md transition-all justify-center ord-text text-gray-700 p-[10px] px-[20px] mt-[10px] sm:mt-0"
         >
           <p>Следующий урок</p>
-          <ArrowRight className="text-white w-[20px] ml-[10px] h-[20px]" />
+          <ArrowRight className="text-gray-700 w-[20px] ml-[10px] h-[20px]" />
         </Link>
       </div>
 
@@ -920,9 +971,13 @@ export default function LessonClient({
         <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
           Комментарии ({countAllComments(comments)})
         </p>
+        <p className=" pb-[10px] mb-[15px] smaller-text">
+          Спасибо, что прошли этот урок! Поделитесь своим мнением об уроке, что
+          было непонятно, что понравилось. Что бы вы дополнили?
+        </p>
 
         {/* Comment Form */}
-        <div className="flex flex-row items-center mb-6">
+        <div className="flex flex-row items-center mb-6 mt-[20px]">
           <img
             src="/aiclose.png"
             className="w-[40px] h-[40px] rounded-full"
@@ -957,7 +1012,24 @@ export default function LessonClient({
             </div>
           ) : comments.length > 0 ? (
             comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} />
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                user={user}
+                isAuthenticated={isAuthenticated}
+                editingCommentId={editingCommentId}
+                editContent={editContent}
+                replyingTo={replyingTo}
+                replyContent={replyContent}
+                onEdit={handleEditComment}
+                onDelete={handleDeleteComment}
+                onReply={handleAddReply}
+                onLike={handleLikeComment}
+                setEditingCommentId={setEditingCommentId}
+                setEditContent={setEditContent}
+                setReplyingTo={setReplyingTo}
+                setReplyContent={setReplyContent}
+              />
             ))
           ) : (
             <p className="text-gray-500 text-center py-4">
