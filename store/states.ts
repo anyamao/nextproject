@@ -70,7 +70,7 @@ const useContactStore = create<ContactState>((set) => ({
   togglemathNavigation: () =>
     set((state) => ({ mathnavigationState: !state.mathnavigationState })),
 
-  englishnavigationState: true,
+  englishnavigationState: false,
   toggleenglishNavigation: () =>
     set((state) => ({ englishnavigationState: !state.englishnavigationState })),
 

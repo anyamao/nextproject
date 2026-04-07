@@ -10,6 +10,8 @@ export interface Comment {
   content: string;
   created_at: string;
   updated_at: string;
+  author_name?: string; // ✅ Add this
+  author_avatar?: string; // ✅ Add this
   user_email?: string;
 }
 

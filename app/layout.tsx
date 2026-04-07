@@ -11,12 +11,21 @@ import ProfileNavigation from "../ui/profile";
 import ForgotPassword from "../ui/ForgotPassword";
 import { useAuthListener } from "@/hooks/useAuthListener";
 import Footer from "../ui/footer";
+import { useEffect } from "react";
+import useContactStore from "@/store/states";
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useAuthListener();
+  const { user, loading } = useAuthListener();
+
+  const setUser = useContactStore((state) => state.setUser);
+
+  // ✅ Sync Supabase auth to Zustand store
+  useEffect(() => {
+    setUser(user); // This automatically sets isAuthenticated: !!user
+  }, [user, setUser]);
 
   return (
     <html lang="en">

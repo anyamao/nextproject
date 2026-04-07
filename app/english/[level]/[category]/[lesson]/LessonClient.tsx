@@ -10,7 +10,7 @@ import {
   TestResult,
 } from "@/types/database";
 import { useAuthListener } from "@/hooks/useAuthListener";
-
+import { Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 interface LessonClientProps {
   initialLesson: Lesson | null;
   level: string;
@@ -66,10 +66,11 @@ export default function LessonClient({
 
         const { data: comments } = await supabase
           .from("comments")
-          .select("id, lesson_id, user_id, content, created_at, updated_at")
+          .select(
+            "id, lesson_id, user_id, content, created_at, updated_at, author_name, author_avatar",
+          ) // ✅ Added missing fields
           .eq("lesson_id", lessonData.id)
           .order("created_at", { ascending: false });
-
         let testResults: TestResult[] = [];
         const { data: tests } = await supabase
           .from("tests")
@@ -170,15 +171,30 @@ export default function LessonClient({
     e.preventDefault();
     if (!user || !lesson || !newComment.trim()) return;
     setSubmittingComment(true);
+
     try {
+      // Fetch username from profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .single();
+
+      const authorName =
+        profile?.username || user.email?.split("@")[0] || "Пользователь";
+
       const { data, error } = await supabase
         .from("comments")
         .insert({
           lesson_id: lesson.id,
           user_id: user.id,
           content: newComment.trim(),
+          author_name: authorName,
+          author_avatar: "aiclose.png", // Default avatar
         })
-        .select("id, lesson_id, user_id, content, created_at, updated_at")
+        .select(
+          "id, lesson_id, user_id, content, created_at, updated_at, author_name, author_avatar",
+        )
         .single();
 
       if (error) throw error;
@@ -198,6 +214,7 @@ export default function LessonClient({
       setSubmittingComment(false);
     }
   };
+
   const copyLessonLink = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("Link copied!");
@@ -222,48 +239,76 @@ export default function LessonClient({
       </div>
     );
   }
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-sm text-gray-500 uppercase mb-1">
-              {level.toUpperCase()} / {category}
-            </div>
-            <h1 className="text-3xl font-bold">{lesson.display_name}</h1>
-          </div>
-          <button
-            onClick={copyLessonLink}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
-          >
-            📋 Copy Link
-          </button>
+    <div className="w-full h-full flex flex-col items-center">
+      <div className="text-wrap-no">
+        <div className="text-gray-500 smaller-text">
+          {level.toUpperCase()} / {category}
         </div>
-        {lesson.comments?.map((comment: CommentType) => (
-          <div key={comment.id} className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Anonymous
-              </span>
-              <span className="text-xs text-gray-500">
-                {new Date(comment.created_at).toLocaleDateString()}
-              </span>
+
+        <p className="bigger-text font-semibold">{lesson.display_name}</p>
+
+        <div className="flex flex-row items-center justify-between mt-[20px]">
+          <div
+            onClick={copyLessonLink}
+            className=" flex flex-row items-center cursor-pointer bg-white justify-center h-[50px] w-[150px] rounded-xl"
+          >
+            <div className="flex items-center justify-center rounded-full p-[7px] border-[1px] border-gray-400">
+              <Copy className="text-black w-[13px] h-[13px]  " />{" "}
             </div>
-            <p className="text-gray-800">{comment.content}</p>
+            <p className="font-semibold ml-[7px]  ">Copy Link</p>
           </div>
-        ))}
+
+          {lesson.test_results && lesson.test_results.length > 0 && (
+            <div className="font-semibold">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/english/${level}/${category}/${lessonName}/test`,
+                  )
+                }
+                className={` ${
+                  lesson.test_results[0].score >= 75
+                    ? "bg-green-100 text-green-800 hover:bg-green-200 flex items-center h-[50px] w-[170px]"
+                    : "bg-red-200 text-red-800 hover:bg-yellow-200 rounded-xl h-[50px] w-[180px]"
+                }`}
+              >
+                {lesson.test_results[0].score >= 75 ? "✓" : "✗"}
+                <span>
+                  Test: {lesson.test_results[0].score}%
+                  <span className="text-xs opacity-75 ml-1">
+                    (
+                    {lesson.test_results[0].score >= 75
+                      ? "Passed"
+                      : "Try Again"}
+                    )
+                  </span>
+                </span>
+              </button>
+            </div>
+          )}
+
+          {(!lesson.test_results || lesson.test_results.length === 0) && (
+            <div className="p-[10px] px-[20px]">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/english/${level}/${category}/${lessonName}/test`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-medium hover:bg-blue-200 transition-colors"
+              >
+                📝 Take the Test
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div
-        className="prose prose-lg max-w-none mb-8 p-6 bg-white rounded-lg shadow-sm border"
-        dangerouslySetInnerHTML={{ __html: lesson.content }}
-      />
+      <div className="" dangerouslySetInnerHTML={{ __html: lesson.content }} />
 
-      <div className="mb-8 p-6 bg-gray-50 rounded-lg">
-        <h2 className="text-lg font-semibold mb-4">
-          Did you understand this lesson?
-        </h2>
+      <div className="text-wrap-no flex flex-col justify-center items-center">
+        <h2 className="text-lg font-semibold mb-4">Как вам урок?</h2>
         <div className="flex gap-4">
           <button
             onClick={() => handleReaction("understood")}
@@ -306,17 +351,41 @@ export default function LessonClient({
       </div>
 
       {/* Comments */}
+
+      {/* Comments Section */}
+
+      {/* Comments Section - ALWAYS VISIBLE */}
       <div className="border-t pt-8">
         <h2 className="text-2xl font-bold mb-6">
-          Comments ({lesson.comments?.length || 0})
+          Комментарии ({lesson.comments?.length || 0})
         </h2>
+
+        {/* Auth Warning - Only shows for guests */}
+        {!user && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+            <span className="text-2xl">🔒</span>
+            <div className="flex-1">
+              <p className="text-yellow-800 font-medium mb-1">
+                Только для зарегистрированных пользователей
+              </p>
+              <p className="text-yellow-700 text-sm mb-3">
+                Пожалуйста, войдите в систему, чтобы оставлять комментарии.
+              </p>
+              <button className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors">
+                Войти сейчас
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Comment Form - Active for users, Disabled for guests */}
         {user ? (
           <form onSubmit={handleCommentSubmit} className="mb-8">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
-              className="w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Напишите комментарий..."
+              className="w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
               disabled={submittingComment}
             />
@@ -324,33 +393,84 @@ export default function LessonClient({
               <button
                 type="submit"
                 disabled={submittingComment || !newComment.trim()}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {submittingComment ? "Posting..." : "Post Comment"}
+                {submittingComment ? "Отправка..." : "Отправить комментарий"}
               </button>
             </div>
           </form>
         ) : (
-          <p className="mb-8 text-gray-500">Please login to comment</p>
+          <div className="mb-8">
+            <textarea
+              placeholder="Войдите, чтобы написать комментарий..."
+              className="w-full p-4 border rounded-lg resize-none bg-gray-100 cursor-not-allowed"
+              rows={3}
+              disabled
+            />
+            <div className="mt-2 flex justify-end">
+              <button
+                disabled
+                className="px-6 py-2 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed"
+              >
+                Требуется вход
+              </button>
+            </div>
+          </div>
         )}
 
+        {/* Comments List - RENDERS FOR EVERYONE */}
         <div className="space-y-4">
-          {lesson.comments?.map((comment: CommentType) => (
-            <div key={comment.id} className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  {comment.user_email || "Anonymous"}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {new Date(comment.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <p className="text-gray-800">{comment.content}</p>
-            </div>
-          ))}
-          {(!lesson.comments || lesson.comments.length === 0) && (
+          {lesson.comments && lesson.comments.length > 0 ? (
+            lesson.comments.map((comment) => {
+              const isCurrentUser = user && comment.user_id === user.id;
+
+              return (
+                <div key={comment.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      <img
+                        src={comment.author_avatar || "/aiclose.png"}
+                        alt={comment.author_name || "User"}
+                        className="w-10 h-10 rounded-full object-cover border border-gray-300"
+                      />
+                    </div>
+
+                    {/* Comment Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {comment.author_name || "Пользователь"}
+                          </span>
+                          {isCurrentUser && (
+                            <span className="text-xs text-blue-600 font-medium">
+                              (вы)
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(comment.created_at).toLocaleDateString(
+                            "ru-RU",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
             <p className="text-gray-500 text-center py-8">
-              No comments yet. Be the first!
+              Пока нет комментариев. Будьте первым!
             </p>
           )}
         </div>
