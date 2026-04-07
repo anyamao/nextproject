@@ -1,480 +1,971 @@
+// app/english/[level]/[category]/[lesson]/LessonClient.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import {
-  Lesson,
-  Comment as CommentType,
-  LessonReaction,
-  TestResult,
-} from "@/types/database";
-import { useAuthListener } from "@/hooks/useAuthListener";
-import { Copy, ThumbsUp, ThumbsDown } from "lucide-react";
-interface LessonClientProps {
-  initialLesson: Lesson | null;
+  ArrowLeft,
+  Copy,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  ArrowRight,
+  Loader2,
+  Send,
+} from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+import useContactStore from "@/store/states";
+import { supabase } from "@/lib/supabase";
+
+// Types
+type TestResult = {
+  score: number;
+  passed: boolean;
+  completed_at: string | null;
+};
+
+type Lesson = {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  description: string;
   level: string;
   category: string;
-  lessonName: string;
+  test_id: string | null;
+  estimated_minutes: number;
+  passing_score: number;
+  clear_count: number;
+  unclear_count: number;
+};
+
+type Comment = {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at?: string;
+  parent_id?: string | null;
+  likes_count: number;
+  dislikes_count: number;
+  user_email: string;
+  replies?: Comment[];
+  user_liked?: "like" | "dislike" | null;
+};
+
+interface LessonClientProps {
+  initialLesson: Lesson;
+  initialSlug: string;
+  params: { level: string; category: string; lesson: string };
 }
 
 export default function LessonClient({
   initialLesson,
-  level,
-  category,
-  lessonName,
+  initialSlug,
+  params,
 }: LessonClientProps) {
-  const params = useParams();
   const router = useRouter();
-  const supabase = createClient();
-  const { user } = useAuthListener();
+  const { user, isAuthenticated } = useContactStore();
 
-  const [lesson, setLesson] = useState<Lesson | null>(initialLesson);
-  const [loading, setLoading] = useState(!initialLesson);
+  // State
+  const [lesson, setLesson] = useState<Lesson>(initialLesson);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+
+  // UI state
+  const [copySuccess, setCopySuccess] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [submittingReaction, setSubmittingReaction] = useState(false);
-  const [submittingComment, setSubmittingComment] = useState(false);
+  const [sendingComment, setSendingComment] = useState(false);
+  const [result, setResult] = useState<TestResult | null>(null);
+  const [loadingResult, setLoadingResult] = useState(true);
+
+  // Comment features state
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
+    null,
+  );
+  const TEST_ID = lesson?.test_id || undefined;
+
+  // ─────────────────────────────────────────────────────────────
+  // Fetch comments with replies and user likes
+  // ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (initialLesson) return;
+    // Guard clause
+    if (!lesson?.id) return;
 
-    async function fetchLesson() {
+    const fetchComments = async () => {
       try {
-        const { data: lessonData, error: lessonError } = await supabase
-          .from("lessons")
-          .select(
-            `
-          *,
-          categories!inner (
-            name,
-            levels!inner (name)
-          )
-        `,
-          )
-          .eq("name", lessonName)
-          .eq("categories.name", category)
-          .eq("categories.levels.name", level)
-          .single();
+        console.log("🔍 Fetching comments for lesson:", lesson.id);
 
-        if (lessonError) throw lessonError;
-        if (!lessonData) throw new Error("Lesson not found");
-
-        const { data: reactions } = await supabase
-          .from("lesson_reactions")
-          .select("reaction_type, user_id")
-          .eq("lesson_id", lessonData.id);
-
-        const { data: comments } = await supabase
+        const { data: commentsData, error } = await supabase
           .from("comments")
           .select(
-            "id, lesson_id, user_id, content, created_at, updated_at, author_name, author_avatar",
-          ) // ✅ Added missing fields
-          .eq("lesson_id", lessonData.id)
-          .order("created_at", { ascending: false });
-        let testResults: TestResult[] = [];
-        const { data: tests } = await supabase
-          .from("tests")
-          .select("id")
-          .eq("lesson_id", lessonData.id)
-          .single();
+            `
+          id,
+          user_id,
+          content,
+          created_at,
+          updated_at,
+          parent_id,
+          likes_count,
+          dislikes_count
+        `,
+          )
+          .eq("lesson_id", lesson.id)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: true });
 
-        if (tests && user) {
-          const { data: results } = await supabase
-            .from("test_results")
-            .select("*")
-            .eq("test_id", tests.id)
-            .eq("user_id", user.id)
-            .single();
-          if (results) testResults = [results];
+        if (error) {
+          console.error("❌ Error fetching comments:", error);
+          throw error;
         }
-        const reactionsList = reactions || [];
-        const understood_count = reactionsList.filter(
-          (r: LessonReaction) => r.reaction_type === "understood",
-        ).length;
-        const not_understood_count = reactionsList.filter(
-          (r: LessonReaction) => r.reaction_type === "not_understood",
-        ).length;
-        const userReaction = user
-          ? (reactionsList.find((r: LessonReaction) => r.user_id === user.id)
-              ?.reaction_type as "understood" | "not_understood" | null)
-          : null;
 
-        setLesson({
-          ...lessonData,
-          understood_count,
-          not_understood_count,
-          user_reaction: userReaction,
-          comments: comments || [],
-          test_results: testResults,
+        if (!commentsData) {
+          console.warn("⚠️ No comments data returned");
+          setComments([]);
+          return;
+        }
+
+        console.log("🔍 Fetched comments:", commentsData.length);
+
+        // Fetch user's likes if authenticated
+        let userLikes: { comment_id: string; like_type: string }[] = [];
+        if (isAuthenticated && user) {
+          const commentIds = commentsData.map((c) => c.id);
+          const { data: likesData } = await supabase
+            .from("comment_likes")
+            .select("comment_id, like_type")
+            .in("comment_id", commentIds)
+            .eq("user_id", user.id);
+
+          userLikes = likesData || [];
+          console.log("🔍 User likes:", userLikes.length);
+        }
+
+        // Transform to Comment type with proper username
+        const commentsWithUsers: Comment[] = commentsData.map((c) => {
+          return {
+            id: c.id,
+            user_id: c.user_id,
+            content: c.content,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+            parent_id: c.parent_id,
+            likes_count: c.likes_count || 0,
+            dislikes_count: c.dislikes_count || 0,
+            user_email: "User", // Will be updated below
+            replies: [],
+            user_liked: null,
+          };
         });
-      } catch (error) {
-        console.error("Error fetching lesson:", error);
+
+        // Fetch usernames from profiles
+        const userIds = [...new Set(commentsData.map((c) => c.user_id))];
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", userIds);
+
+        // Create map of user_id → username
+        const usernameMap = new Map<string, string>();
+        if (profilesData) {
+          profilesData.forEach((profile) => {
+            if (profile.username) {
+              usernameMap.set(profile.id, profile.username);
+            }
+          });
+        }
+
+        // Update comments with usernames
+        commentsWithUsers.forEach((comment) => {
+          const username = usernameMap.get(comment.user_id);
+          comment.user_email =
+            username || `User${comment.user_id.split("-")[0]}`;
+
+          // Set user's like status
+          const userLike = userLikes.find((l) => l.comment_id === comment.id);
+          comment.user_liked = userLike?.like_type as "like" | "dislike" | null;
+        });
+
+        // Nest replies
+        const nestedComments = nestComments(commentsWithUsers);
+        console.log("✅ Comments fetched and nested:", nestedComments.length);
+        setComments(nestedComments);
+      } catch (err) {
+        console.error("❌ Exception fetching comments:", err);
       } finally {
-        setLoading(false);
+        setLoadingComments(false);
       }
+    };
+
+    // Helper to nest comments
+    const nestComments = (comments: Comment[]): Comment[] => {
+      const commentMap = new Map<string, Comment>();
+      const rootComments: Comment[] = [];
+
+      // Create map of all comments
+      comments.forEach((c) => {
+        commentMap.set(c.id, {
+          ...c,
+          replies: [],
+        });
+      });
+
+      // Nest replies under parents
+      comments.forEach((c) => {
+        const comment = commentMap.get(c.id);
+        if (!comment) return;
+
+        if (c.parent_id) {
+          const parent = commentMap.get(c.parent_id);
+          if (parent) {
+            if (!parent.replies) parent.replies = [];
+            parent.replies.push(comment);
+          }
+        } else {
+          rootComments.push(comment);
+        }
+      });
+
+      return rootComments;
+    };
+
+    fetchComments();
+  }, [lesson?.id, user, isAuthenticated]);
+
+  // ─────────────────────────────────────────────────────────────
+  // Fetch test result
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated || !user || !TEST_ID) {
+      setLoadingResult(false);
+      return;
     }
 
-    fetchLesson();
-  }, [initialLesson, level, category, lessonName, supabase, user]);
-  const handleReaction = async (type: "understood" | "not_understood") => {
-    if (!user || !lesson) return;
-    setSubmittingReaction(true);
-    try {
-      const { error: upsertError } = await supabase
-        .from("lesson_reactions")
-        .upsert(
-          {
-            lesson_id: lesson.id,
-            user_id: user.id,
-            reaction_type: type,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "lesson_id,user_id",
-          },
-        );
+    const fetchResult = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("test_results")
+          .select("score, passed, completed_at")
+          .eq("user_id", user.id)
+          .eq("test_id", TEST_ID)
+          .order("score", { ascending: false })
+          .limit(1)
+          .single();
 
-      if (upsertError) throw upsertError;
-
-      const { data: reactions } = await supabase
-        .from("lesson_reactions")
-        .select("reaction_type, user_id")
-        .eq("lesson_id", lesson.id);
-
-      if (reactions) {
-        const understood_count = reactions.filter(
-          (r: LessonReaction) => r.reaction_type === "understood",
-        ).length;
-        const not_understood_count = reactions.filter(
-          (r: LessonReaction) => r.reaction_type === "not_understood",
-        ).length;
-
-        setLesson((prev) =>
-          prev
-            ? {
-                ...prev,
-                understood_count,
-                not_understood_count,
-                user_reaction: type,
-              }
-            : null,
-        );
+        if (error && error.code !== "PGRST116") throw error;
+        if (data)
+          setResult({
+            score: data.score,
+            passed: data.passed,
+            completed_at: data.completed_at,
+          });
+      } catch (err) {
+        console.error("Error fetching test result:", err);
+      } finally {
+        setLoadingResult(false);
       }
-    } catch (error) {
-      console.error("Error submitting reaction:", error);
-    } finally {
-      setSubmittingReaction(false);
+    };
+
+    fetchResult();
+  }, [user, isAuthenticated, TEST_ID]);
+  if (!initialLesson || !initialSlug) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
+        <p className="ml-4 text-gray-600">Загрузка урока...</p>
+      </div>
+    );
+  }
+  // ─────────────────────────────────────────────────────────────
+  // Handlers
+  // ─────────────────────────────────────────────────────────────
+  const countAllComments = (comments: Comment[]): number => {
+    return comments.reduce((total, comment) => {
+      return (
+        total + 1 + (comment.replies ? countAllComments(comment.replies) : 0)
+      );
+    }, 0);
+  };
+
+  const handleTakeTest = () => {
+    if (!TEST_ID) return;
+    const returnUrl = encodeURIComponent(window.location.pathname);
+    router.push(`/tests?id=${TEST_ID}&returnUrl=${returnUrl}`);
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
     }
   };
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !lesson || !newComment.trim()) return;
-    setSubmittingComment(true);
+  const submitFeedback = async (type: "clear" | "unclear") => {
+    if (!user) return;
 
     try {
-      // Fetch username from profiles table
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("id", user.id)
-        .single();
+      const { error } = await supabase.from("lesson_feedback").upsert(
+        {
+          lesson_id: lesson?.id,
+          user_id: user.id,
+          feedback_type: type,
+        },
+        { onConflict: "lesson_id,user_id" },
+      );
 
-      const authorName =
-        profile?.username || user.email?.split("@")[0] || "Пользователь";
+      if (!error) {
+        setUserFeedback(type);
 
-      const { data, error } = await supabase
+        // Re-fetch lesson to get updated counts
+        const { data: updatedLesson, error: fetchError } = await supabase
+          .from("lessons")
+          .select("clear_count, unclear_count")
+          .eq("id", lesson?.id)
+          .single();
+
+        if (updatedLesson && !fetchError) {
+          setLesson((prev) => ({
+            ...prev,
+            clear_count: updatedLesson.clear_count,
+            unclear_count: updatedLesson.unclear_count,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Error submitting feedback:", err);
+    }
+  };
+
+  const addComment = async (content: string) => {
+    if (!user) return;
+
+    try {
+      const { data: comment, error } = await supabase
         .from("comments")
         .insert({
           lesson_id: lesson.id,
           user_id: user.id,
-          content: newComment.trim(),
-          author_name: authorName,
-          author_avatar: "aiclose.png", // Default avatar
+          content: content.trim(),
         })
-        .select(
-          "id, lesson_id, user_id, content, created_at, updated_at, author_name, author_avatar",
-        )
+        .select()
+        .single();
+
+      if (!error && comment) {
+        const newCommentObj: Comment = {
+          ...comment,
+          user_email: user.email?.split("@")[0] || "Вы",
+          replies: [],
+          user_liked: null,
+        };
+        setComments((prev) => [newCommentObj, ...prev]);
+        setNewComment("");
+      }
+    } catch (err) {
+      console.error("Error adding comment:", err);
+    }
+  };
+
+  const handleSendComment = async () => {
+    if (!newComment.trim()) return;
+    setSendingComment(true);
+    await addComment(newComment);
+    setSendingComment(false);
+  };
+
+  // NEW: Edit comment
+  const handleEditComment = async (commentId: string, newContent: string) => {
+    if (!newContent.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .update({
+          content: newContent.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", commentId);
+
+      if (error) throw error;
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, content: newContent.trim() } : c,
+        ),
+      );
+      setEditingCommentId(null);
+      setEditContent("");
+    } catch (err) {
+      console.error("Error editing comment:", err);
+    }
+  };
+
+  // NEW: Delete comment
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Удалить этот комментарий и все ответы?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId);
+
+      if (error) throw error;
+
+      const removeCommentAndReplies = (
+        commentsList: Comment[],
+        id: string,
+      ): Comment[] => {
+        return commentsList
+          .filter((c) => c.id !== id)
+          .map((c) => ({
+            ...c,
+            replies: c.replies
+              ? removeCommentAndReplies(c.replies, id)
+              : undefined,
+          }));
+      };
+
+      setComments((prev) => removeCommentAndReplies(prev, commentId));
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+  };
+
+  // NEW: Add reply
+  const handleAddReply = async (parentCommentId: string) => {
+    if (!replyContent.trim() || !user) return;
+
+    try {
+      const { data: reply, error } = await supabase
+        .from("comments")
+        .insert({
+          lesson_id: lesson.id,
+          user_id: user.id,
+          content: replyContent.trim(),
+          parent_id: parentCommentId,
+        })
+        .select()
         .single();
 
       if (error) throw error;
 
-      setLesson((prev: Lesson | null) =>
-        prev
-          ? {
-              ...prev,
-              comments: [data, ...(prev.comments || [])],
-            }
-          : null,
-      );
-      setNewComment("");
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-    } finally {
-      setSubmittingComment(false);
+      const addReplyToComment = (
+        commentsList: Comment[],
+        parentId: string,
+        replyObj: Comment,
+      ): Comment[] => {
+        return commentsList.map((c) => {
+          if (c.id === parentId) {
+            return {
+              ...c,
+              replies: [...(c.replies || []), replyObj],
+            };
+          }
+          if (c.replies) {
+            return {
+              ...c,
+              replies: addReplyToComment(c.replies, parentId, replyObj),
+            };
+          }
+          return c;
+        });
+      };
+
+      const newReply: Comment = {
+        ...reply,
+        user_email: user.email?.split("@")[0] || "Вы",
+        replies: [],
+        user_liked: null,
+      };
+
+      setComments((prev) => addReplyToComment(prev, parentCommentId, newReply));
+      setReplyingTo(null);
+      setReplyContent("");
+    } catch (err) {
+      console.error("Error adding reply:", err);
     }
   };
 
-  const copyLessonLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copied!");
+  // NEW: Like/Dislike comment
+  const handleLikeComment = async (
+    commentId: string,
+    type: "like" | "dislike",
+  ) => {
+    if (!user) return;
+
+    try {
+      const currentComment = comments.find((c) => c.id === commentId);
+      const existingLike = currentComment?.user_liked;
+
+      if (existingLike === type) {
+        // Unlike
+        const { error } = await supabase
+          .from("comment_likes")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id === commentId) {
+              return {
+                ...c,
+                likes_count:
+                  type === "like"
+                    ? Math.max(0, c.likes_count - 1)
+                    : c.likes_count,
+                dislikes_count:
+                  type === "dislike"
+                    ? Math.max(0, c.dislikes_count - 1)
+                    : c.dislikes_count,
+                user_liked: null,
+              };
+            }
+            return c;
+          }),
+        );
+      } else {
+        // Upsert like/dislike
+        const { error } = await supabase.from("comment_likes").upsert(
+          {
+            comment_id: commentId,
+            user_id: user.id,
+            like_type: type,
+          },
+          {
+            onConflict: "comment_id,user_id",
+          },
+        );
+
+        if (error) throw error;
+
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id === commentId) {
+              return {
+                ...c,
+                likes_count:
+                  type === "like"
+                    ? existingLike === "dislike"
+                      ? c.likes_count + 1
+                      : c.likes_count + 1
+                    : existingLike === "like"
+                      ? c.likes_count - 1
+                      : c.likes_count,
+                dislikes_count:
+                  type === "dislike"
+                    ? existingLike === "like"
+                      ? c.dislikes_count + 1
+                      : c.dislikes_count + 1
+                    : existingLike === "dislike"
+                      ? c.dislikes_count - 1
+                      : c.dislikes_count,
+                user_liked: type,
+              };
+            }
+            return c;
+          }),
+        );
+      }
+    } catch (err) {
+      console.error("Error liking comment:", err);
+    }
   };
 
-  const goToTest = () => {
-    router.push(`/english/${level}/${category}/${lessonName}/test`);
+  const getResultBadge = () => {
+    if (!isAuthenticated)
+      return {
+        text: "—",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    if (loadingResult)
+      return {
+        text: "...",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    if (!result)
+      return {
+        text: "—",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    if (result.passed)
+      return {
+        text: `${result.score}%`,
+        border: "border-green-500",
+        bg: "bg-green-200",
+        textColor: "text-green-900",
+      };
+    return {
+      text: `${result.score}%`,
+      border: "border-red-500",
+      bg: "bg-red-200",
+      textColor: "text-red-900",
+    };
   };
 
-  if (loading) {
+  const badge = getResultBadge();
+  const lessonName = initialSlug?.split("/").pop() || ""; // ✅ Safe with optional chaining
+  // ─────────────────────────────────────────────────────────────
+  // CommentItem Component
+  // ─────────────────────────────────────────────────────────────
+  const CommentItem = ({
+    comment,
+    depth = 0,
+  }: {
+    comment: Comment;
+    depth?: number;
+  }) => {
+    const isOwner = user?.id === comment.user_id;
+    const isReplying = replyingTo === comment.id;
+    const isEditing = editingCommentId === comment.id;
+
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl">
-        Loading lesson...
-      </div>
-    );
-  }
-
-  if (!lesson) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-red-500">
-        Lesson not found
-      </div>
-    );
-  }
-  return (
-    <div className="w-full h-full flex flex-col items-center">
-      <div className="text-wrap-no">
-        <div className="text-gray-500 smaller-text">
-          {level.toUpperCase()} / {category}
-        </div>
-
-        <p className="bigger-text font-semibold">{lesson.display_name}</p>
-
-        <div className="flex flex-row items-center justify-between mt-[20px]">
-          <div
-            onClick={copyLessonLink}
-            className=" flex flex-row items-center cursor-pointer bg-white justify-center h-[50px] w-[150px] rounded-xl"
-          >
-            <div className="flex items-center justify-center rounded-full p-[7px] border-[1px] border-gray-400">
-              <Copy className="text-black w-[13px] h-[13px]  " />{" "}
-            </div>
-            <p className="font-semibold ml-[7px]  ">Copy Link</p>
+      <div
+        className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
+      >
+        <div className="flex gap-3 p-4 bg-white rounded-lg shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
+            {comment.user_email?.[0]?.toUpperCase() || "А"}
           </div>
-
-          {lesson.test_results && lesson.test_results.length > 0 && (
-            <div className="font-semibold">
-              <button
-                onClick={() =>
-                  router.push(
-                    `/english/${level}/${category}/${lessonName}/test`,
-                  )
-                }
-                className={` ${
-                  lesson.test_results[0].score >= 75
-                    ? "bg-green-100 text-green-800 hover:bg-green-200 flex items-center h-[50px] w-[170px]"
-                    : "bg-red-200 text-red-800 hover:bg-yellow-200 rounded-xl h-[50px] w-[180px]"
-                }`}
-              >
-                {lesson.test_results[0].score >= 75 ? "✓" : "✗"}
-                <span>
-                  Test: {lesson.test_results[0].score}%
-                  <span className="text-xs opacity-75 ml-1">
-                    (
-                    {lesson.test_results[0].score >= 75
-                      ? "Passed"
-                      : "Try Again"}
-                    )
-                  </span>
-                </span>
-              </button>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-medium text-sm">{comment.user_email}</span>
+              <span className="text-xs text-gray-400">
+                {new Date(comment.created_at).toLocaleDateString("ru-RU")}
+              </span>
+              {comment.updated_at &&
+                comment.updated_at !== comment.created_at && (
+                  <span className="text-xs text-gray-400">(изменено)</span>
+                )}
             </div>
-          )}
 
-          {(!lesson.test_results || lesson.test_results.length === 0) && (
-            <div className="p-[10px] px-[20px]">
-              <button
-                onClick={() =>
-                  router.push(
-                    `/english/${level}/${category}/${lessonName}/test`,
-                  )
-                }
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-medium hover:bg-blue-200 transition-colors"
-              >
-                📝 Take the Test
-              </button>
+            {isEditing ? (
+              <div className="mt-2">
+                <textarea
+                  // ✅ Add stable key to prevent re-mounting
+                  key={`edit-${comment.id}`}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  rows={3}
+                  // ✅ Auto-focus when editing starts
+                  autoFocus
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleEditComment(comment.id, editContent)}
+                    className="px-3 py-1 bg-green-500 text-white rounded text-sm"
+                  >
+                    Сохранить
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(null);
+                      setEditContent("");
+                    }}
+                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-700">{comment.content}</p>
+            )}
+            <div className="flex items-center gap-4 mt-3">
+              {isAuthenticated && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleLikeComment(comment.id, "like")}
+                    className={`flex items-center gap-1 text-sm ${
+                      comment.user_liked === "like"
+                        ? "text-blue-600"
+                        : "text-gray-500 hover:text-blue-600"
+                    }`}
+                  >
+                    <ThumbsUp size={14} />
+                    <span>{comment.likes_count}</span>
+                  </button>
+                  <button
+                    onClick={() => handleLikeComment(comment.id, "dislike")}
+                    className={`flex items-center gap-1 text-sm ${
+                      comment.user_liked === "dislike"
+                        ? "text-red-600"
+                        : "text-gray-500 hover:text-red-600"
+                    }`}
+                  >
+                    <ThumbsDown size={14} />
+                    <span>{comment.dislikes_count}</span>
+                  </button>
+                </div>
+              )}
+
+              {isAuthenticated && !isReplying && (
+                <button
+                  onClick={() => {
+                    setReplyingTo(comment.id);
+                    setReplyContent("");
+                  }}
+                  className="text-sm text-gray-500 hover:text-purple-600"
+                >
+                  Ответить
+                </button>
+              )}
+
+              {isOwner && !isEditing && (
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(comment.id);
+                      setEditContent(comment.content);
+                    }}
+                    className="text-sm text-gray-500 hover:text-blue-600"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    className="text-sm text-gray-500 hover:text-red-600"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="" dangerouslySetInnerHTML={{ __html: lesson.content }} />
-
-      <div className="text-wrap-no flex flex-col justify-center items-center">
-        <h2 className="text-lg font-semibold mb-4">Как вам урок?</h2>
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleReaction("understood")}
-            disabled={submittingReaction || !user}
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-              lesson.user_reaction === "understood"
-                ? "bg-green-500 text-white"
-                : "bg-white border-2 border-green-500 text-green-600 hover:bg-green-50"
-            } disabled:opacity-50`}
-          >
-            ✓ Understood ({lesson.understood_count || 0})
-          </button>
-          <button
-            onClick={() => handleReaction("not_understood")}
-            disabled={submittingReaction || !user}
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-              lesson.user_reaction === "not_understood"
-                ? "bg-red-500 text-white"
-                : "bg-white border-2 border-red-500 text-red-600 hover:bg-red-50"
-            } disabled:opacity-50`}
-          >
-            ✗ Not Understood ({lesson.not_understood_count || 0})
-          </button>
+            {isAuthenticated && isReplying && (
+              <div className="mt-3">
+                <textarea
+                  // ✅ Add stable key
+                  key={`reply-${comment.id}`}
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Написать ответ..."
+                  className="w-full p-2 border rounded-lg"
+                  rows={2}
+                  // ✅ Auto-focus
+                  autoFocus
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleAddReply(comment.id)}
+                    className="px-3 py-1 bg-purple-500 text-white rounded text-sm"
+                  >
+                    Отправить
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setReplyContent("");
+                    }}
+                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        {!user && (
-          <p className="text-sm text-gray-500 mt-2 text-center">
-            Please login to react
-          </p>
+
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {comment.replies.map((reply) => (
+              <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
+            ))}
+          </div>
         )}
       </div>
+    );
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // Main Render
+  // ─────────────────────────────────────────────────────────────
+  return (
+    <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between w-full mb-6">
+        <Link
+          href={`/english/${lesson?.level}/${lesson?.category}`}
+          className="text-gray-600 hover:text-purple-600 transition"
+        >
+          <ArrowLeft className="w-6 h-6 cursor-pointer" />
+        </Link>
+        <div className="bg-purple-100 px-4 py-2 rounded-full text-sm font-medium text-purple-700 capitalize">
+          {lesson?.level.toUpperCase()}: {lesson?.category} — {lessonName}
+        </div>
+        <div className="w-6" />
+      </div>
+
+      {/* Stats Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full mb-8">
+        {/* Copy Link */}
+        <div className="bg-white flex p-[15px] items-center shadow-xs rounded-lg">
+          <div className="font-semibold smaller-text">Поделитесь уроком</div>
+          <button
+            onClick={handleCopyLink}
+            className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400 hover:bg-gray-50 transition relative"
+          >
+            {copySuccess ? (
+              <Check className="w-[15px] h-[15px] text-green-600" />
+            ) : (
+              <Copy className="w-[15px] h-[15px] text-gray-700" />
+            )}
+            {copySuccess && (
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                Скопировано!
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Test Result Badge */}
+        <div className="bg-white flex flex-row p-[15px] items-center shadow-xs rounded-lg">
+          <div className="font-semibold smaller-text">
+            {!isAuthenticated
+              ? "Войдите, чтобы видеть результат"
+              : !result
+                ? "Пройдите тест, чтобы узнать свой результат"
+                : result.passed
+                  ? `Ваш результат - ${result.score}%! Так держать!`
+                  : `Ваш результат - ${result.score}%! Вы можете лучше`}
+          </div>
+          <div
+            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${badge.border} ${badge.bg} ${badge.textColor}`}
+          >
+            {badge.text}
+          </div>
+        </div>
+      </div>
+
+      {/* Lesson Content */}
+      <article
+        className="text-wrap mt-[50px] prose prose-lg max-w-none"
+        dangerouslySetInnerHTML={{ __html: lesson?.content }}
+      />
 
       {/* Test Button */}
-      <div className="mb-8">
-        <button
-          onClick={goToTest}
-          className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg"
+      {TEST_ID && (
+        <div className="text-wrap mt-[30px] flex justify-center">
+          <button
+            onClick={handleTakeTest}
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[20px] items-center justify-center font-semibold rounded-xl md:w-[350px] w-[270px] h-[60px] md:h-[80px]"
+          >
+            {result?.passed ? "Пройти тест ещё раз" : "Пройти тест!"}
+          </button>
+        </div>
+      )}
+
+      {/* Feedback Buttons */}
+      <div className="text-wrap flex flex-col sm:flex-row items-center justify-between w-full mt-[30px]">
+        <div className="flex flex-col items-center">
+          <div className="font-semibold ord-text mb-[10px]">Как вам урок?</div>
+          <div className="flex flex-row gap-3">
+            <button
+              onClick={() => submitFeedback("clear")}
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] transition ${
+                userFeedback === "clear"
+                  ? "bg-green-100 border-green-300 text-green-700"
+                  : "border-gray-400 hover:bg-gray-50"
+              }`}
+            >
+              <p>Понятно</p>
+              <ThumbsUp className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
+              <p className="ml-[5px]">{lesson?.clear_count}</p>
+            </button>
+            <button
+              onClick={() => submitFeedback("unclear")}
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] transition ${
+                userFeedback === "unclear"
+                  ? "bg-red-100 border-red-300 text-red-700"
+                  : "border-gray-400 hover:bg-gray-50"
+              }`}
+            >
+              <p>Не понятно</p>
+              <ThumbsDown className="text-gray-700 ml-[5px] w-[15px] h-[15px]" />
+              <p className="ml-[5px]">{lesson?.unclear_count}</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Next Lesson */}
+        <Link
+          href={`/english/${lesson?.level}/${lesson?.category}/vocabulary`}
+          className="bg-purple-600 rounded-xl w-[200px] sm:w-[250px] flex flex-row items-center hover:translate-y-[-5px] hover:shadow-md transition-all justify-center text-white p-[10px] px-[20px] mt-[10px] sm:mt-0"
         >
-          📝 Take the Test
-        </button>
+          <p>Следующий урок</p>
+          <ArrowRight className="text-white w-[20px] ml-[10px] h-[20px]" />
+        </Link>
       </div>
 
-      {/* Comments */}
-
       {/* Comments Section */}
+      <div className="text-wrap-no flex flex-col w-full mt-[40px]">
+        <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
+          Комментарии ({countAllComments(comments)})
+        </p>
 
-      {/* Comments Section - ALWAYS VISIBLE */}
-      <div className="border-t pt-8">
-        <h2 className="text-2xl font-bold mb-6">
-          Комментарии ({lesson.comments?.length || 0})
-        </h2>
+        {/* Comment Form */}
+        <div className="flex flex-row items-center mb-6">
+          <img
+            src="/aiclose.png"
+            className="w-[40px] h-[40px] rounded-full"
+            alt="Avatar"
+          />
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Оставить комментарий"
+            className="ml-[10px] flex-1 border-b border-gray-300 pb-2 outline-none focus:border-purple-500 transition"
+            onKeyDown={(e) => e.key === "Enter" && handleSendComment()}
+          />
+          <button
+            onClick={handleSendComment}
+            disabled={!newComment.trim() || sendingComment}
+            className="ml-2 p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition"
+          >
+            {sendingComment ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </button>
+        </div>
 
-        {/* Auth Warning - Only shows for guests */}
-        {!user && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
-            <span className="text-2xl">🔒</span>
-            <div className="flex-1">
-              <p className="text-yellow-800 font-medium mb-1">
-                Только для зарегистрированных пользователей
-              </p>
-              <p className="text-yellow-700 text-sm mb-3">
-                Пожалуйста, войдите в систему, чтобы оставлять комментарии.
-              </p>
-              <button className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors">
-                Войти сейчас
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Comment Form - Active for users, Disabled for guests */}
-        {user ? (
-          <form onSubmit={handleCommentSubmit} className="mb-8">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Напишите комментарий..."
-              className="w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={3}
-              disabled={submittingComment}
-            />
-            <div className="mt-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={submittingComment || !newComment.trim()}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submittingComment ? "Отправка..." : "Отправить комментарий"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="mb-8">
-            <textarea
-              placeholder="Войдите, чтобы написать комментарий..."
-              className="w-full p-4 border rounded-lg resize-none bg-gray-100 cursor-not-allowed"
-              rows={3}
-              disabled
-            />
-            <div className="mt-2 flex justify-end">
-              <button
-                disabled
-                className="px-6 py-2 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed"
-              >
-                Требуется вход
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Comments List - RENDERS FOR EVERYONE */}
+        {/* Comments List */}
         <div className="space-y-4">
-          {lesson.comments && lesson.comments.length > 0 ? (
-            lesson.comments.map((comment) => {
-              const isCurrentUser = user && comment.user_id === user.id;
-
-              return (
-                <div key={comment.id} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div className="flex-shrink-0">
-                      <img
-                        src={comment.author_avatar || "/aiclose.png"}
-                        alt={comment.author_name || "User"}
-                        className="w-10 h-10 rounded-full object-cover border border-gray-300"
-                      />
-                    </div>
-
-                    {/* Comment Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {comment.author_name || "Пользователь"}
-                          </span>
-                          {isCurrentUser && (
-                            <span className="text-xs text-blue-600 font-medium">
-                              (вы)
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(comment.created_at).toLocaleDateString(
-                            "ru-RU",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            },
-                          )}
-                        </span>
-                      </div>
-                      <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                        {comment.content}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+          {loadingComments ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
+            </div>
+          ) : comments.length > 0 ? (
+            comments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} />
+            ))
           ) : (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 text-center py-4">
               Пока нет комментариев. Будьте первым!
             </p>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
