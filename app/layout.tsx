@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="overflow-x-hidden bg-gray-100">
-        <div className="bg-gray-100 text-black   min-w-full  min-h-full items-center  flex flex-col  ">
+        <div className="bg-gray-100 text-black   min-w-full  h-full min-h-[1300px] items-center  flex flex-col  ">
           <Mainnav></Mainnav>
           <ProfileNavigation></ProfileNavigation>
           <div

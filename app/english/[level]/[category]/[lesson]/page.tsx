@@ -112,8 +112,8 @@ export default async function LessonPage({
 
   // Fetch lesson by exact slug match
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/lessons?select=*&slug=like.${encodeURIComponent("english/a2/people/grammar")}&is_published=eq.true`,
-
+    // ✅ Correct (uses dynamic params)
+    `${supabaseUrl}/rest/v1/lessons?select=*&slug=eq.${encodeURIComponent(fullSlug)}&is_published=eq.true`,
     {
       headers: {
         apikey: supabaseKey,

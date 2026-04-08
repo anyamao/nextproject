@@ -7,29 +7,30 @@ import { supabase } from "@/lib/supabase";
 import useContactStore from "@/store/states";
 import { Loader2, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
-type TestQuestion = {
-  id: string;
-  question: string;
-  options: string[];
-  correct_answer: string;
-  order_index: number;
-};
-type TestQuestionDB = {
+// ─────────────────────────────────────────────────────────────
+// TYPES (Support both question types)
+// ─────────────────────────────────────────────────────────────
+type QuestionType = "multiple_choice" | "input";
+
+type EGEQuestion = {
   id: string;
   question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
+  question_type: QuestionType;
+  option_a?: string | null;
+  option_b?: string | null;
+  option_c?: string | null;
+  option_d?: string | null;
   correct_answer: string;
+  answer_type?: "number" | "decimal" | "text";
+  explanation?: string | null;
   order_index: number;
 };
 
-type TestData = {
+type EGETest = {
   id: string;
   passing_score: number;
-  time_limit_seconds?: number;
-  questions: TestQuestion[];
+  time_limit_minutes?: number;
+  questions: EGEQuestion[];
 };
 
 function TestContent() {
@@ -40,7 +41,7 @@ function TestContent() {
   const testId = searchParams.get("id");
   const returnUrl = searchParams.get("returnUrl") || "/";
 
-  const [test, setTest] = useState<TestData | null>(null);
+  const [test, setTest] = useState<EGETest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +51,9 @@ function TestContent() {
   const [score, setScore] = useState<number | null>(null);
   const [passed, setPassed] = useState<boolean | null>(null);
 
-  // Fetch test data
+  // ─────────────────────────────────────────────────────────────
+  // FETCH TEST & QUESTIONS
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!testId) {
       setError("No test ID provided");
@@ -58,14 +61,12 @@ function TestContent() {
       return;
     }
 
-    console.log("🔍 Fetching test:", testId);
-
     const fetchTest = async () => {
       try {
         // 1. Fetch test info
         const { data: testData, error: testError } = await supabase
-          .from("tests")
-          .select("id,  passing_score, time_limit_seconds")
+          .from("ege_tests")
+          .select("id, passing_score, time_limit_minutes")
           .eq("id", testId)
           .single();
 
@@ -76,13 +77,23 @@ function TestContent() {
           return;
         }
 
-        console.log("✅ Test data:", testData);
-
-        // 2. Fetch questions
+        // 2. Fetch questions (with both types)
         const { data: questionsData, error: questionsError } = await supabase
-          .from("test_questions")
+          .from("questions")
           .select(
-            "id, question_text, option_a, option_b, option_c, option_d, correct_answer, order_index",
+            `
+            id, 
+            question_text, 
+            question_type,
+            option_a, 
+            option_b, 
+            option_c, 
+            option_d, 
+            correct_answer, 
+            answer_type, 
+            explanation, 
+            order_index
+          `,
           )
           .eq("test_id", testId)
           .order("order_index", { ascending: true });
@@ -94,25 +105,11 @@ function TestContent() {
           return;
         }
 
-        console.log("✅ Questions:", questionsData);
-
-        // 3. Transform questions to match expected format
-        const transformedQuestions: TestQuestion[] = (questionsData || []).map(
-          (q: TestQuestionDB) => ({
-            id: q.id,
-            question: q.question_text,
-            options: [q.option_a, q.option_b, q.option_c, q.option_d].filter(
-              Boolean,
-            ),
-            correct_answer: q.correct_answer,
-            order_index: q.order_index,
-          }),
-        );
         setTest({
           id: testData.id,
-          passing_score: testData.passing_score || 70,
-          time_limit_seconds: testData.time_limit_seconds,
-          questions: transformedQuestions,
+          passing_score: testData.passing_score || 75,
+          time_limit_minutes: testData.time_limit_minutes,
+          questions: questionsData || [],
         });
       } catch (err) {
         console.error("❌ Fetch error:", err);
@@ -125,17 +122,61 @@ function TestContent() {
     fetchTest();
   }, [testId]);
 
+  // ─────────────────────────────────────────────────────────────
+  // ANSWER HANDLING
+  // ─────────────────────────────────────────────────────────────
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const handleOptionSelect = (questionId: string, option: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: option }));
+  };
+
+  const normalizeAnswer = (answer: string, type?: string): string => {
+    if (type === "decimal" || type === "number") {
+      const num = parseFloat(answer);
+      if (isNaN(num)) return "";
+      return type === "decimal" ? num.toFixed(2) : String(Math.round(num));
+    }
+    return answer.trim().toLowerCase();
+  };
+
   const calculateScore = () => {
     if (!test) return 0;
     let correct = 0;
+
     test.questions.forEach((q) => {
-      if (answers[q.id] === q.correct_answer) correct++;
+      const userAnswer = normalizeAnswer(
+        answers[q.id] || "",
+        q.answer_type || "text",
+      );
+      const correctAnswer = normalizeAnswer(
+        q.correct_answer || "",
+        q.answer_type || "text",
+      );
+
+      if (userAnswer === correctAnswer && userAnswer !== "") {
+        correct++;
+      }
     });
+
     return Math.round((correct / test.questions.length) * 100);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // SUBMIT TEST
+  // ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!test) return;
+
+    const unanswered = test.questions.filter((q) => !answers[q.id]?.trim());
+    if (unanswered.length > 0) {
+      alert(
+        `Пожалуйста, ответьте на все вопросы. Осталось: ${unanswered.length}`,
+      );
+      return;
+    }
 
     setLoading(true);
     const calculatedScore = calculateScore();
@@ -145,25 +186,30 @@ function TestContent() {
     setPassed(testPassed);
     setSubmitted(true);
 
-    // Save result
     if (isAuthenticated && user) {
       try {
+        const details = test.questions.map((q) => ({
+          question_id: q.id,
+          question_type: q.question_type,
+          user_answer: answers[q.id] || "",
+          correct_answer: q.correct_answer || "",
+          is_correct:
+            normalizeAnswer(answers[q.id] || "", q.answer_type || "text") ===
+            normalizeAnswer(q.correct_answer || "", q.answer_type || "text"),
+        }));
+
         const { error } = await supabase.from("test_results").upsert(
           {
             user_id: user.id,
             test_id: test.id,
             score: calculatedScore,
-            total_questions: test.questions.length,
-            answers: answers, // Save which answers user selected
             completed_at: new Date().toISOString(),
+            answers: details,
           },
           { onConflict: "user_id,test_id" },
         );
 
-        if (error) {
-          console.error("❌ Save error:", error);
-          throw error;
-        }
+        if (error) throw error;
         console.log("✅ Test result saved");
       } catch (err) {
         console.error("❌ Failed to save result:", err);
@@ -177,7 +223,9 @@ function TestContent() {
     router.push(returnUrl);
   };
 
-  // Loading state
+  // ─────────────────────────────────────────────────────────────
+  // RENDER STATES
+  // ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -187,7 +235,6 @@ function TestContent() {
     );
   }
 
-  // Error state
   if (error || !test) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -198,7 +245,7 @@ function TestContent() {
           <p className="text-gray-600 mb-4">Test ID: {testId}</p>
           <button
             onClick={handleReturn}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg"
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
           >
             Вернуться к уроку
           </button>
@@ -207,7 +254,6 @@ function TestContent() {
     );
   }
 
-  // Results screen
   if (submitted) {
     return (
       <main className="flex-1 flex flex-col items-center px-[20px] py-[30px] w-full max-w-3xl mx-auto">
@@ -227,7 +273,7 @@ function TestContent() {
           </p>
           <button
             onClick={handleReturn}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
           >
             Вернуться к уроку
           </button>
@@ -236,17 +282,36 @@ function TestContent() {
     );
   }
 
-  // Quiz screen
   const question = test.questions[currentQuestion];
   const progress = Math.round(
     ((currentQuestion + 1) / test.questions.length) * 100,
   );
 
+  // Get options for multiple choice
+  const options = [
+    question.option_a,
+    question.option_b,
+    question.option_c,
+    question.option_d,
+  ].filter(Boolean);
+
   return (
     <main className="flex-1 flex flex-col items-center px-[20px] py-[30px] w-full max-w-3xl mx-auto">
-      {/* Header */}
+      {/* Header with Progress Bar */}
       <div className="w-full mb-6">
-        <div className="flex items-center justify-between mb-4"></div>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={handleReturn}
+            className="text-gray-600 hover:text-purple-600 transition text-sm"
+          >
+            ← Вернуться
+          </button>
+          {test.time_limit_minutes && (
+            <span className="text-sm text-gray-500">
+              ⏱ {test.time_limit_minutes} мин
+            </span>
+          )}
+        </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-purple-600 h-2 rounded-full transition-all"
@@ -258,36 +323,66 @@ function TestContent() {
         </p>
       </div>
 
-      {/* Question */}
+      {/* Question Card */}
       <div className="bg-white rounded-xl shadow-lg p-6 w-full mb-6">
-        <p className="text-lg font-medium mb-4">{question.question}</p>
-        <div className="space-y-3">
-          {question.options.map((option, idx) => {
-            const optionLetter = String.fromCharCode(97 + idx); // a, b, c, d
-            const isSelected = answers[question.id] === optionLetter;
-            return (
-              <button
-                key={idx}
-                onClick={() =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [question.id]: optionLetter,
-                  }))
-                }
-                className={`w-full text-left p-4 rounded-lg border-2 transition ${
-                  isSelected
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
-                }`}
-              >
-                <span className="font-medium mr-2">
-                  {optionLetter.toUpperCase()}.
-                </span>
-                {option}
-              </button>
-            );
-          })}
-        </div>
+        <p className="text-lg font-medium mb-4">
+          {currentQuestion + 1}. {question.question_text}
+        </p>
+
+        {/* MULTIPLE CHOICE UI */}
+        {question.question_type === "multiple_choice" && options.length > 0 && (
+          <div className="space-y-3">
+            {options.map((option, idx) => {
+              // Skip if option is null/undefined
+              if (!option) return null;
+
+              const optionLetter = String.fromCharCode(97 + idx);
+              const isSelected = answers[question.id] === option;
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleOptionSelect(question.id, option)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition ${
+                    isSelected
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 hover:border-purple-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="font-medium mr-2">
+                    {optionLetter.toUpperCase()}.
+                  </span>
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* INPUT UI */}
+        {question.question_type === "input" && (
+          <div className="space-y-3">
+            <input
+              type="text"
+              inputMode={question.answer_type === "text" ? "text" : "decimal"}
+              value={answers[question.id] || ""}
+              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              placeholder={
+                question.answer_type === "decimal"
+                  ? "Например: 0.45"
+                  : question.answer_type === "number"
+                    ? "Например: 5"
+                    : "Введите ответ"
+              }
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition text-lg"
+            />
+            {question.answer_type === "decimal" && (
+              <p className="text-xs text-gray-500">
+                💡 Округляйте до сотых, если требуется
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -295,7 +390,7 @@ function TestContent() {
         <button
           onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
           disabled={currentQuestion === 0}
-          className="px-4 py-2 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:text-purple-600 transition"
         >
           ← Назад
         </button>
@@ -303,18 +398,18 @@ function TestContent() {
         {currentQuestion < test.questions.length - 1 ? (
           <button
             onClick={() => setCurrentQuestion((prev) => prev + 1)}
-            disabled={!answers[question.id]}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!answers[question.id]?.trim()}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
           >
-            Далее →
+            Далее <ArrowRight className="w-4 h-4" />
           </button>
         ) : (
           <button
             onClick={handleSubmit}
             disabled={
-              Object.keys(answers).length < test.questions.length || loading
+              test.questions.some((q) => !answers[q.id]?.trim()) || loading
             }
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Завершить тест
           </button>
