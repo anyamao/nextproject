@@ -28,9 +28,8 @@ function Mainnav() {
           </div>
           <div className="flex flex-row justify-between   items-center  pr-[10px] ">
             <Contact></Contact>
-            <div className="flex hidden sm:block items-center justify-center p-[7px] bg-orange-100 rounded-full mr-[15px]">
-              <Flame className="text-orange-400 w-[20px]"></Flame>
-              <p className="text-orange-900 pr-[5px] smaller-text">12</p>
+            <div className="flex hidden sm:block items-center justify-center p-[7px] bg-orange-100 rounded-full mr-[13px]">
+              <Flame className="text-orange-400 w-[20px] h-[20px]"></Flame>
             </div>
             <Register></Register>
           </div>
@@ -45,21 +44,14 @@ function Mainnav() {
             ⭐Кружок английского &apos;Шэкспир&apos;
           </Link>
           <Link
-            href="/english/A2"
-            onClick={closeEverything}
-            className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
-          >
-            🔥Бесплатные материалы
-          </Link>
-          <Link
-            href="/english"
+            href="/english/a2/people/grammar"
             onClick={closeEverything}
             className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
           >
             Английский
           </Link>
           <Link
-            href=""
+            href="/ege/math/"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap  duration-300"
           >
