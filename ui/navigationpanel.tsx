@@ -20,14 +20,14 @@ function NavigationPanel() {
 
               <Link
                 onClick={toggleNavigation}
-                href="/english"
+                href="/languages/english"
                 className="cursor-pointer ord-text mt-[10px] font-semibold"
               >
                 Английский
               </Link>
               <Link
                 onClick={toggleNavigation}
-                href="/"
+                href="/ege/maths"
                 className="cursor-pointer ord-text mt-[10px] font-semibold"
               >
                 Математика

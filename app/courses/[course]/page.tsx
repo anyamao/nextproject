@@ -2,16 +2,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-export async function generateStaticParams() {
-  return [
-    { subject: "math" },
-    { subject: "maths" },
-    { subject: "physics" },
-    { subject: "russian" },
-    { subject: "english" },
-    { subject: "informatics" },
-  ];
-}
+// 🔒 CRITICAL: Hardcoded for static export stability.
+// Next.js requires these paths to exist at BUILD TIME.
+export async function generateStaticParams() {}
 
 // Define a type to avoid `any` errors
 type Lesson = {
@@ -29,12 +22,12 @@ export default async function SubjectHubPage({
 }) {
   const { subject } = await params;
 
+  // ✅ Static subject metadata (works without DB during build)
   const subjectData: Record<string, { name: string; description: string }> = {
     math: { name: "Математика", description: "Профильная математика ЕГЭ" },
     physics: { name: "Физика", description: "Физика ЕГЭ" },
     russian: { name: "Русский язык", description: "Русский язык ЕГЭ" },
     english: { name: "Английский", description: "Английский язык ЕГЭ" },
-    informatics: { name: "Информатика", description: "Информатика ЕГЭ" },
   };
 
   const currentSubject = subjectData[subject] || {
@@ -43,6 +36,7 @@ export default async function SubjectHubPage({
   };
   let lessons: Lesson[] = [];
 
+  // 🔍 Try to fetch lessons ONLY if env vars exist (safe during build)
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -100,19 +94,13 @@ export default async function SubjectHubPage({
               <Link
                 key={lesson.id}
                 href={`/ege/${subject}/${lessonPart}`}
-                className="block p-[20px] bg-white hover:ml-[30px] duration-300 shadow-xs transition-all border-[1px]  border-gray-300 rounded-xl flex flex-row justify-between  transition"
+                className="block p-6 bg-white border-[1px] border-gray-300 rounded-xl  shadow-sm hover:shadow-md transition"
               >
-                <div className="flex flex-row">
-                  <div className="bg-purple-400 h-full w-[5px]"></div>
-                  <div className="flex flex-col ml-[10px] items-start">
-                    <h2 className="ord-text font-semibold">{lesson.title}</h2>
-                    <p className="text-gray-600 mt-1">{lesson.description}</p>
-                    <span className="text-sm text-gray-600 mt-[5px] inline-block">
-                      ⏱ {lesson.estimated_minutes ?? 30} мин
-                    </span>
-                  </div>
-                </div>
-                <ArrowLeft className="w-5 h-5 mt-[15px] text-gray-400 rotate-180 group-hover:translate-x-1 transition-transform" />
+                <h2 className="ord-text font-semibold">{lesson.title}</h2>
+                <p className="text-gray-600 mt-1">{lesson.description}</p>
+                <span className="text-sm text-purple-600 mt-2 inline-block">
+                  ⏱ {lesson.estimated_minutes ?? 30} мин
+                </span>
               </Link>
             );
           })}

@@ -34,63 +34,42 @@ function Mainnav() {
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white    mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
+        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white justify-center   mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
           {" "}
+          <Link
+            href="/chats"
+            onClick={closeEverything}
+            className="hover:text-blue-500 whitespace-nowrap hidden duration-300"
+          >
+            Общаться
+          </Link>
           <Link
             href="/english"
             onClick={closeEverything}
-            className="hover:text-blue-500 whitespace-nowrap duration-300"
+            className="hover:text-blue-500 whitespace-nowrap  ml-[20px] duration-300"
           >
             ⭐Кружок английского &apos;Шэкспир&apos;
           </Link>
           <Link
-            href="/english/a2/people/grammar"
+            href="/languages"
             onClick={closeEverything}
             className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
           >
-            Английский
+            Учить языки
           </Link>
           <Link
-            href="/ege/math/"
+            href="/ege"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap  duration-300"
           >
-            Математика
+            Подготовиться к ЕГЭ
           </Link>
           <Link
-            href=""
+            href="/courses"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500    whitespace-nowrap  duration-300"
           >
-            Программирование
-          </Link>
-          <Link
-            href=""
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500    whitespace-nowrap   duration-300"
-          >
-            Инженерия
-          </Link>
-          <Link
-            href=""
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500   whitespace-nowrap   duration-300"
-          >
-            Физика
-          </Link>
-          <Link
-            href=""
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
-          >
-            Китайский
-          </Link>
-          <Link
-            href=""
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
-          >
-            Немецкий
+            Разные курсы
           </Link>
           {" "}
           <Link
@@ -98,14 +77,7 @@ function Mainnav() {
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
           >
-            Анализ данных
-          </Link>
-          <Link
-            href=""
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500 whitespace-nowrap   duration-300"
-          >
-            Русский
+            Статьи
           </Link>
         </div>
       </div>

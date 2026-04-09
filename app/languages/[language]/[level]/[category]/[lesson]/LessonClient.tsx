@@ -1,4 +1,4 @@
-// app/ege/[subject]/[lesson]/LessonClient.tsx
+// app/languages/[language]/[level]/[category]/[lesson]/LessonClient.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -18,7 +18,7 @@ import useContactStore from "@/store/states";
 import { supabase } from "@/lib/supabase";
 
 // ─────────────────────────────────────────────────────────────
-// TYPES (Updated for EGE structure)
+// TYPES
 // ─────────────────────────────────────────────────────────────
 type TestResult = {
   score: number;
@@ -31,11 +31,13 @@ type Lesson = {
   title: string;
   content: string;
   description: string;
+  level: string;
+  category: string;
+  test_id: string | null;
   estimated_minutes: number;
   passing_score: number;
   clear_count: number;
   unclear_count: number;
-  test_id: string | null;
 };
 
 type Comment = {
@@ -52,6 +54,15 @@ type Comment = {
   user_liked?: "like" | "dislike" | null;
 };
 
+interface LessonClientProps {
+  initialLesson: Lesson;
+  initialSlug: string;
+  params: { language: string; level: string; category: string; lesson: string };
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMMENT ITEM COMPONENT
+// ─────────────────────────────────────────────────────────────
 type User = {
   id: string;
   email?: string;
@@ -60,16 +71,6 @@ type User = {
   };
 };
 
-// ✅ Updated to match EGE route: { subject, lesson }
-interface LessonClientProps {
-  initialLesson: Lesson;
-  initialSlug: string;
-  params: { subject: string; lesson: string };
-}
-
-// ─────────────────────────────────────────────────────────────
-// COMMENT ITEM COMPONENT
-// ─────────────────────────────────────────────────────────────
 type CommentItemProps = {
   comment: Comment;
   depth?: number;
@@ -115,21 +116,19 @@ const CommentItem = ({
     <div
       className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
     >
-      <div className="flex gap-3 p-4 bg-white overflow-x-auto rounded-lg shadow-sm">
-        {/* ✅ AVATAR CLICKABLE -> PROFILE PAGE */}
+      <div className="flex items-start gap-3 mb-2">
         <Link
           href={`/profile-page?id=${comment.user_id}`}
-          className="flex-shrink-0 group"
-          title="View profile"
+          className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold"
         >
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
-            {comment.user_email?.[0]?.toUpperCase() || "U"}
-          </div>
+          {comment.user_email?.[0]?.toUpperCase() || "U"}
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm">{comment.user_email}</span>
-            <span className="text-xs text-gray-400">
+            <span className="font-semibold text-sm text-gray-900">
+              {comment.user_email}
+            </span>
+            <span className="text-xs text-gray-500">
               {new Date(comment.created_at).toLocaleDateString("ru-RU")}
             </span>
             {comment.updated_at &&
@@ -201,7 +200,7 @@ const CommentItem = ({
               <button
                 onClick={() => {
                   setReplyingTo(comment.id);
-                  setReplyContent("@${comment.user_email}");
+                  setReplyContent("");
                 }}
                 className="text-sm text-gray-500 hover:text-purple-600"
               >
@@ -306,7 +305,10 @@ export default function LessonClient({
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
-
+  const [clearCount, setClearCount] = useState(initialLesson.clear_count || 0);
+  const [unclearCount, setUnclearCount] = useState(
+    initialLesson.unclear_count || 0,
+  );
   // UI state
   const [copySuccess, setCopySuccess] = useState(false);
   const [newComment, setNewComment] = useState("");
@@ -324,7 +326,6 @@ export default function LessonClient({
   );
 
   const TEST_ID = lesson?.test_id || undefined;
-  const lessonName = initialSlug?.split("/").pop() || "";
 
   // ─────────────────────────────────────────────────────────────
   // HELPER: Count all comments including replies
@@ -338,7 +339,7 @@ export default function LessonClient({
   };
 
   // ─────────────────────────────────────────────────────────────
-  // SYNC FEEDBACK COUNTS
+  // Sync feedback counts
   // ─────────────────────────────────────────────────────────────
   const syncFeedbackCounts = async (lessonId: string) => {
     try {
@@ -358,16 +359,13 @@ export default function LessonClient({
       if (clearRes.error) throw clearRes.error;
       if (unclearRes.error) throw unclearRes.error;
 
-      setLesson((prev) => ({
-        ...prev,
-        clear_count: clearRes.count ?? 0,
-        unclear_count: unclearRes.count ?? 0,
-      }));
+      // ✅ UPDATE SEPARATE STATE, NOT LESSON STATE
+      setClearCount(clearRes.count ?? 0);
+      setUnclearCount(unclearRes.count ?? 0);
     } catch (err) {
       console.error("Failed to sync feedback counts:", err);
     }
   };
-
   useEffect(() => {
     if (lesson?.id) {
       syncFeedbackCounts(lesson.id);
@@ -386,15 +384,15 @@ export default function LessonClient({
           .from("comments")
           .select(
             `
-            id,
-            user_id,
-            content,
-            created_at,
-            updated_at,
-            parent_id,
-            likes_count,
-            dislikes_count
-          `,
+              id,
+              user_id,
+              content,
+              created_at,
+              updated_at,
+              parent_id,
+              likes_count,
+              dislikes_count
+            `,
           )
           .eq("lesson_id", lesson.id)
           .eq("is_deleted", false)
@@ -548,6 +546,7 @@ export default function LessonClient({
     }
   };
 
+  // ✅ FIXED: Submit Feedback Function
   const submitFeedback = async (type: "clear" | "unclear") => {
     if (!user) {
       alert("Пожалуйста, войдите чтобы оставить отзыв");
@@ -570,7 +569,6 @@ export default function LessonClient({
       console.error("❌ Feedback error:", err);
     }
   };
-
   const addComment = async (content: string) => {
     if (!user) return;
 
@@ -598,7 +596,7 @@ export default function LessonClient({
         setNewComment("");
       }
     } catch (err) {
-      console.error("❌ Comment error:", err);
+      console.error("Error adding comment:", err);
     }
   };
 
@@ -631,7 +629,7 @@ export default function LessonClient({
       setEditingCommentId(null);
       setEditContent("");
     } catch (err) {
-      console.error("❌ Edit error:", err);
+      console.error("Error editing comment:", err);
     }
   };
 
@@ -662,7 +660,7 @@ export default function LessonClient({
 
       setComments((prev) => removeCommentAndReplies(prev, commentId));
     } catch (err) {
-      console.error("❌ Delete error:", err);
+      console.error("Error deleting comment:", err);
     }
   };
 
@@ -718,7 +716,7 @@ export default function LessonClient({
       setReplyingTo(null);
       setReplyContent("");
     } catch (err) {
-      console.error("❌ Reply error:", err);
+      console.error("Error adding reply:", err);
     }
   };
 
@@ -733,7 +731,6 @@ export default function LessonClient({
       const existingLike = currentComment?.user_liked;
 
       if (existingLike === type) {
-        // Remove like/dislike
         const { error } = await supabase
           .from("comment_likes")
           .delete()
@@ -762,7 +759,6 @@ export default function LessonClient({
           }),
         );
       } else {
-        // Add or switch like/dislike
         const { error } = await supabase.from("comment_likes").upsert(
           {
             comment_id: commentId,
@@ -805,7 +801,7 @@ export default function LessonClient({
         );
       }
     } catch (err) {
-      console.error("❌ Like error:", err);
+      console.error("Error liking comment:", err);
     }
   };
 
@@ -846,21 +842,17 @@ export default function LessonClient({
   // ─────────────────────────────────────────────────────────────
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
-      {/* Header - Back Link */}
-      <div className="flex flex-row w-full items-center justify-between">
-        {" "}
-        <Link
-          href={`/ege/${params.subject}`}
-          className="text-gray-600 hover:text-purple-600 transition mb-4 inline-flex items-center gap-2"
-        >
-          <ArrowLeft className="w-[20px] h-[20px]" />
-        </Link>
+      {/* Back Link */}
+      <Link
+        href={`/languages/${params.language}/${params.level}/${params.category}`}
+        className="text-gray-600 hover:text-purple-600 transition flex items-center justify-between w-full mb-[25px] "
+      >
+        <ArrowLeft className="w-[20px] h-[20px]" />
         <div className="bg-purple-100 px-4 py-2 rounded-full text-sm font-medium text-purple-700 capitalize">
           {lesson.title}
         </div>
         <div className="w-6" />
-      </div>
-      <p className="text-gray-600 mb-6 w-full">{lesson.description}</p>
+      </Link>
 
       {/* Stats Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full mb-8">
@@ -896,7 +888,7 @@ export default function LessonClient({
                   : `Ваш результат - ${result.score}%! Вы можете лучше`}
           </div>
           <div
-            className={`rounded-full text-sm ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${
+            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${
               result
                 ? result.score >= 75
                   ? "text-green-900 bg-green-200 border-green-600"
@@ -911,16 +903,16 @@ export default function LessonClient({
 
       {/* Lesson Content */}
       <article
-        className="flex flex-col items-center prose prose-purple max-w-none mb-10"
+        className="flex flex-col items-center w-full "
         dangerouslySetInnerHTML={{ __html: lesson.content }}
       />
 
-      {/* Test Button & Feedback */}
+      {/* Test Button and Feedback */}
       <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row gap-4">
         {TEST_ID && (
           <button
             onClick={handleTakeTest}
-            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-5px] hover:shadow-md transition-all flex text-[16px] items-center justify-center font-semibold rounded-xl h-[50px] w-[220px]"
+            className="bg-purple-900 sm:hidden block cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[20px] items-center justify-center font-semibold rounded-xl w-[200px] max-h-[40px]"
           >
             <p>{result ? "Перепройти тест" : "Пройти тест"}</p>
           </button>
@@ -928,50 +920,69 @@ export default function LessonClient({
 
         {/* Feedback Buttons */}
         <div className="flex flex-col items-center">
-          <div className="font-semibold text-sm mb-[10px]">Как вам урок?</div>
+          <div className="font-semibold ord-text mb-[10px]">Как вам урок?</div>
           <div className="flex flex-row gap-3">
             <button
               onClick={() => submitFeedback("clear")}
-              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${
-                userFeedback === "clear" ? "bg-black text-white" : ""
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:border-black hover:text-white duration-300 ${
+                userFeedback === "clear"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : ""
               }`}
             >
               <p>Понятно</p>
               <ThumbsUp className="ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{lesson.clear_count}</p>
+              <p className="ml-[5px]">{clearCount}</p>
             </button>
             <button
               onClick={() => submitFeedback("unclear")}
-              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${
-                userFeedback === "unclear" ? "bg-black text-white" : ""
+              className={`rounded-full smaller-text p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:border-black hover:text-white duration-300 ${
+                userFeedback === "unclear"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : ""
               }`}
             >
               <p>Не понятно</p>
               <ThumbsDown className="ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{lesson.unclear_count}</p>
+              <p className="ml-[5px]">{unclearCount}</p>
             </button>
           </div>
         </div>
 
-        {/* Next Lesson (Generic link to subject hub) */}
+        {TEST_ID && (
+          <button
+            onClick={handleTakeTest}
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[16px] items-center justify-center font-semibold rounded-xl h-[60px] w-[250px]"
+          >
+            <p>{result ? "Перепройти тест" : "Пройти тест"}</p>
+          </button>
+        )}
+
+        {/* Next Lesson */}
         <Link
-          href={`/ege/${params.subject}`}
-          className="bg-gray-200 rounded-xl border-[1px] border-gray-300 w-[180px] flex flex-row items-center hover:translate-y-[-3px] hover:shadow-md transition-all justify-center text-sm text-gray-700 p-[10px]"
+          href={`/languages/${params.language}/${params.level}/${params.category}/vocabulary`}
+          className="bg-gray-300 rounded-xl border-[1px] border-gray-400 w-[200px] flex flex-row items-center hover:translate-y-[-5px] hover:shadow-md transition-all justify-center ord-text text-gray-700 p-[10px] px-[20px] mt-[10px] sm:mt-0"
         >
           <p>Следующий урок</p>
-          <ArrowRight className="text-gray-700 w-[16px] ml-[8px] h-[16px]" />
+          <ArrowRight className="text-gray-700 w-[20px] ml-[10px] h-[20px]" />
         </Link>
       </div>
 
       {/* Comments Section */}
-      <div className="flex flex-col w-full mt-[40px]">
+      <div className="text-wrap-no flex flex-col w-full mt-[40px]">
         <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
           Комментарии ({countAllComments(comments)})
         </p>
-        <div className="flex flex-row items-center mb-6 mt-[10px]">
+        <p className="pb-[10px] mb-[15px] smaller-text">
+          Спасибо, что прошли этот урок! Поделитесь своим мнением об уроке, что
+          было непонятно, что понравилось. Что бы вы дополнили?
+        </p>
+
+        {/* Comment Form */}
+        <div className="flex flex-row items-center mb-6 mt-[20px]">
           <img
             src="/aiclose.png"
-            className="w-[40px] h-[40px] rounded-full bg-gray-200"
+            className="w-[40px] h-[40px] rounded-full"
             alt="Avatar"
           />
           <input
@@ -994,6 +1005,8 @@ export default function LessonClient({
             )}
           </button>
         </div>
+
+        {/* Comments List */}
         <div className="space-y-4">
           {loadingComments ? (
             <div className="flex justify-center py-8">

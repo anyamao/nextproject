@@ -22,7 +22,6 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
 
-  // Fetch profile
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
@@ -69,11 +68,9 @@ export default function AccountPage() {
     fetchProfile();
   }, [user, isAuthenticated]);
 
-  // ✅ Handler passed to EditableField
   const handleSaveField = async (field: keyof Profile, newValue: string) => {
     if (!user) return;
 
-    // Validation
     const validations: Record<
       string,
       { min?: number; max: number; pattern?: RegExp }
@@ -98,7 +95,6 @@ export default function AccountPage() {
       }
     }
 
-    // Save to database
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       [field]: newValue.trim() || null,
@@ -107,7 +103,6 @@ export default function AccountPage() {
 
     if (error) throw error;
 
-    // Update local state
     setProfile((prev) =>
       prev ? { ...prev, [field]: newValue.trim() || null } : null,
     );
@@ -115,7 +110,6 @@ export default function AccountPage() {
     setTimeout(() => setSuccess(false), 3000);
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[1300px] bg-gray-100">
@@ -127,7 +121,6 @@ export default function AccountPage() {
     );
   }
 
-  // Not authenticated
   if (!isAuthenticated || !user) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh] bg-gray-100">
@@ -138,7 +131,6 @@ export default function AccountPage() {
   return (
     <div className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] min-w-full min-h-full bg-gray-100">
       <div className="text-wrap flex w-full ">
-        {/* Avatar Section */}
         <div className="flex flex-col w-full justify-center md:flex-row items-start gap-6 mb-8 pb-8 border-b border-gray-200">
           <div className="flex flex-col items-center">
             <img
@@ -179,7 +171,6 @@ export default function AccountPage() {
         </div>
       </div>
       <div className="text-wrap">
-        {/* Status Section */}
         <EditableField
           label="Статус"
           field="status"
