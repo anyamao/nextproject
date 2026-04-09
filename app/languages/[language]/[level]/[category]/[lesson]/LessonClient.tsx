@@ -909,15 +909,6 @@ export default function LessonClient({
 
       {/* Test Button and Feedback */}
       <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row gap-4">
-        {TEST_ID && (
-          <button
-            onClick={handleTakeTest}
-            className="bg-purple-900 sm:hidden block cursor-pointer text-white hover:translate-y-[-10px] hover:shadow-md transition-all flex text-[20px] items-center justify-center font-semibold rounded-xl w-[200px] max-h-[40px]"
-          >
-            <p>{result ? "Перепройти тест" : "Пройти тест"}</p>
-          </button>
-        )}
-
         {/* Feedback Buttons */}
         <div className="flex flex-col items-center">
           <div className="font-semibold ord-text mb-[10px]">Как вам урок?</div>
@@ -1007,7 +998,7 @@ export default function LessonClient({
         </div>
 
         {/* Comments List */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full overflow-x-auto">
           {loadingComments ? (
             <div className="flex justify-center py-8">
               <Loader2 className="animate-spin w-6 h-6 text-gray-400" />

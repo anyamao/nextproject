@@ -34,7 +34,7 @@ function Mainnav() {
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white justify-center   mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   items-center">
+        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white sm:justify-center   mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   sm:items-center">
           {" "}
           <Link
             href="/chats"

@@ -402,23 +402,24 @@ export default function UserProfilePage() {
             <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
               <button
                 onClick={() => setShowMessageModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shadow-md smaller-text hover:shadow-lg px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg smaller-text transition-all"
               >
-                <MessageCircle className="w-4 h-4" /> Message
+                <MessageCircle className="w-4 h-4" />
+                Написать
               </button>
 
               {friendshipStatus === "none" && (
                 <button
                   onClick={handleAddFriend}
                   disabled={isFriendLoading}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50"
                 >
                   {isFriendLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <UserPlus className="w-4 h-4" />
                   )}
-                  Add Friend
+                  Добавить в друзья
                 </button>
               )}
 
@@ -427,7 +428,7 @@ export default function UserProfilePage() {
                   disabled
                   className="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
                 >
-                  <Loader2 className="w-4 h-4" /> Request Sent
+                  <Loader2 className="w-4 h-4" /> Заявка отправлена
                 </button>
               )}
 
@@ -438,14 +439,14 @@ export default function UserProfilePage() {
                     disabled={isFriendLoading}
                     className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md"
                   >
-                    <Check className="w-4 h-4" /> Accept
+                    <Check className="w-4 h-4" /> Принять
                   </button>
                   <button
                     onClick={handleRejectFriend}
                     disabled={isFriendLoading}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all shadow-md"
                   >
-                    <X className="w-4 h-4" /> Decline
+                    <X className="w-4 h-4" /> Отвергнуть
                   </button>
                 </div>
               )}
@@ -454,14 +455,14 @@ export default function UserProfilePage() {
                 <button
                   onClick={handleRemoveFriend}
                   disabled={isFriendLoading}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all shadow-md"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 smaller-text hover:bg-gray-700 text-white rounded-lg transition-all shadow-md"
                 >
-                  <UserMinus className="w-4 h-4" /> Friends
+                  <UserMinus className="w-4 h-4" /> Друзья
                 </button>
               )}
 
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">
-                <ChevronDown className="w-4 h-4" /> More
+              <button className="flex items-center smaller-text gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-600 text-white rounded-lg transition-all">
+                <ChevronDown className="w-4 h-4" /> Больше
               </button>
             </div>
           )}
@@ -526,7 +527,7 @@ export default function UserProfilePage() {
               ))}
               {friends.length === 0 && (
                 <p className="text-gray-500 text-sm text-center py-4">
-                  Пока нет друзей
+                  Система друзей в разработке
                 </p>
               )}
             </div>
@@ -544,13 +545,12 @@ export default function UserProfilePage() {
         </div>
       </div>
 
-      {/* Message Modal */}
       {showMessageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800">
-                Message {profile.first_name || profile.username}
+                Написать {profile.first_name || profile.username}
               </h3>
               <button
                 onClick={() => setShowMessageModal(false)}

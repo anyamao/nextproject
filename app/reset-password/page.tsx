@@ -1,230 +1,171 @@
+// app/reset-password/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { createClient } from "@/lib/supabase/client"; // your existing client
 
-export default function ResetPassword() {
+export default function ResetPasswordPage() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [status, setStatus] = useState<
+    "verifying" | "ready" | "updating" | "success" | "error"
+  >("verifying");
+  const [message, setMessage] = useState("");
   const router = useRouter();
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
-
-  // Debug version - change this to force cache refresh
-  const DEBUG_VERSION = "v2.2";
+  const supabase = createClient();
 
   useEffect(() => {
-    console.log(`🔍 ResetPassword ${DEBUG_VERSION} loaded`);
-    console.log("URL:", window.location.href);
+    const handleReset = async () => {
+      try {
+        // This automatically reads the #access_token from the URL hash
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-    const checkSession = async () => {
-      const result = await supabase.auth.getSession();
-      const session = result.data?.session;
-      const sessionError = result.error;
+        if (error || !session) {
+          setStatus("error");
+          setMessage("Ссылка устарела или недействительна. Запросите новую.");
+          return;
+        }
 
-      if (sessionError) {
-        setError("Ошибка: " + sessionError.message);
-        return;
+        // ✅ Session verified - user can now set new password
+        setStatus("ready");
+      } catch (err) {
+        console.error("Session verification failed:", err);
+        setStatus("error");
+        setMessage("Ошибка проверки ссылки");
       }
-
-      if (!session) {
-        setError("Ссылка недействительна или истекла.");
-        return;
-      }
-
-      console.log("✅ Valid recovery session");
     };
 
-    checkSession();
-  }, []);
+    handleReset();
+  }, [supabase.auth]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
-    if (formData.password.length < 6) {
-      setError("Пароль должен быть минимум 6 символов");
-      setLoading(false);
+    if (password.length < 6) {
+      setMessage("Пароль должен содержать минимум 6 символов");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Пароли не совпадают");
-      setLoading(false);
+    if (password !== confirmPassword) {
+      setMessage("Пароли не совпадают");
       return;
     }
+
+    setStatus("updating");
 
     try {
-      const result = await supabase.auth.updateUser({
-        password: formData.password,
+      const { error } = await supabase.auth.updateUser({
+        password: password.trim(),
       });
 
-      if (result.error) throw result.error;
+      if (error) throw error;
 
-      // ✅ Clear recovery session to prevent redirect loop
-      await supabase.auth.signOut();
+      setStatus("success");
+      setMessage("Пароль успешно обновлён! Перенаправляем...");
 
-      setSuccess(true);
+      // Clear the hash to prevent re-use
+      window.location.hash = "";
 
+      // Redirect after short delay
       setTimeout(() => {
-        router.push("/?login=true");
-        router.refresh();
+        router.push("/");
+        router.refresh(); // Ensure auth state updates
       }, 2000);
-    } catch (err: unknown) {
-      console.error("Update error:", err);
-      setError(
-        err instanceof Error ? err.message : "Не удалось обновить пароль",
-      );
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Password update failed:", err);
+      setStatus("error");
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER: Loading
-  // ─────────────────────────────────────────────────────────────
-  if (loading && !error && !success) {
+  // Loading / Error states
+  if (status === "verifying") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50/95 backdrop-blur-sm">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Обновляем пароль...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg">Проверка ссылки...</p>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER: Success
-  // ─────────────────────────────────────────────────────────────
-  if (success) {
+  if (status === "error") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50/95 backdrop-blur-sm">
-        <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
-          <div className="text-4xl mb-4">✅</div>
-          <h2 className="text-xl font-bold mb-2">Пароль обновлён!</h2>
-          <p className="text-gray-600 mb-6">Теперь войдите с новым паролем.</p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white p-6 rounded-xl shadow max-w-md w-full text-center">
+          <p className="text-red-600 mb-4">❌ {message}</p>
           <button
-            onClick={() => router.push("/?login=true")}
-            className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            onClick={() => router.push("/forgot-password")}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
           >
-            Войти
+            Запросить новую ссылку
           </button>
         </div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER: Error (invalid token)
-  // ─────────────────────────────────────────────────────────────
-  if (error && !formData.password) {
+  // Success state
+  if (status === "success") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50/95 backdrop-blur-sm">
-        <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold mb-2">Ошибка</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => router.push("/?forgot=true")}
-            className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
-          >
-            Запросить сброс заново
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-green-600 text-lg">✅ {message}</p>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER: Password Reset Form
-  // ─────────────────────────────────────────────────────────────
+  // ✅ Main form - only shown when session is verified
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50/95 backdrop-blur-sm p-4">
-      <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full relative">
-        <span className="absolute top-2 right-3 text-xs text-gray-300">
-          {DEBUG_VERSION}
-        </span>
+    <main className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white p-[50px] rounded-xl shadow max-w-md w-full">
+        <h1 className="bigger-text border-b-[1px] border-gray-300  pb-[10px] font-bold mb-4 text-center">
+          Введите новый пароль
+        </h1>
 
-        <h2 className="text-xl font-bold mb-2 text-center">Новый пароль</h2>
-        <p className="text-sm text-gray-600 text-center mb-6">
-          Придумайте надёжный пароль
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-[40px]">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block  font-medium mb-[5px]  ord-text ml-[5px] font-semibold">
               Новый пароль
             </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Подтвердите пароль
-            </label>
             <input
-              type={showPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmPassword: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
               placeholder="••••••••"
               required
               minLength={6}
             />
           </div>
 
-          {error && formData.password && (
-            <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
-              {error}
-            </p>
-          )}
+          <div>
+            <label className="block ord-text font-semibold ml-[5px] mt-[20px] mb-[5px]">
+              Подтвердите пароль
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full border-gray-300 mb-[20px] p-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 font-medium transition"
+            disabled={status === "updating"}
+            className="w-full py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 transition"
           >
-            {loading ? "Обновляем..." : "Обновить пароль"}
+            {status === "updating" ? "Обновляем..." : "Установить пароль"}
           </button>
         </form>
 
-        <p className="text-xs text-gray-400 text-center mt-6">
-          Ссылка действительна 1 час
+        <p className="text-xs text-gray-500 text-center mb-[20px] mt-4">
+          Ссылка действительна 1 час и может быть использована только один раз.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
