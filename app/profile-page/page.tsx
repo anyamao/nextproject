@@ -1,6 +1,6 @@
 // app/profile-page/page.tsx
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -21,6 +21,7 @@ import {
 import useContactStore from "@/store/states";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// ... keep all your types the same ...
 type FriendshipStatus =
   | "none"
   | "pending_sent"
@@ -35,23 +36,6 @@ type Achievement = {
   description: string;
   unlocked: boolean;
   icon: string;
-};
-
-type FriendshipRow = {
-  friend_id: {
-    id: string;
-    username: string | null;
-    first_name: string | null;
-    last_name: string | null;
-    status: string | null;
-  } | null;
-  user_id: {
-    id: string;
-    username: string | null;
-    first_name: string | null;
-    last_name: string | null;
-    status: string | null;
-  } | null;
 };
 
 type Profile = {
@@ -91,10 +75,11 @@ type Friend = {
   status: string | null;
 };
 
-export default function UserProfilePage() {
+// ✅ NEW: Component that uses useSearchParams
+function ProfileContent() {
   const { user, isAuthenticated } = useContactStore();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // ✅ This is now inside ProfileContent
   const userId = searchParams.get("id") || user?.id;
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -356,6 +341,8 @@ export default function UserProfilePage() {
 
   return (
     <div className="relative px-6 pb-6 max-w-5xl w-full mx-auto">
+      {/* Your entire JSX remains the same - just copy from your current file */}
+      {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-16">
         <img
           src="/aiclose.png"
@@ -371,6 +358,7 @@ export default function UserProfilePage() {
             <h1 className="text-3xl font-bold text-gray-800">
               {profile.last_name}
             </h1>
+
             <span className="text-gray-500 text-lg">
               @{profile.username || "username"}
             </span>
@@ -388,6 +376,7 @@ export default function UserProfilePage() {
           <div className="flex items-center gap-4 text-sm text-gray-500"></div>
         </div>
 
+        {/* Action Buttons */}
         {!isOwnProfile && (
           <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
             <button
@@ -467,7 +456,9 @@ export default function UserProfilePage() {
         )}
       </div>
 
+      {/* Content Grid */}
       <div className="max-w-5xl w-full mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 px-6">
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-3">Обо мне</p>
@@ -477,6 +468,7 @@ export default function UserProfilePage() {
           </div>
         </div>
 
+        {/* Right Column */}
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -570,5 +562,20 @@ export default function UserProfilePage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ✅ MAIN COMPONENT - wraps ProfileContent in Suspense
+export default function UserProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          Loading profile...
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
   );
 }
