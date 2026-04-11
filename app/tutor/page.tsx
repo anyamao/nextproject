@@ -122,7 +122,7 @@ export default function Home() {
             borderRadius: "8px",
           }}
         >
-          <h2>Ответ учителя:</h2>
+          <h2>Ответ учителя!!!:</h2>
           {/* Вместо <p>{answer}</p> используйте: */}
           <MessageContent text={answer} />
         </div>
