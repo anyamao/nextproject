@@ -13,6 +13,7 @@ import { useAuthListener } from "@/hooks/useAuthListener";
 import Footer from "../ui/footer";
 import { useEffect } from "react";
 import useContactStore from "@/store/states";
+import AISpace from "../ui/AISpace";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,9 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="overflow-x-hidden bg-gray-100">
-        <div className="bg-gray-100 text-black   min-w-full  h-full min-h-[1300px] items-center  flex flex-col  ">
+        <div className="bg-gray-100 text-black   min-w-full  h-full min-h-[1500px] items-center  flex flex-col  ">
           <Mainnav></Mainnav>
           <ProfileNavigation></ProfileNavigation>
+          <AISpace />
           <div
             className={`flex-1 flex flex-col w-full mt-[120px]  bg-gray-100 z-19 h-full relative`}
           >

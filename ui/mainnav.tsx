@@ -12,7 +12,7 @@ function Mainnav() {
 
   return (
     <main
-      className={`w-full bg-white fixed  border-b-[1px] z-20 ${navigationState ? "shadow-none" : "shadow-xs"}  border-gray-200 flex items-center justify-center px-[20px]  `}
+      className={`w-full bg-white fixed  border-b-[1px] z-21 ${navigationState ? "shadow-none" : "shadow-xs"}  border-gray-200 flex items-center justify-center px-[20px]  `}
     >
       <div className="  w-full max-w-[1200px] h-[120px] items-center   flex-1   flex flex-col">
         <div className="flex flex-row w-full flex-1 items-center   mt-[15px] justify-between">
@@ -72,6 +72,13 @@ function Mainnav() {
             Разные курсы
           </Link>
           {" "}
+          <Link
+            href="/languages"
+            onClick={closeEverything}
+            className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
+          >
+            Олимпиадное программирование
+          </Link>
           <Link
             href=""
             onClick={closeEverything}
