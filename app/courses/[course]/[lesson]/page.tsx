@@ -35,7 +35,7 @@ export async function generateStaticParams() {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
         },
-        cache: "no-store",
+        next: { revalidate: 360 },
       },
     );
 
@@ -84,7 +84,7 @@ export default async function LessonPage({
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
       },
-      cache: "no-store",
+      next: { revalidate: 360 },
     },
   );
 

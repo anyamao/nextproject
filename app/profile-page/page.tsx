@@ -37,6 +37,23 @@ type Achievement = {
   icon: string;
 };
 
+type FriendshipRow = {
+  friend_id: {
+    id: string;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    status: string | null;
+  } | null;
+  user_id: {
+    id: string;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    status: string | null;
+  } | null;
+};
+
 type Profile = {
   id: string;
   username: string | null;
@@ -85,14 +102,11 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState("");
-
-  // Friend system state
   const [friendshipStatus, setFriendshipStatus] =
     useState<FriendshipStatus>("none");
   const [isFriendLoading, setIsFriendLoading] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
 
-  // Mock achievements (replace with DB later)
   const mockAchievements: Achievement[] = [
     {
       id: 1,
@@ -138,9 +152,6 @@ export default function UserProfilePage() {
     },
   ];
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH PROFILE & FRIENDSHIP STATUS
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated || !user || !userId) return;
 
@@ -149,7 +160,6 @@ export default function UserProfilePage() {
       setIsOwnProfile(userId === user.id);
 
       try {
-        // 1. Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -162,11 +172,10 @@ export default function UserProfilePage() {
         setProfile({
           ...profileData,
           username: profileData?.username || `user_${userId.slice(0, 8)}`,
-          streak: 15, // Replace with real streak logic later
+          streak: 15,
           achievements: mockAchievements,
         });
 
-        // 2. Fetch friendship status
         if (!isOwnProfile) {
           const { data: friendshipData } = await supabase
             .from("friendships")
@@ -189,7 +198,6 @@ export default function UserProfilePage() {
           }
         }
 
-        // 3. Fetch friends list
         const { data: friendsData } = await supabase
           .from("friendships")
           .select(
@@ -235,9 +243,6 @@ export default function UserProfilePage() {
     fetchData();
   }, [userId, user, isAuthenticated, isOwnProfile]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FRIEND ACTIONS
-  // ─────────────────────────────────────────────────────────────
   const handleAddFriend = async () => {
     if (!user || !userId) return;
     setIsFriendLoading(true);
@@ -245,7 +250,6 @@ export default function UserProfilePage() {
       const { error } = await supabase
         .from("friendships")
         .insert({ user_id: user.id, friend_id: userId, status: "pending" });
-
       if (error) throw error;
       setFriendshipStatus("pending_sent");
     } catch (err) {
@@ -265,10 +269,8 @@ export default function UserProfilePage() {
         .update({ status: "accepted" })
         .eq("user_id", userId)
         .eq("friend_id", user.id);
-
       if (error) throw error;
       setFriendshipStatus("accepted");
-      // Refetch friends list
       router.refresh();
     } catch (err) {
       console.error("Accept friend error:", err);
@@ -286,7 +288,6 @@ export default function UserProfilePage() {
         .update({ status: "rejected" })
         .eq("user_id", userId)
         .eq("friend_id", user.id);
-
       if (error) throw error;
       setFriendshipStatus("rejected");
     } catch (err) {
@@ -306,7 +307,6 @@ export default function UserProfilePage() {
         .delete()
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`);
-
       if (error) throw error;
       setFriendshipStatus("none");
       router.refresh();
@@ -335,152 +335,139 @@ export default function UserProfilePage() {
     return "bg-gray-400";
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER STATES
-  // ─────────────────────────────────────────────────────────────
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
-        <p className="ml-4">Загрузка профиля...</p>
+      <div className="flex items-center justify-center h-screen">
+        Загрузка профиля...
       </div>
     );
   if (!isAuthenticated || !user)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Войдите чтобы видеть профиль</p>
+      <div className="flex items-center justify-center h-screen">
+        Войдите чтобы видеть профиль
       </div>
     );
   if (!profile)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Пользователь не найден</p>
+      <div className="flex items-center justify-center h-screen">
+        Пользователь не найден
       </div>
     );
 
   return (
-    <div className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
-      {/* Profile Header */}
-      <div className=" w-full h-[90px] relative"></div>
+    <div className="relative px-6 pb-6 max-w-5xl w-full mx-auto">
+      <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-16">
+        <img
+          src="/aiclose.png"
+          alt="Avatar"
+          className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-white object-cover"
+        />
 
-      <div className="relative px-6 pb-6 max-w-5xl w-full  mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-16">
-          <img
-            src="/aiclose.png"
-            alt="Avatar"
-            className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-white object-cover"
-          />
-
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-800">
-                {profile.first_name || profile.username || "Пользователь"}
-              </h1>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {profile.last_name}
-              </h1>
-
-              <span className="text-gray-500 text-lg">
-                @{profile.username || "username"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 mb-3">
-              <div
-                className={`w-2 h-2 rounded-full ${getStatusColor(profile.status)}`}
-              ></div>
-              <span className="text-sm text-gray-600">
-                {profile.status || "Offline"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 text-sm text-gray-500"></div>
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-800">
+              {profile.first_name || profile.username || "Пользователь"}
+            </h1>
+            <h1 className="text-3xl font-bold text-gray-800">
+              {profile.last_name}
+            </h1>
+            <span className="text-gray-500 text-lg">
+              @{profile.username || "username"}
+            </span>
           </div>
 
-          {/* Action Buttons */}
-          {!isOwnProfile && (
-            <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-              <button
-                onClick={() => setShowMessageModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shadow-md smaller-text hover:shadow-lg px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg smaller-text transition-all"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Написать
-              </button>
+          <div className="flex items-center gap-2 mb-3">
+            <div
+              className={`w-2 h-2 rounded-full ${getStatusColor(profile.status)}`}
+            ></div>
+            <span className="text-sm text-gray-600">
+              {profile.status || "Offline"}
+            </span>
+          </div>
 
-              {friendshipStatus === "none" && (
-                <button
-                  onClick={handleAddFriend}
-                  disabled={isFriendLoading}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-                >
-                  {isFriendLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <UserPlus className="w-4 h-4" />
-                  )}
-                  Добавить в друзья
-                </button>
-              )}
-
-              {friendshipStatus === "pending_sent" && (
-                <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
-                >
-                  <Loader2 className="w-4 h-4" /> Заявка отправлена
-                </button>
-              )}
-
-              {friendshipStatus === "pending_received" && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleAcceptFriend}
-                    disabled={isFriendLoading}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md"
-                  >
-                    <Check className="w-4 h-4" /> Принять
-                  </button>
-                  <button
-                    onClick={handleRejectFriend}
-                    disabled={isFriendLoading}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all shadow-md"
-                  >
-                    <X className="w-4 h-4" /> Отвергнуть
-                  </button>
-                </div>
-              )}
-
-              {friendshipStatus === "accepted" && (
-                <button
-                  onClick={handleRemoveFriend}
-                  disabled={isFriendLoading}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 smaller-text hover:bg-gray-700 text-white rounded-lg transition-all shadow-md"
-                >
-                  <UserMinus className="w-4 h-4" /> Друзья
-                </button>
-              )}
-
-              <button className="flex items-center smaller-text gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-600 text-white rounded-lg transition-all">
-                <ChevronDown className="w-4 h-4" /> Больше
-              </button>
-            </div>
-          )}
-
-          {isOwnProfile && (
-            <button
-              onClick={() => router.push("/account-settings")}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg smaller-text transition-all"
-            >
-              Редактировать профиль
-            </button>
-          )}
+          <div className="flex items-center gap-4 text-sm text-gray-500"></div>
         </div>
+
+        {!isOwnProfile && (
+          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+            <button
+              onClick={() => setShowMessageModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all shadow-md smaller-text hover:shadow-lg"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Написать
+            </button>
+
+            {friendshipStatus === "none" && (
+              <button
+                onClick={handleAddFriend}
+                disabled={isFriendLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+              >
+                {isFriendLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <UserPlus className="w-4 h-4" />
+                )}
+                Добавить в друзья
+              </button>
+            )}
+
+            {friendshipStatus === "pending_sent" && (
+              <button
+                disabled
+                className="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+              >
+                <Loader2 className="w-4 h-4" /> Заявка отправлена
+              </button>
+            )}
+
+            {friendshipStatus === "pending_received" && (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAcceptFriend}
+                  disabled={isFriendLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all shadow-md"
+                >
+                  <Check className="w-4 h-4" /> Принять
+                </button>
+                <button
+                  onClick={handleRejectFriend}
+                  disabled={isFriendLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all shadow-md"
+                >
+                  <X className="w-4 h-4" /> Отвергнуть
+                </button>
+              </div>
+            )}
+
+            {friendshipStatus === "accepted" && (
+              <button
+                onClick={handleRemoveFriend}
+                disabled={isFriendLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-500 smaller-text hover:bg-gray-700 text-white rounded-lg transition-all shadow-md"
+              >
+                <UserMinus className="w-4 h-4" /> Друзья
+              </button>
+            )}
+
+            <button className="flex items-center smaller-text gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-600 text-white rounded-lg transition-all">
+              <ChevronDown className="w-4 h-4" /> Больше
+            </button>
+          </div>
+        )}
+
+        {isOwnProfile && (
+          <button
+            onClick={() => router.push("/account-settings")}
+            className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg smaller-text transition-all"
+          >
+            Редактировать профиль
+          </button>
+        )}
       </div>
 
-      {/* Content Grid */}
       <div className="max-w-5xl w-full mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 px-6">
-        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-3">Обо мне</p>
@@ -490,7 +477,6 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-4 flex items-center gap-2">
