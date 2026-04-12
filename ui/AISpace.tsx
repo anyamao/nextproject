@@ -8,7 +8,7 @@ export default function AI() {
     <div className="">
       <div
         onClick={toggleAiSpace}
-        className={` ${!aispaceState ? "hidden" : ""}  fixed bottom-0 right-0 shadow-xs cursor-pointer hover:mb-[55px] transiton-all duration-300 bg-white mb-[50px] mr-[10px] flex items-center justify-center rounded-[20px] py-[7px] px-[5px] z-50`}
+        className={` ${aispaceState ? "hidden" : ""}  fixed bottom-0 right-0 shadow-xs cursor-pointer hover:mb-[55px] transiton-all duration-300 bg-white mb-[50px] mr-[10px] flex items-center justify-center rounded-[20px] py-[7px] px-[5px] z-50`}
       >
         <div className="h-[60px] w-[4px] bg-orange-200 ml-[7px]"></div>
         <div className="flex flex-col">
@@ -25,7 +25,7 @@ export default function AI() {
         />
       </div>
       <div
-        className={`  ${aispaceState ? "hidden" : ""}  pt-[140px] p-[20px] w-[50%] h-full bg-white fixed z-20`}
+        className={`  ${!aispaceState ? "hidden" : ""}  pt-[140px] p-[20px] w-[50%] h-full bg-white fixed z-20`}
       >
         <div className="flex flex-row items-center justify-between border-b-[1px] border-b-gray-200 pb-[10px]">
           <div className="flex items-center">

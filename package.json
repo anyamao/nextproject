@@ -17,7 +17,7 @@
     "@supabase/supabase-js": "^2.99.3",
     "@types/dompurify": "^3.2.0",
     "dompurify": "^3.3.3",
-    "gigachat": "^0.0.19",
+    "gigachat-node": "^2.4.5",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.16.45",
     "latex-content-renderer": "^1.1.3",

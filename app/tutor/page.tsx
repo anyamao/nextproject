@@ -1,132 +1,383 @@
 // app/page.tsx
 "use client";
 
-import { useState } from "react";
-import MessageContent from "@/ui/MessageContent";
-export default function Home() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+import { useState, useEffect, useRef } from "react";
+import MessageBubble from "@/ui/MessageBubble";
+import { createClient } from "@/lib/supabase/client";
+import ChatSidebar from "@/ui/ChatSidebar";
 
-  const askTeacher = async () => {
-    if (!question.trim()) {
-      setError("Пожалуйста, введите вопрос");
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+interface Chat {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function Home() {
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [error, setError] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const supabase = createClient();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const loadChats = async () => {
+    setIsLoadingChats(true);
+    const { data, error } = await supabase
+      .from("chats")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (!error && data) {
+      setChats(data);
+      if (data.length > 0 && !currentChatId) {
+        setCurrentChatId(data[0].id);
+      }
+    }
+    setIsLoadingChats(false);
+  };
+
+  const loadMessages = async (chatId: string) => {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: true });
+
+    if (!error && data) {
+      setMessages(data);
+    } else {
+      setMessages([]);
+    }
+  };
+
+  const createNewChat = async () => {
+    const { data, error } = await supabase
+      .from("chats")
+      .insert({ title: "Новый чат" })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setChats([data, ...chats]);
+      setCurrentChatId(data.id);
+      setMessages([]);
+    }
+  };
+
+  const deleteChat = async (chatId: string) => {
+    const { error } = await supabase.from("chats").delete().eq("id", chatId);
+
+    if (!error) {
+      const newChats = chats.filter((c) => c.id !== chatId);
+      setChats(newChats);
+
+      if (currentChatId === chatId) {
+        if (newChats.length > 0) {
+          setCurrentChatId(newChats[0].id);
+        } else {
+          setCurrentChatId(null);
+          setMessages([]);
+        }
+      }
+    }
+  };
+
+  const renameChat = async (chatId: string, newTitle: string) => {
+    const { error } = await supabase
+      .from("chats")
+      .update({ title: newTitle })
+      .eq("id", chatId);
+
+    if (!error) {
+      setChats(
+        chats.map((chat) =>
+          chat.id === chatId ? { ...chat, title: newTitle } : chat,
+        ),
+      );
+    }
+  };
+
+  const updateChatTitle = async (chatId: string, firstMessage: string) => {
+    const title =
+      firstMessage.slice(0, 30) + (firstMessage.length > 30 ? "..." : "");
+    await supabase.from("chats").update({ title }).eq("id", chatId);
+
+    setChats(
+      chats.map((chat) => (chat.id === chatId ? { ...chat, title } : chat)),
+    );
+  };
+
+  const editMessage = async (messageId: string, newContent: string) => {
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: newContent })
+      .eq("id", messageId);
+
+    if (error) {
+      setError("Не удалось обновить сообщение");
       return;
     }
 
+    const messagesToDelete = messages.slice(messageIndex + 1);
+    for (const msg of messagesToDelete) {
+      await supabase.from("messages").delete().eq("id", msg.id);
+    }
+
+    const updatedMessages = [...messages.slice(0, messageIndex + 1)];
+    updatedMessages[messageIndex] = {
+      ...updatedMessages[messageIndex],
+      content: newContent,
+    };
+    setMessages(updatedMessages);
+
     setLoading(true);
-    setAnswer("");
-    setError("");
-
     try {
-      console.log("Отправляем вопрос:", question);
-
       const response = await fetch("/api/tutor", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: question }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: newContent,
+          chatId: currentChatId,
+          isEdit: true,
+          editedMessageId: messageId,
+        }),
       });
 
-      console.log("Статус ответа:", response.status);
-
-      // Сначала получаем текст ответа
-      const responseText = await response.text();
-      console.log("Сырой ответ от сервера:", responseText);
-
-      // Пробуем распарсить JSON
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("Ошибка парсинга JSON:", parseError);
-        setError(
-          `Сервер вернул некорректный ответ: ${responseText.substring(0, 100)}`,
-        );
-        return;
-      }
+      const data = await response.json();
 
       if (response.ok) {
-        if (data.response) {
-          setAnswer(data.response);
-        } else if (data.error) {
-          setError(data.error);
-        } else {
-          setError("Неожиданный формат ответа от сервера");
-        }
+        const assistantMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.response,
+          created_at: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        setError(data.error || `Ошибка сервера: ${response.status}`);
+        setError(data.error || "Ошибка при перегенерации ответа");
       }
     } catch (error) {
-      console.error("Ошибка сети:", error);
-      setError(
-        "Не удалось соединиться с сервером. Проверьте консоль сервера для деталей.",
-      );
+      console.error("Ошибка:", error);
+      setError("Не удалось соединиться с сервером");
     } finally {
       setLoading(false);
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    const messagesToDelete = messages.slice(messageIndex);
+    for (const msg of messagesToDelete) {
+      await supabase.from("messages").delete().eq("id", msg.id);
+    }
+
+    const updatedMessages = messages.slice(0, messageIndex);
+    setMessages(updatedMessages);
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage = input;
+    setInput("");
+    setLoading(true);
+    setError("");
+
+    let chatId = currentChatId;
+
+    if (!chatId) {
+      const { data, error } = await supabase
+        .from("chats")
+        .insert({ title: "Новый чат" })
+        .select()
+        .single();
+
+      if (error || !data) {
+        setLoading(false);
+        setError("Не удалось создать чат");
+        return;
+      }
+
+      chatId = data.id;
+      setCurrentChatId(chatId);
+      setChats([data, ...chats]);
+    }
+
+    const tempUserMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: userMessage,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempUserMessage]);
+
+    if (messages.length === 0 && chatId) {
+      updateChatTitle(chatId, userMessage);
+    }
+
+    try {
+      const response = await fetch("/api/tutor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userMessage, chatId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.response,
+          created_at: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        setError(data.error || "Ошибка при получении ответа");
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id));
+      }
+    } catch (error) {
+      console.error("Ошибка:", error);
+      setError("Не удалось соединиться с сервером");
+      setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id));
+    } finally {
+      setLoading(false);
+      loadChats();
+    }
+  };
+
+  useEffect(() => {
+    loadChats();
+  }, []);
+
+  useEffect(() => {
+    if (currentChatId) {
+      loadMessages(currentChatId);
+    }
+  }, [currentChatId]);
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>🤖 ИИ-Учитель от Яндекса</h1>
+    <div className="flex h-full ">
+      <ChatSidebar
+        chats={chats}
+        currentChatId={currentChatId}
+        onSelectChat={setCurrentChatId}
+        onNewChat={createNewChat}
+        onDeleteChat={deleteChat}
+        onRenameChat={renameChat}
+      />
 
-      <div>
-        <textarea
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Задайте вопрос по школьному предмету или грамматике..."
-          rows={4}
-          style={{
-            width: "100%",
-            marginBottom: "1rem",
-            padding: "0.5rem",
-            fontSize: "1rem",
-          }}
-        />
-        <button
-          onClick={askTeacher}
-          disabled={loading}
-          style={{
-            padding: "0.5rem 1rem",
-            fontSize: "1rem",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "ИИ думает..." : "Спросить"}
-        </button>
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="py-[10px] bg-gray-100  text-center">
+          <p className="smaller-text   mt-1">ИИ-учитель Мао</p>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 bg-foxford-gray/30">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          {messages.length === 0 && !isLoadingChats && currentChatId && (
+            <div className="text-center text-foxford-text-light mt-12">
+              <p className="ord-text mb-2">Начните диалог с ИИ-учителем!</p>
+              <p className="smaller-text">
+                Задайте вопрос по математике, физике, русскому языку или любому
+                другому предмету
+              </p>
+            </div>
+          )}
+
+          {messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              id={message.id}
+              role={message.role}
+              content={message.content}
+              onEdit={message.role === "user" ? editMessage : undefined}
+              onDelete={message.role === "user" ? deleteMessage : undefined}
+            />
+          ))}
+
+          {loading && (
+            <div className="flex justify-start mb-4">
+              <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-foxford-gray shadow-sm">
+                <div className="flex gap-1">
+                  <span className="animate-pulse">●</span>
+                  <span
+                    className="animate-pulse"
+                    style={{ animationDelay: "0.2s" }}
+                  >
+                    ●
+                  </span>
+                  <span
+                    className="animate-pulse"
+                    style={{ animationDelay: "0.4s" }}
+                  >
+                    ●
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="p-4 bg-white border-t border-gray-300">
+          <div className="flex gap-3 max-w-3xl mx-auto">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder="Задайте вопрос по школьному предмету..."
+              rows={1}
+              className="flex-1 px-4 py-3 rounded-xl 300 bg-white text-foxford-text text-sm resize-none focus:outline-none focus:border-foxford-green transition-colors"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              className="px-6 py-3 bg-foxford-green text-white rounded-xl text-sm font-medium hover:bg-foxford-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Отправить
+            </button>
+          </div>
+        </div>
       </div>
-
-      {error && (
-        <div
-          style={{
-            marginTop: "2rem",
-            padding: "1rem",
-            border: "1px solid #ff0000",
-            borderRadius: "8px",
-            backgroundColor: "#ffeeee",
-          }}
-        >
-          <h2 style={{ color: "#ff0000" }}>Ошибка:</h2>
-          <p>{error}</p>
-        </div>
-      )}
-      {answer && (
-        <div
-          style={{
-            marginTop: "2rem",
-            padding: "1rem",
-            border: "1px solid #4caf50",
-            borderRadius: "8px",
-          }}
-        >
-          <h2>Ответ учителя!!!:</h2>
-          {/* Вместо <p>{answer}</p> используйте: */}
-          <MessageContent text={answer} />
-        </div>
-      )}
     </div>
   );
 }
