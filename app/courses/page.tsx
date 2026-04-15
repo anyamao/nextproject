@@ -1,4 +1,4 @@
-// app/ege/page.tsx
+// app/courses/page.tsx
 import Link from "next/link";
 import { BookOpen, Calculator, Atom, Languages, ArrowLeft } from "lucide-react";
 
@@ -11,10 +11,9 @@ type Course = {
   created_at: string;
 };
 
-// ✅ Static export safe: no dynamic params needed for root page
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
-export default async function EGEHubPage() {
+export default async function CoursesPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -24,38 +23,34 @@ export default async function EGEHubPage() {
   try {
     if (supabaseUrl && supabaseKey) {
       const res = await fetch(
-        `${supabaseUrl}/rest/v1/courses?select=id,slug,name,description,created_at&order=name`,
+        `${supabaseUrl}/rest/v1/courses?select=id,slug,name,subject,description,created_at&is_published=eq.true&order=name`,
         {
           headers: {
             apikey: supabaseKey,
             Authorization: `Bearer ${supabaseKey}`,
           },
-          cache: "no-store", // ✅ Disables Next.js caching for this request
-          next: { revalidate: 0 },
+          cache: "no-store",
         },
       );
 
       if (res.ok) {
         courses = await res.json();
       } else {
-        error = "Не удалось загрузить предметы";
+        error = "Не удалось загрузить курсы";
       }
     }
   } catch (err) {
-    console.error("❌ Failed to fetch subjects:", err);
+    console.error("❌ Failed to fetch courses:", err);
     error = "Ошибка подключения к базе данных";
   }
 
-  // Icon mapping for subjects
-  const getSubjectIcon = (slug: string) => {
-    switch (slug) {
+  const getSubjectIcon = (subject: string | null) => {
+    switch (subject) {
       case "math":
-      case "maths":
         return <Calculator className="w-8 h-8 text-purple-600" />;
       case "physics":
         return <Atom className="w-8 h-8 text-blue-600" />;
       case "russian":
-      case "english":
         return <BookOpen className="w-8 h-8 text-amber-600" />;
       default:
         return <BookOpen className="w-8 h-8 text-gray-600" />;
@@ -63,23 +58,20 @@ export default async function EGEHubPage() {
   };
 
   return (
-    <main className=" flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
-      {/* Header */}
+    <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
       <div className="w-full">
-        <div className="flex flex-row  w-full items-center justify-between">
+        <div className="flex flex-row w-full items-center justify-between">
           <Link
             href="/"
             className="text-gray-600 hover:text-purple-600 transition"
           >
             <ArrowLeft className="w-6 h-6 cursor-pointer" />
           </Link>
-
           <p className="bigger-text font-bold">Наши курсы</p>
           <div></div>
         </div>
         <p className="text-gray-600 ord-text max-w-2xl mt-[20px] mx-auto">
-          Здесь собраны курсы по разным направлениям. В будущем будет сделана
-          сортировка.
+          Здесь собраны курсы по разным направлениям
         </p>
       </div>
 
@@ -89,7 +81,6 @@ export default async function EGEHubPage() {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="text-center py-20">
           <p className="text-red-600 text-lg mb-4">{error}</p>
@@ -99,42 +90,33 @@ export default async function EGEHubPage() {
         </div>
       )}
 
-      {/* Subjects Grid */}
       {courses.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-[20px]">
-          {courses.map((subject) => (
+          {courses.map((course) => (
             <Link
-              key={subject.id}
-              href={`/courses/${subject.slug}`}
+              key={course.id}
+              href={`/courses/${course.slug}`}
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
             >
               <div className="flex items-start gap-4">
-                {/* Icon */}
                 <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
-                  {getSubjectIcon(subject.slug)}
+                  {getSubjectIcon(course.subject)}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
-                    {subject.subject}
-                  </p>
-
+                  {course.subject && (
+                    <p className="text-sm font-medium text-purple-600 mb-1">
+                      {course.subject}
+                    </p>
+                  )}
                   <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
-                    {subject.name}
+                    {course.name}
                   </h2>
                   <p className="text-gray-600 mt-2 text-sm line-clamp-2">
-                    {subject.description || "Курс подготовки к ЕГЭ"}
+                    {course.description || "Курс для изучения"}
                   </p>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">📚 Уроки</span>
-                    <span className="flex items-center gap-1">📝 Тесты</span>
-                  </div>
                 </div>
 
-                {/* Arrow */}
                 <div className="text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all">
                   →
                 </div>
@@ -148,10 +130,10 @@ export default async function EGEHubPage() {
         <div className="text-center py-20 bg-gray-50 rounded-2xl">
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Предметы пока не добавлены
+            Курсы пока не добавлены
           </h3>
           <p className="text-gray-500 mb-6">
-            Администратор ещё не добавил доступные предметы
+            Администратор ещё не добавил доступные курсы
           </p>
         </div>
       )}

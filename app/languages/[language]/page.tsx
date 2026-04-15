@@ -12,7 +12,7 @@ import { notFound } from "next/navigation";
 
 type Level = {
   id: string;
-  code: string; // 'A1', 'A2', etc.
+  code: string;
   name: string;
   description: string | null;
   display_order: number;
@@ -26,10 +26,7 @@ type Language = {
   icon?: string | null;
 };
 
-// ✅ REQUIRED: This tells Next.js which pages to build statically.
-// The key MUST match your folder name: [language]
 export async function generateStaticParams() {
-  // Fallback ensures build succeeds even if DB fetch fails
   const fallback = [
     { language: "english" },
     { language: "spanish" },
@@ -50,7 +47,7 @@ export async function generateStaticParams() {
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
       },
-      cache: "no-store", // Don't cache during build
+      cache: "no-store",
     });
 
     if (!res.ok) return fallback;
@@ -58,7 +55,6 @@ export async function generateStaticParams() {
     const langs = await res.json();
     if (!langs || langs.length === 0) return fallback;
 
-    // Return key "language" to match folder [language]
     return langs.map((l: { slug: string }) => ({ language: l.slug }));
   } catch {
     return fallback;
@@ -68,7 +64,7 @@ export async function generateStaticParams() {
 export default async function LanguageRoadmapPage({
   params,
 }: {
-  params: Promise<{ language: string }>; // Match folder name here too
+  params: Promise<{ language: string }>;
 }) {
   const { language: langSlug } = await params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -100,8 +96,18 @@ export default async function LanguageRoadmapPage({
       headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
     },
   );
-  const categoryCounts: { level_id: string; count: number }[] =
-    (await categoryCountsRes.json()) || [];
+
+  // ✅ ИСПРАВЛЕНИЕ: гарантируем, что categoryCounts будет массивом
+  let categoryCounts: { level_id: string; count: number }[] = [];
+  const countsData = await categoryCountsRes.json();
+
+  if (Array.isArray(countsData)) {
+    categoryCounts = countsData;
+  } else if (countsData && typeof countsData === "object") {
+    // Если пришёл объект, пытаемся извлечь массив
+    categoryCounts = Object.values(countsData).filter(Array.isArray)[0] || [];
+  }
+  // Если ничего не подошло — оставляем пустой массив
 
   // Merge counts into levels
   const levels = allLevels.map((level) => ({
@@ -110,12 +116,11 @@ export default async function LanguageRoadmapPage({
       categoryCounts.find((c) => c.level_id === level.id)?.count || 0,
   }));
 
-  // Mock progress data (Replace with real user progress later)
+  // Mock progress data
   const completedLevels = ["A1"];
 
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
-      {/* Header */}
       <div className="w-full mb-8 flex flex-col items-center text-center">
         <div className="flex items-center w-full justify-between">
           <Link
@@ -144,27 +149,23 @@ export default async function LanguageRoadmapPage({
             const isCompleted = completedLevels.includes(level.code);
             const isLocked =
               index > 0 && !completedLevels.includes(levels[index - 1].code);
-            const progress = isCompleted ? 100 : isLocked ? 0 : 35;
 
             return (
               <div
                 key={level.id}
                 className="relative flex items-start gap-4 sm:gap-6"
               >
-                {/* Level indicator */}
                 <div className="relative z-10 flex-shrink-0">
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ord-text text-purple-600 bg-purple-200 border-[1px] border-purple-500 transition-all `}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ord-text text-purple-600 bg-purple-200 border-[1px] border-purple-500 transition-all`}
                   >
                     {level.code}
                   </div>
                 </div>
 
-                {/* Level card */}
                 <Link
                   href={`/languages/${langSlug}/${level.code.toLowerCase()}`}
-                  className={`flex-1 p-5 rounded-xl border-2 transition-all group bg-white border-[1px] border-gray-300 shadow-xs
-                  `}
+                  className={`flex-1 p-5 rounded-xl border-2 transition-all group bg-white border-[1px] border-gray-300 shadow-xs`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -178,7 +179,6 @@ export default async function LanguageRoadmapPage({
                         {level.description || "Освойте базовые навыки общения"}
                       </p>
 
-                      {/* Stats */}
                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <BookOpen className="w-4 h-4 text-purple-500" />
@@ -206,7 +206,6 @@ export default async function LanguageRoadmapPage({
         </div>
       </div>
 
-      {/* Completion Badge */}
       {completedLevels.length === levels.length && (
         <div className="mt-12 p-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl text-white text-center shadow-lg">
           <Trophy className="w-12 h-12 mx-auto mb-3" />
