@@ -1,5 +1,5 @@
 "use client";
-
+import toast from "react-hot-toast";
 import "./globals.css";
 import Mainnav from "./../ui/mainnav";
 import ContactForm from "./../ui/contactform";
@@ -43,7 +43,7 @@ export default function RootLayout({
             <ContactForm></ContactForm>
             <NavigationPanel></NavigationPanel>
             <ForgotPassword></ForgotPassword>
-            <div className="w-full  ">{children}</div>
+            <div className="w-full px-[20px]  ">{children}</div>
           </div>
           <Footer></Footer>
         </div>

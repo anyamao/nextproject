@@ -340,7 +340,7 @@ function ProfileContent() {
     );
 
   return (
-    <div className="relative px-6 pb-6 max-w-5xl w-full mx-auto">
+    <div className="relative px-6 pb-6 max-w-5xl mt-[100px] w-full mx-auto">
       {/* Your entire JSX remains the same - just copy from your current file */}
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-16">

@@ -69,7 +69,7 @@ export default async function SubjectHubPage({
     <main className=" flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
       <div className="flex items-center justify-between w-full mb-6 h-full">
         <Link
-          href="/ege"
+          href="/courses"
           className="text-gray-600 hover:text-purple-600 transition"
         >
           <ArrowLeft className="w-6 h-6 cursor-pointer" />

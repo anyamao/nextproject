@@ -1,4 +1,14 @@
-function footer() {
+"use client";
+
+import { usePathname } from "next/navigation";
+
+function Footer() {
+  const pathname = usePathname();
+
+  // Скрываем футер на странице /tutor
+  if (pathname === "/tutor") {
+    return null;
+  }
   return (
     <div className="w-full bg-gray-900   flex justify-center  ">
       <div className="text-wrap-no flex flex-col md:flex-row  justify-between">
@@ -31,4 +41,4 @@ function footer() {
   );
 }
 
-export default footer;
+export default Footer;

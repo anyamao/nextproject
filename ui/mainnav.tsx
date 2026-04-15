@@ -73,14 +73,14 @@ function Mainnav() {
           </Link>
           {" "}
           <Link
-            href="/languages"
+            href="/tutor"
             onClick={closeEverything}
             className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
           >
-            Олимпиадное программирование
+            ИИ-учитель
           </Link>
           <Link
-            href=""
+            href="/articles"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500  whitespace-nowrap   duration-300"
           >

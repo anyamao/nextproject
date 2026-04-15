@@ -3,43 +3,70 @@
 
 import React from "react";
 
+// Функция для обработки Markdown
+const processMarkdown = (text: string): string => {
+  if (!text) return "";
+
+  let processed = text;
+
+  // Обрабатываем **жирный текст** → <strong>
+  processed = processed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Обрабатываем *курсив* → <em>
+  processed = processed.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+  // Обрабатываем `код` → <code>
+  processed = processed.replace(/`(.*?)`/g, "<code>$1</code>");
+
+  // Переносы строк → <br/>
+  processed = processed.replace(/\n/g, "<br/>");
+
+  return processed;
+};
+
+// Функция для обработки математических формул $...$
+const processFormulas = (text: string): React.ReactNode[] => {
+  const parts = text.split(/(\$[^$]+\$)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("$") && part.endsWith("$")) {
+      // Формула — убираем $ и показываем как код
+      const formula = part.slice(1, -1);
+      return (
+        <code
+          key={index}
+          style={{
+            backgroundColor: "#e8e8e8",
+            padding: "2px 8px",
+            borderRadius: "6px",
+            fontFamily: "monospace",
+            fontSize: "0.95em",
+            color: "#4a4a4a",
+            fontWeight: "500",
+            border: "1px solid #d4d4d4",
+          }}
+        >
+          {formula}
+        </code>
+      );
+    } else {
+      // Обычный текст — обрабатываем Markdown
+      return (
+        <span
+          key={index}
+          dangerouslySetInnerHTML={{ __html: processMarkdown(part) }}
+        />
+      );
+    }
+  });
+};
+
 const MessageContent = ({ text }: { text: string }) => {
   if (!text) return null;
 
-  // Убираем $ и заменяем формулы на текст в красивом оформлении
-  const processText = (content: string) => {
-    // Разбиваем текст по паттерну $...$
-    const parts = content.split(/(\$[^$]+\$)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("$") && part.endsWith("$")) {
-        // Это формула — убираем $ и показываем как код
-        const formula = part.slice(1, -1);
-        return (
-          <code
-            key={index}
-            style={{
-              backgroundColor: "#f5f5f5",
-              padding: "2px 8px",
-              borderRadius: "4px",
-              fontFamily: "monospace",
-              fontSize: "0.95em",
-              color: "#555555",
-            }}
-          >
-            {formula}
-          </code>
-        );
-      } else {
-        // Обычный текст
-        return <span key={index}>{part}</span>;
-      }
-    });
-  };
-
   return (
     <div className="message-content" style={{ lineHeight: 1.6 }}>
-      {processText(text)}
+      {processFormulas(text)}
     </div>
   );
 };

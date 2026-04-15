@@ -21,6 +21,8 @@ interface ContactState {
 
   aispaceState: boolean;
   toggleAiSpace: () => void;
+  aisidebarState: boolean;
+  toggleAiSidebar: () => void;
 
   profilenavigationState: boolean;
   toggleprofilenavigation: () => void;
@@ -66,6 +68,9 @@ const useContactStore = create<ContactState>((set) => ({
 
   aispaceState: false,
   toggleAiSpace: () => set((state) => ({ aispaceState: !state.aispaceState })),
+  aisidebarState: false,
+  toggleAiSidebar: () =>
+    set((state) => ({ aisidebarState: !state.aisidebarState })),
 
   profilenavigationState: false,
 
