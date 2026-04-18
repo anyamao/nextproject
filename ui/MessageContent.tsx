@@ -3,34 +3,27 @@
 
 import React from "react";
 
-// Функция для обработки Markdown
 const processMarkdown = (text: string): string => {
   if (!text) return "";
 
   let processed = text;
 
-  // Обрабатываем **жирный текст** → <strong>
   processed = processed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
-  // Обрабатываем *курсив* → <em>
   processed = processed.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
-  // Обрабатываем `код` → <code>
   processed = processed.replace(/`(.*?)`/g, "<code>$1</code>");
 
-  // Переносы строк → <br/>
   processed = processed.replace(/\n/g, "<br/>");
 
   return processed;
 };
 
-// Функция для обработки математических формул $...$
 const processFormulas = (text: string): React.ReactNode[] => {
   const parts = text.split(/(\$[^$]+\$)/g);
 
   return parts.map((part, index) => {
     if (part.startsWith("$") && part.endsWith("$")) {
-      // Формула — убираем $ и показываем как код
       const formula = part.slice(1, -1);
       return (
         <code
@@ -50,7 +43,6 @@ const processFormulas = (text: string): React.ReactNode[] => {
         </code>
       );
     } else {
-      // Обычный текст — обрабатываем Markdown
       return (
         <span
           key={index}

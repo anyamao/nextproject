@@ -78,6 +78,7 @@ export default function Signup() {
       if (error) throw error;
 
       setSuccess(true);
+      toggleRegister();
     } catch (err: unknown) {
       const rawMessage =
         err instanceof Error ? err.message : "Failed to sign up";

@@ -1,4 +1,3 @@
-// app/tests/page.tsx
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -7,9 +6,6 @@ import { supabase } from "@/lib/supabase";
 import useContactStore from "@/store/states";
 import { Loader2, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────
-// TYPES (Support both question types)
-// ─────────────────────────────────────────────────────────────
 type QuestionType = "multiple_choice" | "input";
 
 type EGEQuestion = {
@@ -51,9 +47,6 @@ function TestContent() {
   const [score, setScore] = useState<number | null>(null);
   const [passed, setPassed] = useState<boolean | null>(null);
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH TEST & QUESTIONS
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!testId) {
       setError("No test ID provided");
@@ -63,7 +56,6 @@ function TestContent() {
 
     const fetchTest = async () => {
       try {
-        // 1. Fetch test info
         const { data: testData, error: testError } = await supabase
           .from("ege_tests")
           .select("id, passing_score, time_limit_minutes")
@@ -77,7 +69,6 @@ function TestContent() {
           return;
         }
 
-        // 2. Fetch questions (with both types)
         const { data: questionsData, error: questionsError } = await supabase
           .from("questions")
           .select(
@@ -122,9 +113,6 @@ function TestContent() {
     fetchTest();
   }, [testId]);
 
-  // ─────────────────────────────────────────────────────────────
-  // ANSWER HANDLING
-  // ─────────────────────────────────────────────────────────────
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
@@ -164,9 +152,6 @@ function TestContent() {
     return Math.round((correct / test.questions.length) * 100);
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // SUBMIT TEST
-  // ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!test) return;
 
@@ -223,9 +208,6 @@ function TestContent() {
     router.push(returnUrl);
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER STATES
-  // ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -287,7 +269,6 @@ function TestContent() {
     ((currentQuestion + 1) / test.questions.length) * 100,
   );
 
-  // Get options for multiple choice
   const options = [
     question.option_a,
     question.option_b,
@@ -323,17 +304,14 @@ function TestContent() {
         </p>
       </div>
 
-      {/* Question Card */}
       <div className="bg-white rounded-xl shadow-lg p-6 w-full mb-6">
         <p className="text-lg font-medium mb-4">
           {currentQuestion + 1}. {question.question_text}
         </p>
 
-        {/* MULTIPLE CHOICE UI */}
         {question.question_type === "multiple_choice" && options.length > 0 && (
           <div className="space-y-3">
             {options.map((option, idx) => {
-              // Skip if option is null/undefined
               if (!option) return null;
 
               const optionLetter = String.fromCharCode(97 + idx);
@@ -359,7 +337,6 @@ function TestContent() {
           </div>
         )}
 
-        {/* INPUT UI */}
         {question.question_type === "input" && (
           <div className="space-y-3">
             <input
@@ -385,7 +362,6 @@ function TestContent() {
         )}
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between w-full">
         <button
           onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}

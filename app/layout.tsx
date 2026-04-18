@@ -23,9 +23,8 @@ export default function RootLayout({
 
   const setUser = useContactStore((state) => state.setUser);
 
-  // ✅ Sync Supabase auth to Zustand store
   useEffect(() => {
-    setUser(user); // This automatically sets isAuthenticated: !!user
+    setUser(user);
   }, [user, setUser]);
 
   return (
@@ -43,7 +42,7 @@ export default function RootLayout({
             <ContactForm></ContactForm>
             <NavigationPanel></NavigationPanel>
             <ForgotPassword></ForgotPassword>
-            <div className="w-full px-[20px]  ">{children}</div>
+            <div className="w-full px-[10px] md:px-[20px]  ">{children}</div>
           </div>
           <Footer></Footer>
         </div>

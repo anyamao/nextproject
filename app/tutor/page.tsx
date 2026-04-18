@@ -34,7 +34,6 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Флаги для умной прокрутки
   const prevMessagesLengthRef = useRef(0);
   const shouldAutoScrollRef = useRef(true);
   const isUserScrollingRef = useRef(false);
@@ -42,14 +41,12 @@ export default function Home() {
   const supabase = createClient();
   const { aisidebarState } = useContactStore();
 
-  // Функция прокрутки вниз
   const scrollToBottom = useCallback(() => {
     if (shouldAutoScrollRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
 
-  // Отслеживаем скролл пользователя
   const handleScroll = useCallback(() => {
     if (!messagesContainerRef.current) return;
 
@@ -66,7 +63,6 @@ export default function Home() {
     }
   }, []);
 
-  // Умная прокрутка
   useEffect(() => {
     const currentLength = messages.length;
     const prevLength = prevMessagesLengthRef.current;
@@ -78,23 +74,19 @@ export default function Home() {
     prevMessagesLengthRef.current = currentLength;
   }, [messages, scrollToBottom]);
 
-  // Сброс автоскролла при смене чата
   useEffect(() => {
     shouldAutoScrollRef.current = true;
     isUserScrollingRef.current = false;
     setTimeout(() => scrollToBottom(), 100);
   }, [currentChatId, scrollToBottom]);
 
-  // ✅ Загрузка списка чатов ТОЛЬКО текущего пользователя
   const loadChats = async () => {
     setIsLoadingChats(true);
 
-    // Получаем текущего пользователя
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Если пользователь не авторизован, показываем пустой список
     if (!user) {
       setChats([]);
       setIsLoadingChats(false);
@@ -116,14 +108,12 @@ export default function Home() {
     setIsLoadingChats(false);
   };
 
-  // ✅ Загрузка сообщений чата (с проверкой доступа)
   const loadMessages = async (chatId: string) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Сначала проверяем, принадлежит ли чат пользователю
     const { data: chat, error: chatError } = await supabase
       .from("chats")
       .select("user_id")
@@ -149,7 +139,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Создание нового чата с привязкой к пользователю
   const createNewChat = async () => {
     const {
       data: { user },
@@ -177,7 +166,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Удаление чата (только своего)
   const deleteChat = async (chatId: string) => {
     const {
       data: { user },
@@ -188,7 +176,7 @@ export default function Home() {
       .from("chats")
       .delete()
       .eq("id", chatId)
-      .eq("user_id", user.id); // ✅ Только свой чат
+      .eq("user_id", user.id);
 
     if (!error) {
       const newChats = chats.filter((c) => c.id !== chatId);
@@ -207,7 +195,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Переименование чата (только своего)
   const renameChat = async (chatId: string, newTitle: string) => {
     const {
       data: { user },
@@ -229,7 +216,6 @@ export default function Home() {
     }
   };
 
-  // Обновление названия чата по первому сообщению
   const updateChatTitle = async (chatId: string, firstMessage: string) => {
     const title =
       firstMessage.slice(0, 30) + (firstMessage.length > 30 ? "..." : "");
@@ -240,7 +226,6 @@ export default function Home() {
     );
   };
 
-  // Копирование текста
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -249,7 +234,6 @@ export default function Home() {
     }
   };
 
-  // Перегенерация ответа учителя
   const regenerateMessage = async (messageId: string) => {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
@@ -311,7 +295,6 @@ export default function Home() {
     }
   };
 
-  // Редактирование сообщения
   const editMessage = async (messageId: string, newContent: string) => {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
@@ -372,7 +355,6 @@ export default function Home() {
     }
   };
 
-  // Удаление сообщения
   const deleteMessage = async (messageId: string) => {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
@@ -386,7 +368,6 @@ export default function Home() {
     setMessages(updatedMessages);
   };
 
-  // ✅ Отправка сообщения с сохранением user_id
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
@@ -412,7 +393,7 @@ export default function Home() {
         .from("chats")
         .insert({
           title: "Новый чат",
-          user_id: user.id, // ✅ Добавляем user_id
+          user_id: user.id,
         })
         .select()
         .single();
@@ -428,7 +409,6 @@ export default function Home() {
       setChats([data, ...chats]);
     }
 
-    // ✅ Сохраняем сообщение пользователя с user_id
     const { data: savedUserMessage, error: saveError } = await supabase
       .from("messages")
       .insert({
@@ -473,7 +453,7 @@ export default function Home() {
           .from("messages")
           .insert({
             chat_id: chatId,
-            user_id: user.id, // ✅ Добавляем user_id
+            user_id: user.id,
             role: "assistant",
             content: data.response,
           })
@@ -505,12 +485,10 @@ export default function Home() {
     }
   };
 
-  // Загрузка чатов при монтировании
   useEffect(() => {
     loadChats();
   }, []);
 
-  // Загрузка сообщений при смене чата
   useEffect(() => {
     if (currentChatId) {
       loadMessages(currentChatId);
@@ -532,7 +510,6 @@ export default function Home() {
         className={`${aisidebarState ? "ml-[200px]" : ""} flex-1 flex flex-col items-center`}
       >
         <div className="flex justify-center max-w-[1300px] w-full">
-          {/* Header */}
           <div className="py-[10px] bg-gray-100 fixed w-full text-center z-10">
             <p className="text-[10px] font-semibold mt-1">
               {currentChatId
@@ -542,7 +519,6 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Messages Container */}
           <div
             ref={messagesContainerRef}
             onScroll={handleScroll}
@@ -583,18 +559,18 @@ export default function Home() {
               <div className="flex justify-start mb-4">
                 <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-foxford-gray shadow-sm">
                   <div className="flex gap-1">
-                    <span className="animate-pulse">●</span>
+                    <span className="animate-pulse">.</span>
                     <span
                       className="animate-pulse"
                       style={{ animationDelay: "0.2s" }}
                     >
-                      ●
+                      .
                     </span>
                     <span
                       className="animate-pulse"
                       style={{ animationDelay: "0.4s" }}
                     >
-                      ●
+                      .
                     </span>
                   </div>
                 </div>
@@ -605,7 +581,7 @@ export default function Home() {
           </div>
 
           {/* Input */}
-          <div className="p-4 bg-white w-[60%] fixed bottom-0 border-gray-300 mb-[20px] rounded-xl shadow-sm z-10">
+          <div className="p-4 bg-white w-[60%] min-w-[350px] fixed bottom-0 border-gray-300 mb-[20px] rounded-xl shadow-sm z-10">
             <div className="flex gap-3 items-center max-w-3xl mx-auto">
               <textarea
                 value={input}
@@ -616,7 +592,7 @@ export default function Home() {
                     sendMessage();
                   }
                 }}
-                placeholder="Задайте вопрос по школьному предмету..."
+                placeholder="Задайте вопрос..."
                 rows={1}
                 className="flex-1 px-4 py-3 bg-white smaller-text resize-none focus:outline-none focus:border-foxford-green transition-colors"
               />

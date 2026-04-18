@@ -1,4 +1,3 @@
-// app/languages/[language]/[level]/[category]/[lesson]/LessonClient.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -17,9 +16,6 @@ import { useState, useEffect } from "react";
 import useContactStore from "@/store/states";
 import { supabase } from "@/lib/supabase";
 
-// ─────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────
 type TestResult = {
   score: number;
   completed_at: string | null;
@@ -60,9 +56,6 @@ interface LessonClientProps {
   params: { language: string; level: string; category: string; lesson: string };
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMMENT ITEM COMPONENT
-// ─────────────────────────────────────────────────────────────
 type User = {
   id: string;
   email?: string;
@@ -112,28 +105,34 @@ const CommentItem = ({
   const isReplying = replyingTo === comment.id;
   const isEditing = editingCommentId === comment.id;
 
+  // Only apply margin for first 2 levels, then stop increasing
+  const marginLeft = depth === 0 ? 0 : depth === 1 ? 12 : 20;
+
   return (
-    <div
-      className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
-    >
-      <div className="flex items-start gap-3 mb-2">
+    <div style={{ marginLeft: `${marginLeft}px` }} className="">
+      <div className="flex gap-3 p-4   overflow-x-auto">
         <Link
           href={`/profile-page?id=${comment.user_id}`}
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold"
+          className="flex-shrink-0 group"
+          title="View profile"
         >
-          {comment.user_email?.[0]?.toUpperCase() || "U"}
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
+            {comment.user_email?.[0]?.toUpperCase() || "U"}
+          </div>
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm text-gray-900">
+        <div className="">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="font-medium text-sm break-word">
               {comment.user_email}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-400 flex-shrink-0">
               {new Date(comment.created_at).toLocaleDateString("ru-RU")}
             </span>
             {comment.updated_at &&
               comment.updated_at !== comment.created_at && (
-                <span className="text-xs text-gray-400">(изменено)</span>
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                  (изменено)
+                </span>
               )}
           </div>
 
@@ -165,10 +164,12 @@ const CommentItem = ({
               </div>
             </div>
           ) : (
-            <p className="text-gray-700">{comment.content}</p>
+            <p className="text-gray-700 break-words whitespace-pre-wrap">
+              {comment.content}
+            </p>
           )}
 
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4 mt-3 ">
             {isAuthenticated && (
               <div className="flex items-center gap-2">
                 <button
@@ -200,9 +201,9 @@ const CommentItem = ({
               <button
                 onClick={() => {
                   setReplyingTo(comment.id);
-                  setReplyContent("");
+                  setReplyContent(`@${comment.user_email} `);
                 }}
-                className="text-sm text-gray-500 hover:text-purple-600"
+                className="smaller-text text-gray-500 hover:text-purple-600"
               >
                 Ответить
               </button>
@@ -215,13 +216,13 @@ const CommentItem = ({
                     setEditingCommentId(comment.id);
                     setEditContent(comment.content);
                   }}
-                  className="text-sm text-gray-500 hover:text-blue-600"
+                  className="smaller-text text-gray-500 hover:text-blue-600"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => onDelete(comment.id)}
-                  className="text-sm text-gray-500 hover:text-red-600"
+                  className="smaller-text text-gray-500 hover:text-red-600"
                 >
                   Удалить
                 </button>
@@ -289,10 +290,6 @@ const CommentItem = ({
     </div>
   );
 };
-
-// ─────────────────────────────────────────────────────────────
-// MAIN LESSON CLIENT COMPONENT
-// ─────────────────────────────────────────────────────────────
 export default function LessonClient({
   initialLesson,
   initialSlug,
@@ -301,7 +298,6 @@ export default function LessonClient({
   const router = useRouter();
   const { user, isAuthenticated } = useContactStore();
 
-  // State
   const [lesson, setLesson] = useState<Lesson>(initialLesson);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -309,14 +305,12 @@ export default function LessonClient({
   const [unclearCount, setUnclearCount] = useState(
     initialLesson.unclear_count || 0,
   );
-  // UI state
   const [copySuccess, setCopySuccess] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
   const [loadingResult, setLoadingResult] = useState(true);
 
-  // Comment features state
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -327,9 +321,6 @@ export default function LessonClient({
 
   const TEST_ID = lesson?.test_id || undefined;
 
-  // ─────────────────────────────────────────────────────────────
-  // HELPER: Count all comments including replies
-  // ─────────────────────────────────────────────────────────────
   const countAllComments = (commentsList: Comment[]): number => {
     return commentsList.reduce((total, comment) => {
       return (
@@ -338,9 +329,6 @@ export default function LessonClient({
     }, 0);
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // Sync feedback counts
-  // ─────────────────────────────────────────────────────────────
   const syncFeedbackCounts = async (lessonId: string) => {
     try {
       const [clearRes, unclearRes] = await Promise.all([
@@ -359,7 +347,6 @@ export default function LessonClient({
       if (clearRes.error) throw clearRes.error;
       if (unclearRes.error) throw unclearRes.error;
 
-      // ✅ UPDATE SEPARATE STATE, NOT LESSON STATE
       setClearCount(clearRes.count ?? 0);
       setUnclearCount(unclearRes.count ?? 0);
     } catch (err) {
@@ -372,9 +359,6 @@ export default function LessonClient({
     }
   }, [lesson?.id]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH COMMENTS
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!lesson?.id) return;
 
@@ -404,7 +388,6 @@ export default function LessonClient({
           return;
         }
 
-        // Fetch user's likes
         let userLikes: { comment_id: string; like_type: string }[] = [];
         if (isAuthenticated && user) {
           const commentIds = commentsData.map((c) => c.id);
@@ -417,7 +400,6 @@ export default function LessonClient({
           userLikes = likesData || [];
         }
 
-        // Fetch usernames from profiles
         const userIds = [...new Set(commentsData.map((c) => c.user_id))];
         const { data: profilesData } = await supabase
           .from("profiles")
@@ -433,7 +415,6 @@ export default function LessonClient({
           });
         }
 
-        // Transform comments
         const commentsWithUsers: Comment[] = commentsData.map((c) => {
           const username = usernameMap.get(c.user_id);
           const userLike = userLikes.find((l) => l.comment_id === c.id);
@@ -453,7 +434,6 @@ export default function LessonClient({
           };
         });
 
-        // Nest replies
         const nestComments = (comments: Comment[]): Comment[] => {
           const commentMap = new Map<string, Comment>();
           const rootComments: Comment[] = [];
@@ -491,9 +471,6 @@ export default function LessonClient({
     fetchComments();
   }, [lesson?.id, user, isAuthenticated]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH TEST RESULT
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated || !user || !TEST_ID) {
       setLoadingResult(false);
@@ -527,9 +504,6 @@ export default function LessonClient({
     fetchResult();
   }, [user, isAuthenticated, TEST_ID]);
 
-  // ─────────────────────────────────────────────────────────────
-  // HANDLERS
-  // ─────────────────────────────────────────────────────────────
   const handleTakeTest = () => {
     if (!TEST_ID) return;
     const returnUrl = encodeURIComponent(window.location.pathname);
@@ -546,7 +520,6 @@ export default function LessonClient({
     }
   };
 
-  // ✅ FIXED: Submit Feedback Function
   const submitFeedback = async (type: "clear" | "unclear") => {
     if (!user) {
       alert("Пожалуйста, войдите чтобы оставить отзыв");
@@ -837,12 +810,8 @@ export default function LessonClient({
 
   const badge = getResultBadge();
 
-  // ─────────────────────────────────────────────────────────────
-  // MAIN RENDER
-  // ─────────────────────────────────────────────────────────────
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
-      {/* Back Link */}
       <Link
         href={`/languages/${params.language}/${params.level}/${params.category}`}
         className="text-gray-600 hover:text-purple-600 transition flex items-center justify-between w-full mb-[25px] "
@@ -854,9 +823,7 @@ export default function LessonClient({
         <div className="w-6" />
       </Link>
 
-      {/* Stats Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full mb-8">
-        {/* Copy Link */}
         <div className="bg-white flex p-[15px] items-center shadow-xs rounded-lg">
           <div className="font-semibold smaller-text">Поделитесь уроком</div>
           <button
@@ -876,7 +843,6 @@ export default function LessonClient({
           </button>
         </div>
 
-        {/* Test Result Badge */}
         <div className="bg-white flex flex-row p-[15px] items-center shadow-xs rounded-lg">
           <div className="font-semibold smaller-text">
             {!isAuthenticated
@@ -901,15 +867,12 @@ export default function LessonClient({
         </div>
       </div>
 
-      {/* Lesson Content */}
       <article
         className="flex flex-col items-center w-full "
         dangerouslySetInnerHTML={{ __html: lesson.content }}
       />
 
-      {/* Test Button and Feedback */}
       <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row gap-4">
-        {/* Feedback Buttons */}
         <div className="flex flex-col items-center">
           <div className="font-semibold ord-text mb-[10px]">Как вам урок?</div>
           <div className="flex flex-row gap-3">
@@ -949,7 +912,6 @@ export default function LessonClient({
           </button>
         )}
 
-        {/* Next Lesson */}
         <Link
           href={`/languages/${params.language}/${params.level}/${params.category}/vocabulary`}
           className="bg-gray-300 rounded-xl border-[1px] border-gray-400 w-[200px] flex flex-row items-center hover:translate-y-[-5px] hover:shadow-md transition-all justify-center ord-text text-gray-700 p-[10px] px-[20px] mt-[10px] sm:mt-0"
@@ -959,7 +921,6 @@ export default function LessonClient({
         </Link>
       </div>
 
-      {/* Comments Section */}
       <div className="text-wrap-no flex flex-col w-full mt-[40px]">
         <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
           Комментарии ({countAllComments(comments)})
@@ -969,7 +930,6 @@ export default function LessonClient({
           было непонятно, что понравилось. Что бы вы дополнили?
         </p>
 
-        {/* Comment Form */}
         <div className="flex flex-row items-center mb-6 mt-[20px]">
           <img
             src="/aiclose.png"
@@ -997,7 +957,6 @@ export default function LessonClient({
           </button>
         </div>
 
-        {/* Comments List */}
         <div className="space-y-4 w-full overflow-x-auto">
           {loadingComments ? (
             <div className="flex justify-center py-8">

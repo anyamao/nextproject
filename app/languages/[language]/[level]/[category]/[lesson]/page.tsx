@@ -1,12 +1,19 @@
-// app/languages/[language]/[level]/[category]/[lesson]/page.tsx
 import LessonClient from "./LessonClient";
 import { notFound } from "next/navigation";
 
 type LessonData = {
+  id: string;
   slug: string;
-  language: { slug: string } | null;
-  level: { code: string } | null;
-  category: { slug: string } | null;
+  title: string;
+  content: string;
+  description: string;
+  level: string;
+  category: string;
+  test_id: string | null;
+  estimated_minutes: number;
+  passing_score: number;
+  clear_count: number;
+  unclear_count: number;
 };
 
 type RouteParam = {
@@ -16,74 +23,7 @@ type RouteParam = {
   lesson: string;
 };
 
-export async function generateStaticParams(): Promise<RouteParam[]> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  const fallbackParams: RouteParam[] = [
-    {
-      language: "english",
-      level: "a1",
-      category: "greetings-introductions",
-      lesson: "basic-greetings",
-    },
-  ];
-
-  if (!supabaseUrl || !supabaseKey) {
-    return fallbackParams;
-  }
-
-  try {
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/lessons?select=slug,language:languages(slug),level:levels(code),category:categories(slug)&is_published=eq.true`,
-      {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          Prefer: "return=representation",
-        },
-        cache: "no-store", // ✅ Disables Next.js caching for this request
-        next: { revalidate: 0 },
-      },
-    );
-
-    if (!response.ok) {
-      console.error(
-        "Failed to fetch lessons for static params:",
-        response.status,
-      );
-      return fallbackParams;
-    }
-
-    const lessons = await response.json();
-    if (!lessons || lessons.length === 0) return fallbackParams;
-
-    const params = lessons
-      .map((lesson: LessonData): RouteParam | null => {
-        if (
-          lesson.language?.slug &&
-          lesson.level?.code &&
-          lesson.category?.slug
-        ) {
-          return {
-            language: lesson.language.slug,
-            level: lesson.level.code.toLowerCase(),
-            category: lesson.category.slug,
-            lesson: lesson.slug,
-          };
-        }
-        return null;
-      })
-      .filter(
-        (param: RouteParam | null): param is RouteParam => param !== null,
-      );
-
-    return params.length > 0 ? params : fallbackParams;
-  } catch (error) {
-    console.error("Failed to generate static params:", error);
-    return fallbackParams;
-  }
-}
+export const dynamic = "force-dynamic";
 
 export default async function LessonPage({
   params,
@@ -101,109 +41,143 @@ export default async function LessonPage({
     notFound();
   }
 
-  // Try BOTH slug formats
-  const possibleSlugs = [
-    lessonSlug, // Just "basic-greetings"
-    `${language}/${level}/${category}/${lessonSlug}`, // Full path
-  ];
-
   console.log("🔍 Server: Fetching lesson with params:", {
     language,
     level,
     category,
     lessonSlug,
-    possibleSlugs,
   });
 
-  let lesson = null;
-  let lastError = null;
+  try {
+    // 1. Сначала получаем язык по slug
+    const langRes = await fetch(
+      `${supabaseUrl}/rest/v1/languages?select=id&slug=eq.${encodeURIComponent(language)}&is_published=eq.true`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 3600 },
+      },
+    );
+    const languageData = await langRes.json();
+    const languageId = languageData?.[0]?.id;
 
-  for (const slug of possibleSlugs) {
-    try {
-      console.log(`🔍 Trying slug: "${slug}"`);
+    if (!languageId) {
+      console.error("❌ Language not found:", language);
+      notFound();
+    }
+    console.log("✅ Language ID:", languageId);
 
-      const url = `${supabaseUrl}/rest/v1/lessons?select=*&slug=eq.${encodeURIComponent(slug)}&is_published=eq.true`;
-      console.log("🔍 Request URL:", url);
+    // 2. Получаем уровень по code и language_id
+    const levelRes = await fetch(
+      `${supabaseUrl}/rest/v1/levels?select=id&code=eq.${level.toUpperCase()}&language_id=eq.${languageId}&is_published=eq.true`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 3600 },
+      },
+    );
+    const levelData = await levelRes.json();
+    const levelId = levelData?.[0]?.id;
 
-      const response = await fetch(url, {
+    if (!levelId) {
+      console.error("❌ Level not found:", level);
+      notFound();
+    }
+    console.log("✅ Level ID:", levelId);
+
+    // 3. Получаем категорию по slug, language_id и level_id
+    const catRes = await fetch(
+      `${supabaseUrl}/rest/v1/categories?select=id&slug=eq.${encodeURIComponent(category)}&language_id=eq.${languageId}&level_id=eq.${levelId}&is_published=eq.true`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 3600 },
+      },
+    );
+    const categoryData = await catRes.json();
+    const categoryId = categoryData?.[0]?.id;
+
+    if (!categoryId) {
+      console.error("❌ Category not found:", category);
+      notFound();
+    }
+    console.log("✅ Category ID:", categoryId);
+
+    // 4. Получаем урок по slug, language_id, level_id, category_id
+    const lessonRes = await fetch(
+      `${supabaseUrl}/rest/v1/ege_lessons?select=*&slug=eq.${encodeURIComponent(lessonSlug)}&language_id=eq.${languageId}&level_id=eq.${levelId}&category_id=eq.${categoryId}&is_published=eq.true`,
+      {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
           "Content-Type": "application/json",
-          Prefer: "return=representation",
         },
         next: { revalidate: 3600 },
-      });
-
-      console.log(`🔍 Response status for "${slug}":`, response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(
-          `✅ Fetched data for "${slug}":`,
-          JSON.stringify(data, null, 2),
-        );
-
-        // Supabase REST always returns an array
-        if (Array.isArray(data) && data.length > 0) {
-          lesson = data[0];
-          console.log("✅ Found lesson:", lesson.slug);
-          break;
-        } else if (data && typeof data === "object" && !Array.isArray(data)) {
-          // Edge case: single object
-          lesson = data;
-          console.log("✅ Found lesson (object):", lesson.slug);
-          break;
-        } else {
-          console.log(`⚠️ No data found for slug: "${slug}"`);
-        }
-      } else {
-        const errorText = await response.text();
-        console.error(
-          `❌ Error for slug "${slug}":`,
-          response.status,
-          errorText,
-        );
-        lastError = { status: response.status, text: errorText };
-      }
-    } catch (error) {
-      console.error(`❌ Exception fetching slug "${slug}":`, error);
-      lastError = error;
-    }
-  }
-
-  if (!lesson) {
-    console.error(
-      "❌ Lesson not found after trying all slugs. Last error:",
-      lastError,
+      },
     );
-    console.log("📋 Tried slugs:", possibleSlugs);
 
-    // Debug: Try to fetch all lessons to see what's available
-    try {
-      const allLessonsUrl = `${supabaseUrl}/rest/v1/lessons?select=slug,title,is_published&is_published=eq.true&limit=10`;
-      const allResponse = await fetch(allLessonsUrl, {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-      });
-      if (allResponse.ok) {
-        const allLessons = await allResponse.json();
-        console.log("📚 Available published lessons:", allLessons);
-      }
-    } catch (e) {
-      console.error("Failed to fetch all lessons for debugging:", e);
+    if (!lessonRes.ok) {
+      console.error("❌ Lesson fetch failed:", lessonRes.status);
+      notFound();
     }
 
+    const lessonData = await lessonRes.json();
+    const lesson = Array.isArray(lessonData) ? lessonData[0] : lessonData;
+
+    if (!lesson) {
+      console.error("❌ Lesson not found with slug:", lessonSlug);
+
+      // Отладка: показываем все уроки для этой категории
+      const allLessonsRes = await fetch(
+        `${supabaseUrl}/rest/v1/ege_lessons?select=slug,title&language_id=eq.${languageId}&level_id=eq.${levelId}&category_id=eq.${categoryId}&is_published=eq.true`,
+        {
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+        },
+      );
+      if (allLessonsRes.ok) {
+        const allLessons = await allLessonsRes.json();
+        console.log("📚 Available lessons in this category:", allLessons);
+      }
+
+      notFound();
+    }
+
+    console.log("✅ Lesson found:", lesson.title);
+
+    // Преобразуем данные в нужный формат для LessonClient
+    const formattedLesson: LessonData = {
+      id: lesson.id,
+      slug: lesson.slug,
+      title: lesson.title,
+      content: lesson.content,
+      description: lesson.description || "",
+      level: level,
+      category: category,
+      test_id: lesson.test_id || null,
+      estimated_minutes: lesson.estimated_minutes || 30,
+      passing_score: lesson.passing_score || 75,
+      clear_count: lesson.clear_count || 0,
+      unclear_count: lesson.unclear_count || 0,
+    };
+
+    return (
+      <LessonClient
+        initialLesson={formattedLesson}
+        initialSlug={`${language}/${level}/${category}/${lessonSlug}`}
+        params={resolvedParams}
+      />
+    );
+  } catch (error) {
+    console.error("❌ Error fetching lesson:", error);
     notFound();
   }
-
-  return (
-    <LessonClient
-      initialLesson={lesson}
-      initialSlug={`${language}/${level}/${category}/${lessonSlug}`}
-      params={resolvedParams}
-    />
-  );
 }

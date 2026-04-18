@@ -1,4 +1,3 @@
-// app/ege/page.tsx
 import Link from "next/link";
 import { BookOpen, Calculator, Atom, Languages, ArrowLeft } from "lucide-react";
 
@@ -103,12 +102,10 @@ export default async function EGEHubPage() {
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
             >
               <div className="flex items-start gap-4">
-                {/* Icon */}
                 <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
                   {getSubjectIcon(subject.slug)}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
                     {subject.name}

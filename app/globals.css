@@ -25,7 +25,7 @@
     @apply bg-gray-200  rounded-2xl rounded-tl-sm;
   }
   .text-wrap {
-    @apply bg-white rounded-lg shadow-md p-[20px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full max-w-[1000px] my-[10px] sm:my-[20px] mx-[90px]  md:mx-[30px] sm:mx-[20px];
+    @apply bg-white rounded-lg shadow-md p-[20px] sm:p-[20px] md:p-[30px] border-[1px] border-gray-200 w-full max-w-[1000px] my-[10px] sm:my-[20px] mx-[9px]  md:mx-[30px] sm:mx-[20px];
   }
   .text-wrap-no {
     @apply rounded-lg  p-[20px] sm:p-[20px] md:p-[30px]   w-full max-w-[1000px] my-[20px] mx-[90px]  md:mx-[30px] sm:mx-[20px];

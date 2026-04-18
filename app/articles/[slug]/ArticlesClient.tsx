@@ -103,11 +103,12 @@ const CommentItem = ({
   const isReplying = replyingTo === comment.id;
   const isEditing = editingCommentId === comment.id;
 
+  // Only apply margin for first 2 levels, then stop increasing
+  const marginLeft = depth === 0 ? 0 : depth === 1 ? 12 : 20;
+
   return (
-    <div
-      className={`${depth > 0 ? "ml-12 border-l-2 border-gray-200 pl-4" : ""}`}
-    >
-      <div className="flex gap-3 p-4 bg-white overflow-x-auto rounded-lg shadow-sm">
+    <div style={{ marginLeft: `${marginLeft}px` }} className="">
+      <div className="flex gap-3 p-4   overflow-x-auto">
         <Link
           href={`/profile-page?id=${comment.user_id}`}
           className="flex-shrink-0 group"
@@ -117,15 +118,19 @@ const CommentItem = ({
             {comment.user_email?.[0]?.toUpperCase() || "U"}
           </div>
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm">{comment.user_email}</span>
-            <span className="text-xs text-gray-400">
+        <div className="">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="font-medium text-sm break-word">
+              {comment.user_email}
+            </span>
+            <span className="text-xs text-gray-400 flex-shrink-0">
               {new Date(comment.created_at).toLocaleDateString("ru-RU")}
             </span>
             {comment.updated_at &&
               comment.updated_at !== comment.created_at && (
-                <span className="text-xs text-gray-400">(изменено)</span>
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                  (изменено)
+                </span>
               )}
           </div>
 
@@ -157,10 +162,12 @@ const CommentItem = ({
               </div>
             </div>
           ) : (
-            <p className="text-gray-700">{comment.content}</p>
+            <p className="text-gray-700 break-words whitespace-pre-wrap">
+              {comment.content}
+            </p>
           )}
 
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4 mt-3 ">
             {isAuthenticated && (
               <div className="flex items-center gap-2">
                 <button
@@ -194,7 +201,7 @@ const CommentItem = ({
                   setReplyingTo(comment.id);
                   setReplyContent(`@${comment.user_email} `);
                 }}
-                className="text-sm text-gray-500 hover:text-purple-600"
+                className="smaller-text text-gray-500 hover:text-purple-600"
               >
                 Ответить
               </button>
@@ -207,13 +214,13 @@ const CommentItem = ({
                     setEditingCommentId(comment.id);
                     setEditContent(comment.content);
                   }}
-                  className="text-sm text-gray-500 hover:text-blue-600"
+                  className="smaller-text text-gray-500 hover:text-blue-600"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => onDelete(comment.id)}
-                  className="text-sm text-gray-500 hover:text-red-600"
+                  className="smaller-text text-gray-500 hover:text-red-600"
                 >
                   Удалить
                 </button>
@@ -281,7 +288,6 @@ const CommentItem = ({
     </div>
   );
 };
-
 // ─────────────────────────────────────────────────────────────
 // MAIN ARTICLES CLIENT COMPONENT
 // ─────────────────────────────────────────────────────────────

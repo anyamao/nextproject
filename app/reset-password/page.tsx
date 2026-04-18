@@ -1,4 +1,3 @@
-// app/reset-password/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +17,6 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const handleReset = async () => {
       try {
-        // This automatically reads the #access_token from the URL hash
         const {
           data: { session },
           error,
@@ -30,7 +28,6 @@ export default function ResetPasswordPage() {
           return;
         }
 
-        // ✅ Session verified - user can now set new password
         setStatus("ready");
       } catch (err) {
         console.error("Session verification failed:", err);
@@ -67,13 +64,11 @@ export default function ResetPasswordPage() {
       setStatus("success");
       setMessage("Пароль успешно обновлён! Перенаправляем...");
 
-      // Clear the hash to prevent re-use
       window.location.hash = "";
 
-      // Redirect after short delay
       setTimeout(() => {
         router.push("/");
-        router.refresh(); // Ensure auth state updates
+        router.refresh();
       }, 2000);
     } catch (err) {
       console.error("Password update failed:", err);
@@ -81,7 +76,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // Loading / Error states
   if (status === "verifying") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -106,7 +100,6 @@ export default function ResetPasswordPage() {
     );
   }
 
-  // Success state
   if (status === "success") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -115,7 +108,6 @@ export default function ResetPasswordPage() {
     );
   }
 
-  // ✅ Main form - only shown when session is verified
   return (
     <main className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white p-[50px] rounded-xl shadow max-w-md w-full">

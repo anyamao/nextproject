@@ -1,4 +1,3 @@
-// app/components/MessageBubble.tsx
 "use client";
 
 import { useState } from "react";

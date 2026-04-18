@@ -1,4 +1,3 @@
-// app/languages/page.tsx
 import Link from "next/link";
 import { Globe, ArrowLeft, BookOpen, Flag, Languages } from "lucide-react";
 
@@ -8,10 +7,9 @@ type Language = {
   name: string;
   description: string | null;
   icon?: string | null;
+  image: string;
   created_at: string;
 };
-
-export const dynamic = "force-static";
 
 export default async function LanguagesHubPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,7 +20,7 @@ export default async function LanguagesHubPage() {
 
   try {
     if (supabaseUrl && supabaseKey) {
-      const url = `${supabaseUrl}/rest/v1/languages?select=id,slug,name,description,icon,created_at&order=name`;
+      const url = `${supabaseUrl}/rest/v1/languages?select=id,slug,name,image,description,icon,created_at&order=name`;
       console.log("🔍 Fetching:", url);
 
       const res = await fetch(url, {
@@ -30,7 +28,7 @@ export default async function LanguagesHubPage() {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
         },
-        next: { revalidate: 3600 },
+        next: { revalidate: 60 },
       });
 
       console.log("🔍 Status:", res.status, res.ok ? "OK" : "ERROR");
@@ -79,7 +77,6 @@ export default async function LanguagesHubPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
-      {/* Header */}
       <div className="w-full">
         <div className="flex flex-row w-full items-center justify-between">
           <Link
@@ -122,12 +119,13 @@ export default async function LanguagesHubPage() {
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
             >
               <div className="flex items-start gap-4">
-                {/* Icon / Flag */}
-                <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
-                  {getLanguageIcon(language.slug, language.icon)}
+                <div className="bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors w-[100px] h-[130px] overflow-hidden">
+                  <img
+                    src={`/${language.image}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
                     {language.name}
@@ -136,7 +134,6 @@ export default async function LanguagesHubPage() {
                     {language.description || "Полный курс от A1 до C1"}
                   </p>
 
-                  {/* Stats */}
                   <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       📚 5 уровней

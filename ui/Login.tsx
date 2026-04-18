@@ -59,6 +59,7 @@ export default function Signup() {
       if (error) throw error;
 
       setSuccess(true);
+      toggleLogin();
       router.refresh();
     } catch (err: unknown) {
       const rawMessage =

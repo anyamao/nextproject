@@ -1,4 +1,3 @@
-// app/profile-page/page.tsx
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
@@ -21,7 +20,6 @@ import {
 import useContactStore from "@/store/states";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// ... keep all your types the same ...
 type FriendshipStatus =
   | "none"
   | "pending_sent"
@@ -75,11 +73,10 @@ type Friend = {
   status: string | null;
 };
 
-// ✅ NEW: Component that uses useSearchParams
 function ProfileContent() {
   const { user, isAuthenticated } = useContactStore();
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ This is now inside ProfileContent
+  const searchParams = useSearchParams();
   const userId = searchParams.get("id") || user?.id;
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -341,8 +338,6 @@ function ProfileContent() {
 
   return (
     <div className="relative px-6 pb-6 max-w-5xl mt-[100px] w-full mx-auto">
-      {/* Your entire JSX remains the same - just copy from your current file */}
-      {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-16">
         <img
           src="/aiclose.png"
@@ -376,9 +371,8 @@ function ProfileContent() {
           <div className="flex items-center gap-4 text-sm text-gray-500"></div>
         </div>
 
-        {/* Action Buttons */}
         {!isOwnProfile && (
-          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+          <div className="flex hidden flex-wrap gap-2 mt-4 md:mt-0">
             <button
               onClick={() => setShowMessageModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all shadow-md smaller-text hover:shadow-lg"
@@ -456,9 +450,7 @@ function ProfileContent() {
         )}
       </div>
 
-      {/* Content Grid */}
       <div className="max-w-5xl w-full mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 px-6">
-        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-3">Обо мне</p>
@@ -468,7 +460,6 @@ function ProfileContent() {
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <p className="ord-text font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -524,7 +515,7 @@ function ProfileContent() {
       </div>
 
       {showMessageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed hidden inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800">
@@ -565,7 +556,6 @@ function ProfileContent() {
   );
 }
 
-// ✅ MAIN COMPONENT - wraps ProfileContent in Suspense
 export default function UserProfilePage() {
   return (
     <Suspense

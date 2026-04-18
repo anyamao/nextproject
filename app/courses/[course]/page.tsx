@@ -1,4 +1,3 @@
-// app/courses/[course]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -9,12 +8,20 @@ type Lesson = {
   title: string;
   description: string | null;
   estimated_minutes: number | null;
+  image?: string;
 };
 
-type SubjectData = {
+type Course = {
+  id: string;
+  slug: string;
   name: string;
-  description: string;
+  subject: string | null;
+  description: string | null;
+  estimated_minutes: number | null;
+  image: string;
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function SubjectHubPage({
   params,
@@ -23,81 +30,69 @@ export default async function SubjectHubPage({
 }) {
   const { course } = await params;
 
-  const subjectData: Record<string, SubjectData> = {
-    // Можно добавить реальные данные предметов здесь
-    // "math": { name: "Математика", description: "Уроки по математике" }
-  };
-
-  const currentSubject = subjectData[course] || {
-    name: course.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-    description: "Курс по выбранному предмету",
-  };
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   let lessons: Lesson[] = [];
+  let currentCourse: Course | null = null;
+  let error: string | null = null;
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
     if (supabaseUrl && supabaseKey) {
-      // 1️⃣ Получаем ID курса по slug
-      const subjectRes = await fetch(
-        `${supabaseUrl}/rest/v1/courses?select=id&slug=eq.${encodeURIComponent(course)}`,
+      // Получаем курс по slug
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/courses?select=id,slug,name,subject,description,estimated_minutes,image&slug=eq.${encodeURIComponent(course)}&is_published=eq.true`,
         {
           headers: {
             apikey: supabaseKey,
             Authorization: `Bearer ${supabaseKey}`,
-            Prefer: "return=representation",
           },
           cache: "no-store",
         },
       );
 
-      if (!subjectRes.ok) {
-        console.warn("⚠️ Не удалось получить курс:", await subjectRes.text());
+      if (res.ok) {
+        const coursesData = await res.json();
+        if (coursesData && coursesData.length > 0) {
+          currentCourse = coursesData[0];
+        } else {
+          error = "Курс не найден";
+        }
       } else {
-        const subData = await subjectRes.json();
-        const courseId = subData?.[0]?.id;
+        error = "Не удалось загрузить курс";
+      }
 
-        if (courseId) {
-          // 2️⃣ Получаем уроки курса
-          const lessonsRes = await fetch(
-            `${supabaseUrl}/rest/v1/course_lessons?select=id,slug,title,description,estimated_minutes&course_id=eq.${courseId}&is_published=eq.true&order=created_at.asc`,
-            {
-              headers: {
-                apikey: supabaseKey,
-                Authorization: `Bearer ${supabaseKey}`,
-                Prefer: "return=representation",
-              },
-              cache: "no-store",
+      // Если курс найден, загружаем уроки из таблицы ege_lessons по course_id
+      if (currentCourse?.id) {
+        const lessonsRes = await fetch(
+          `${supabaseUrl}/rest/v1/ege_lessons?select=id,slug,title,description,estimated_minutes&course_id=eq.${currentCourse.id}&is_published=eq.true&order=order_number.asc`,
+          {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
             },
-          );
+            cache: "no-store",
+          },
+        );
 
-          if (lessonsRes.ok) {
-            const lessonsData = await lessonsRes.json();
-            // ✅ Гарантируем, что lessons — это массив
-            if (Array.isArray(lessonsData)) {
-              lessons = lessonsData;
-            } else if (lessonsData?.data && Array.isArray(lessonsData.data)) {
-              lessons = lessonsData.data;
-            } else {
-              console.warn("⚠️ Unexpected lessons format:", lessonsData);
-              lessons = [];
-            }
-          } else {
-            console.warn("⚠️ Lessons fetch failed:", await lessonsRes.text());
-          }
+        if (lessonsRes.ok) {
+          lessons = await lessonsRes.json();
+          console.log(
+            `✅ Found ${lessons.length} lessons for course ${currentCourse.name}`,
+          );
+        } else {
+          console.warn("⚠️ Lessons fetch failed:", await lessonsRes.text());
         }
       }
     }
   } catch (err) {
-    console.warn("⚠️ DB fetch error:", err);
-    lessons = []; // ✅ Fallback на пустой массив
+    console.error("❌ Failed to fetch:", err);
+    error = "Ошибка подключения к базе данных";
   }
 
-  // ✅ Дополнительная защита: если lessons не массив — делаем пустой массив
-  if (!Array.isArray(lessons)) {
-    lessons = [];
+  // Если курс не найден и нет ошибки, показываем 404
+  if (!currentCourse && !error) {
+    notFound();
   }
 
   return (
@@ -109,18 +104,38 @@ export default async function SubjectHubPage({
         >
           <ArrowLeft className="w-6 h-6 cursor-pointer" />
         </Link>
-        <div className="bigger-text font-semibold">{currentSubject.name}</div>
+        <div className="bigger-text font-semibold">
+          {currentCourse?.name ||
+            course.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+        </div>
       </div>
-      <p className="text-gray-600 mb-8">{currentSubject.description}</p>
 
-      {lessons.length === 0 ? (
+      {error && (
+        <div className="text-center py-10 mb-8">
+          <p className="text-red-600 text-lg mb-4">{error}</p>
+        </div>
+      )}
+
+      {currentCourse?.subject && (
+        <div className="mb-4">
+          <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+            {currentCourse.subject}
+          </span>
+        </div>
+      )}
+
+      <p className="text-gray-600 mb-8 text-center">
+        {currentCourse?.description || "Курс по выбранному предмету"}
+      </p>
+
+      {lessons.length === 0 && !error ? (
         <p className="text-gray-500 text-center py-10">
           Пока нет доступных уроков.
         </p>
       ) : (
         <div className="grid gap-4 w-full h-full">
           {lessons.map((lesson) => {
-            const lessonPart = lesson.slug?.split("/").pop() || lesson.slug;
+            const lessonPart = lesson.slug;
             return (
               <Link
                 key={lesson.id}

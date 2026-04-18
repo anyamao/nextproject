@@ -1,4 +1,3 @@
-// app/ege/[subject]/[lesson]/page.tsx
 import LessonClient from "./LessonClient";
 import { notFound } from "next/navigation";
 
@@ -16,57 +15,7 @@ type Lesson = {
   clear_count: number;
   unclear_count: number;
 };
-
-export async function generateStaticParams() {
-  const fallbackParams = [
-    { subject: "math", lesson: "test-lesson" }, // ✅ Add your lesson here
-    { subject: "physics", lesson: "mechanics" },
-    { subject: "russian", lesson: "grammar" },
-  ];
-
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) return fallbackParams;
-
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/ege_lessons?select=slug&is_published=eq.true`,
-      {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        cache: "no-store",
-      },
-    );
-
-    if (!res.ok) return fallbackParams;
-
-    const lessons = await res.json();
-
-    if (!lessons || lessons.length === 0) return fallbackParams;
-
-    const params = lessons
-      .map((l: { slug: string }) => {
-        const parts = l.slug.split("/");
-        if (parts.length >= 2) {
-          return {
-            subject: parts[0],
-            lesson: parts[1],
-          };
-        }
-        return null;
-      })
-      .filter((p: { subject: string; lesson: string } | null) => p !== null);
-
-    return params.length > 0 ? params : fallbackParams;
-  } catch (error) {
-    console.error("❌ generateStaticParams error:", error);
-    return fallbackParams;
-  }
-}
-
+export const revalidate = 60;
 export default async function LessonPage({
   params,
 }: {
@@ -86,7 +35,7 @@ export default async function LessonPage({
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
       },
-      next: { revalidate: 3600 },
+      next: { revalidate: 60 },
     },
   );
 
@@ -101,7 +50,6 @@ export default async function LessonPage({
     notFound();
   }
 
-  // Transform to match LessonClient's Lesson type
   const lesson: Lesson = {
     id: egeLesson.id,
     slug: egeLesson.slug,
@@ -117,20 +65,18 @@ export default async function LessonPage({
     unclear_count: egeLesson.unclear_count || 0,
   };
 
-  // ✅ CREATE A NEW PARAMS OBJECT with the shape LessonClient expects
   const clientParams = {
     level: subject,
     category: subject,
     lesson: lessonSlug,
   };
-  // In the return statement, change this:
   return (
     <LessonClient
       initialLesson={lesson}
       initialSlug={fullSlug}
       params={{
-        subject, // ✅ Just pass subject
-        lesson: lessonSlug, // ✅ And lesson
+        subject,
+        lesson: lessonSlug,
       }}
     />
   );

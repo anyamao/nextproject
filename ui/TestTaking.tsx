@@ -68,7 +68,6 @@ export default function TestTaking({ testId, onComplete }: TestTakingProps) {
   useEffect(() => {
     const fetchTestData = async () => {
       try {
-        // ✅ Fetch test metadata - use  { test }
         const { data: test, error: testError } = await supabase
           .from("tests")
           .select("*")
@@ -79,7 +78,6 @@ export default function TestTaking({ testId, onComplete }: TestTakingProps) {
         setTest(test);
         setTimeRemaining(test.duration_minutes * 60);
 
-        // ✅ Fetch questions - use  { questions }
         const { data: questions, error: questionsError } = await supabase
           .from("questions")
           .select(
@@ -107,14 +105,13 @@ export default function TestTaking({ testId, onComplete }: TestTakingProps) {
 
     fetchTestData();
   }, [testId]);
-  // Timer
   useEffect(() => {
     if (loading || testCompleted || timeRemaining <= 0) return;
 
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          handleSubmitTest(); // Auto-submit when time runs out
+          handleSubmitTest();
           return 0;
         }
         return prev - 1;
@@ -126,7 +123,6 @@ export default function TestTaking({ testId, onComplete }: TestTakingProps) {
     };
   }, [loading, testCompleted, timeRemaining]);
 
-  // Handle answer selection
   const handleAnswerSelect = (questionId: string, answerId: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -321,7 +317,6 @@ export default function TestTaking({ testId, onComplete }: TestTakingProps) {
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={goToPrevious}

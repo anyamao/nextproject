@@ -1,19 +1,7 @@
-// app/ege/[subject]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-export async function generateStaticParams() {
-  return [
-    { subject: "math" },
-    { subject: "maths" },
-    { subject: "physics" },
-    { subject: "russian" },
-    { subject: "english" },
-    { subject: "informatics" },
-  ];
-}
 
-// Define a type to avoid `any` errors
 type Lesson = {
   id: string;
   slug: string;

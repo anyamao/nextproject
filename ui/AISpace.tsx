@@ -1,20 +1,14 @@
-// app/components/AI.tsx
+// app/page.tsx
+"use client";
+import { usePathname } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
+import MessageBubble from "@/ui/MessageBubble";
+import { createClient } from "@/lib/supabase/client";
+import ChatSidebar from "@/ui/ChatSidebar";
+import { ArrowUp } from "lucide-react";
 import useContactStore from "@/store/states";
 import Link from "next/link";
-import {
-  X,
-  MessageCirclePlus,
-  Send,
-  Trash,
-  Pencil,
-  Copy,
-  Check,
-} from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import MessageBubble from "@/ui/MessageBubble";
-
+import { X } from "lucide-react";
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -29,44 +23,116 @@ interface Chat {
   updated_at: string;
 }
 
-export default function AI() {
-  const { aispaceState, toggleAiSpace } = useContactStore();
-  const pathname = usePathname();
-  const supabase = createClient();
-
+export default function Home() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [error, setError] = useState("");
+  const { aispaceState, toggleAiSpace } = useContactStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const prevMessagesLengthRef = useRef(0);
+  const shouldAutoScrollRef = useRef(true);
+  const isUserScrollingRef = useRef(false);
+
+  const supabase = createClient();
+  const { aisidebarState } = useContactStore();
+
+  const scrollToBottom = useCallback(() => {
+    if (shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+    if (!isNearBottom) {
+      shouldAutoScrollRef.current = false;
+      isUserScrollingRef.current = true;
+    } else {
+      shouldAutoScrollRef.current = true;
+      isUserScrollingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    const currentLength = messages.length;
+    const prevLength = prevMessagesLengthRef.current;
+
+    if (currentLength > prevLength && shouldAutoScrollRef.current) {
+      scrollToBottom();
+    }
+
+    prevMessagesLengthRef.current = currentLength;
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    shouldAutoScrollRef.current = true;
+    isUserScrollingRef.current = false;
+    setTimeout(() => scrollToBottom(), 100);
+  }, [currentChatId, scrollToBottom]);
 
   const loadChats = async () => {
+    setIsLoadingChats(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setChats([]);
+      setIsLoadingChats(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("chats")
       .select("*")
+      .eq("user_id", user.id) // ✅ Фильтруем по user_id
       .order("updated_at", { ascending: false });
+
     if (!error && data) {
       setChats(data);
       if (data.length > 0 && !currentChatId) {
         setCurrentChatId(data[0].id);
       }
     }
+    setIsLoadingChats(false);
   };
 
-  // Загрузка сообщений
   const loadMessages = async (chatId: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: chat, error: chatError } = await supabase
+      .from("chats")
+      .select("user_id")
+      .eq("id", chatId)
+      .single();
+
+    if (chatError || chat?.user_id !== user.id) {
+      console.error("Нет доступа к этому чату");
+      setMessages([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("messages")
       .select("*")
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true });
+
     if (!error && data) {
       setMessages(data);
     } else {
@@ -74,47 +140,162 @@ export default function AI() {
     }
   };
 
-  // Создание нового чата
   const createNewChat = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Пожалуйста, войдите в аккаунт");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("chats")
-      .insert({ title: "Новый чат" })
+      .insert({
+        title: "Новый чат",
+        user_id: user.id, // ✅ Добавляем user_id
+      })
       .select()
       .single();
+
     if (!error && data) {
       setChats([data, ...chats]);
       setCurrentChatId(data.id);
       setMessages([]);
-      setShowSidebar(false);
+    } else {
+      setError("Не удалось создать чат");
     }
   };
 
-  // Удаление чата
   const deleteChat = async (chatId: string) => {
-    const { error } = await supabase.from("chats").delete().eq("id", chatId);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("chats")
+      .delete()
+      .eq("id", chatId)
+      .eq("user_id", user.id);
+
     if (!error) {
       const newChats = chats.filter((c) => c.id !== chatId);
       setChats(newChats);
-      if (currentChatId === chatId && newChats.length > 0) {
-        setCurrentChatId(newChats[0].id);
-      } else if (newChats.length === 0) {
-        setCurrentChatId(null);
-        setMessages([]);
+
+      if (currentChatId === chatId) {
+        if (newChats.length > 0) {
+          setCurrentChatId(newChats[0].id);
+        } else {
+          setCurrentChatId(null);
+          setMessages([]);
+        }
       }
+    } else {
+      setError("Не удалось удалить чат");
     }
   };
 
-  // Обновление названия чата
+  const renameChat = async (chatId: string, newTitle: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("chats")
+      .update({ title: newTitle })
+      .eq("id", chatId)
+      .eq("user_id", user.id); // ✅ Только свой чат
+
+    if (!error) {
+      setChats(
+        chats.map((chat) =>
+          chat.id === chatId ? { ...chat, title: newTitle } : chat,
+        ),
+      );
+    }
+  };
+
   const updateChatTitle = async (chatId: string, firstMessage: string) => {
     const title =
-      firstMessage.slice(0, 25) + (firstMessage.length > 25 ? "..." : "");
+      firstMessage.slice(0, 30) + (firstMessage.length > 30 ? "..." : "");
     await supabase.from("chats").update({ title }).eq("id", chatId);
+
     setChats(
       chats.map((chat) => (chat.id === chatId ? { ...chat, title } : chat)),
     );
   };
 
-  // Редактирование сообщения
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error("Не удалось скопировать:", err);
+    }
+  };
+
+  const regenerateMessage = async (messageId: string) => {
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    let userMessageIndex = messageIndex - 1;
+    while (
+      userMessageIndex >= 0 &&
+      messages[userMessageIndex].role !== "user"
+    ) {
+      userMessageIndex--;
+    }
+
+    if (userMessageIndex < 0) {
+      setError("Не найдено сообщение пользователя для перегенерации");
+      return;
+    }
+
+    const userMessage = messages[userMessageIndex];
+
+    const messagesToDelete = messages.slice(messageIndex);
+    for (const msg of messagesToDelete) {
+      await supabase.from("messages").delete().eq("id", msg.id);
+    }
+
+    const updatedMessages = messages.slice(0, messageIndex);
+    setMessages(updatedMessages);
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/tutor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: userMessage.content,
+          chatId: currentChatId,
+          isEdit: true,
+          editedMessageId: userMessage.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const assistantMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.response,
+          created_at: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        setError(data.error || "Ошибка при перегенерации ответа");
+      }
+    } catch (error) {
+      console.error("Ошибка:", error);
+      setError("Не удалось соединиться с сервером");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const editMessage = async (messageId: string, newContent: string) => {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
@@ -158,7 +339,7 @@ export default function AI() {
 
       if (response.ok) {
         const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: Date.now().toString(),
           role: "assistant",
           content: data.response,
           created_at: new Date().toISOString(),
@@ -173,12 +354,8 @@ export default function AI() {
     } finally {
       setLoading(false);
     }
-
-    setEditingMessageId(null);
-    setEditContent("");
   };
 
-  // Удаление сообщения
   const deleteMessage = async (messageId: string) => {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
@@ -192,104 +369,19 @@ export default function AI() {
     setMessages(updatedMessages);
   };
 
-  // Копирование текста
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // Можно добавить уведомление
-    } catch (err) {
-      console.error("Не удалось скопировать");
-    }
-  };
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
 
-  // Перегенерация ответа учителя
-  // Перегенерация ответа учителя
-  //
-  //
-  //
-
-  // Перегенерация ответа учителя (из рабочего tutor/page.tsx)
-  const regenerateMessage = async (messageId: string) => {
-    // Находим индекс сообщения, которое нужно перегенерировать
-    const messageIndex = messages.findIndex((m) => m.id === messageId);
-    if (messageIndex === -1) return;
-
-    // Находим предыдущее сообщение пользователя
-    let userMessageIndex = messageIndex - 1;
-    while (
-      userMessageIndex >= 0 &&
-      messages[userMessageIndex].role !== "user"
-    ) {
-      userMessageIndex--;
-    }
-
-    if (userMessageIndex < 0) {
-      setError("Не найдено сообщение пользователя для перегенерации");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Пожалуйста, войдите в аккаунт");
       return;
     }
 
-    const userMessage = messages[userMessageIndex];
+    shouldAutoScrollRef.current = true;
 
-    // Удаляем сообщение ассистента и все последующие из базы
-    const messagesToDelete = messages.slice(messageIndex);
-    for (const msg of messagesToDelete) {
-      await supabase.from("messages").delete().eq("id", msg.id);
-    }
-
-    // Обновляем локальное состояние
-    const updatedMessages = messages.slice(0, messageIndex);
-    setMessages(updatedMessages);
-
-    setLoading(true);
-    try {
-      const response = await fetch("/api/tutor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: userMessage.content,
-          chatId: currentChatId,
-          isEdit: true,
-          editedMessageId: userMessage.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // ✅ СОХРАНЯЕМ НОВЫЙ ОТВЕТ В БАЗУ (как в tutor/page.tsx)
-        const { data: savedAssistantMessage } = await supabase
-          .from("messages")
-          .insert({
-            chat_id: currentChatId,
-            role: "assistant",
-            content: data.response,
-          })
-          .select()
-          .single();
-
-        if (savedAssistantMessage) {
-          const assistantMessageObj: Message = {
-            id: savedAssistantMessage.id,
-            role: "assistant",
-            content: data.response,
-            created_at: savedAssistantMessage.created_at,
-          };
-          setMessages((prev) => [...prev, assistantMessageObj]);
-        }
-      } else {
-        setError(data.error || "Ошибка при перегенерации ответа");
-      }
-    } catch (error) {
-      console.error("Ошибка:", error);
-      setError("Не удалось соединиться с сервером");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Отправка сообщения
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
     const userMessage = input;
     setInput("");
     setLoading(true);
@@ -300,24 +392,29 @@ export default function AI() {
     if (!chatId) {
       const { data, error } = await supabase
         .from("chats")
-        .insert({ title: "Новый чат" })
+        .insert({
+          title: "Новый чат",
+          user_id: user.id,
+        })
         .select()
         .single();
+
       if (error || !data) {
         setLoading(false);
         setError("Не удалось создать чат");
         return;
       }
+
       chatId = data.id;
       setCurrentChatId(chatId);
       setChats([data, ...chats]);
     }
 
-    // Сохраняем сообщение пользователя
     const { data: savedUserMessage, error: saveError } = await supabase
       .from("messages")
       .insert({
         chat_id: chatId,
+        user_id: user.id, // ✅ Добавляем user_id
         role: "user",
         content: userMessage,
       })
@@ -349,6 +446,7 @@ export default function AI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMessage, chatId }),
       });
+
       const data = await response.json();
 
       if (response.ok) {
@@ -356,6 +454,7 @@ export default function AI() {
           .from("messages")
           .insert({
             chat_id: chatId,
+            user_id: user.id,
             role: "assistant",
             content: data.response,
           })
@@ -372,257 +471,182 @@ export default function AI() {
           setMessages((prev) => [...prev, assistantMessageObj]);
         }
       } else {
-        setError(data.error || "Ошибка");
+        setError(data.error || "Ошибка при получении ответа");
         await supabase.from("messages").delete().eq("id", savedUserMessage.id);
         setMessages((prev) => prev.filter((m) => m.id !== savedUserMessage.id));
       }
     } catch (error) {
       console.error("Ошибка:", error);
-      setError("Ошибка соединения");
+      setError("Не удалось соединиться с сервером");
       await supabase.from("messages").delete().eq("id", savedUserMessage.id);
       setMessages((prev) => prev.filter((m) => m.id !== savedUserMessage.id));
     } finally {
       setLoading(false);
-    }
-  };
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (aispaceState) {
       loadChats();
     }
-  }, [aispaceState]);
+  };
+
+  useEffect(() => {
+    loadChats();
+  }, []);
 
   useEffect(() => {
     if (currentChatId) {
       loadMessages(currentChatId);
     }
   }, [currentChatId]);
-
-  if (pathname === "/tutor") {
-    return null;
-  }
-
-  // Свернутый вид
-  if (!aispaceState) {
+  const pathname = usePathname();
+  if (pathname != "/tutor")
     return (
-      <div className="fixed bottom-0 right-0 z-50">
+      <main>
         <div
-          onClick={toggleAiSpace}
-          className="shadow-xs cursor-pointer hover:mb-[55px] transition-all duration-300 bg-white mb-[50px] mr-[10px] flex items-center justify-center rounded-[20px] py-[7px] px-[5px]"
+          className={`  ${aispaceState ? "flex" : "hidden"}   flex h-[840px] min-w-[350px] mt-[120px]  fixed top-0 right-0 z-20 bg-gray-50 border-l-[1px] border-gray-300`}
         >
-          <div className="h-[60px] w-[4px] bg-orange-200 ml-[7px]"></div>
-          <div className="flex flex-col">
-            <p className="smaller-text font-semibold flex text-right pr-[10px] ml-[10px]">
-              ИИ-учитель Мао
-            </p>
-            <p className="smaller-text font-semibold text-gray-600 flex text-right pr-[10px] ml-[10px]">
-              Помогу со всем!
-            </p>
-          </div>
-          <img
-            src="/aiclose.png"
-            className="rounded-full max-w-[80px] border-orange-400 border-[1px] max-h-80px"
-            alt="AI Teacher"
+          <ChatSidebar
+            chats={chats}
+            currentChatId={currentChatId}
+            onSelectChat={setCurrentChatId}
+            onNewChat={createNewChat}
+            onDeleteChat={deleteChat}
+            onRenameChat={renameChat}
           />
-        </div>
-      </div>
-    );
-  }
 
-  // Развернутый вид — используем MessageBubble для отображения сообщений
-  return (
-    <div className="fixed top-0 right-0 sm:w-[500px] w-full mt-[120px] h-full max-h-[900px] overflow-y-auto bg-white shadow-xl z-20 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-        <div className="flex items-center gap-3">
-          <img
-            src="/aiclose.png"
-            className="rounded-full w-10 h-10 object-cover"
-            alt="AI Teacher"
-          />
-          <div>
-            <p className="font-semibold text-sm">
-              {currentChatId
-                ? chats.find((c) => c.id === currentChatId)?.title ||
-                  "Новый чат"
-                : "ИИ-учитель Мао"}
-            </p>
-            <p className="text-xs text-gray-400">ИИ-учитель Мао</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={createNewChat}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            title="Новый чат"
+          <div
+            className={`${aisidebarState ? "" : ""} flex-1 flex flex-col items-center`}
           >
-            <MessageCirclePlus className="w-5 h-5 text-gray-500" />
-          </button>
-          <button
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            title="История чатов"
-          >
-            <svg
-              className="w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <Link
-            href="/tutor"
-            className="bg-purple-500 px-3 py-1.5 rounded-md text-white text-xs font-medium hover:bg-purple-600 transition-colors"
-          >
-            Полная версия
-          </Link>
-          <button
-            onClick={toggleAiSpace}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-      </div>
+            <div className="flex justify-center flex-col items-center   max-w-[1300px] w-full">
+              <div className="py-[10px] bg-gray-50 px-[10px] flex flex-row justify-between w-full text-center z-10">
+                <div className=""></div>
+                <p className="text-[10px] ml-[90px] text-center font-semibold mt-[5px] w-full max-w-[200px] overflow-x-auto">
+                  {currentChatId
+                    ? chats.find((chat) => chat.id === currentChatId)?.title ||
+                      "Новый чат"
+                    : "ИИ-учитель Мао"}
+                </p>
+                <div className="flex flex-row items-center">
+                  <Link
+                    href="/tutor"
+                    className="font-semibold text-[10px] rounded-full border-purple-400 text-white h-[25px] w-[100px] p-[5px] bg-purple-400"
+                  >
+                    Полная версия
+                  </Link>
+                  <X
+                    className="text-gray-700 cursor-pointer m-[10px] w-[15px] h-[15px]"
+                    onClick={toggleAiSpace}
+                  />
+                </div>
+              </div>
 
-      {/* Sidebar с чатами */}
-      {showSidebar && (
-        <div className="absolute left-0 top-[73px] w-64 bg-white border-r border-gray-200 h-[calc(100%-73px)] z-10 shadow-lg">
-          <div className="p-3 border-b border-gray-100">
-            <button
-              onClick={createNewChat}
-              className="w-full py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
-            >
-              + Новый чат
-            </button>
-          </div>
-          <div className="overflow-y-auto h-[calc(100%-60px)]">
-            {chats.map((chat) => (
               <div
-                key={chat.id}
-                className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                  currentChatId === chat.id ? "bg-purple-50" : ""
-                }`}
-                onClick={() => {
-                  setCurrentChatId(chat.id);
-                  setShowSidebar(false);
-                }}
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto p-6 bg-foxford-gray/30 mt-12 mb-24 w-full"
               >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="text-sm font-medium truncate">
-                      {chat.title}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      {new Date(chat.updated_at).toLocaleDateString("ru-RU")}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+                    {error}
+                  </div>
+                )}
+
+                {messages.length === 0 && !isLoadingChats && currentChatId && (
+                  <div className="text-center text-foxford-text-light mt-12">
+                    <p className="ord-text mb-2">
+                      Начните диалог с ИИ-учителем!
+                    </p>
+                    <p className="smaller-text">
+                      Задайте вопрос по математике, физике, русскому языку или
+                      любому другому предмету
+                    </p>
+                  </div>
+                )}
+
+                {messages.map((message) => (
+                  <MessageBubble
+                    key={message.id}
+                    id={message.id}
+                    role={message.role}
+                    content={message.content}
+                    onEdit={message.role === "user" ? editMessage : undefined}
+                    onDelete={
+                      message.role === "user" ? deleteMessage : undefined
+                    }
+                    onCopy={copyToClipboard}
+                    onRegenerate={
+                      message.role === "assistant"
+                        ? regenerateMessage
+                        : undefined
+                    }
+                  />
+                ))}
+
+                {loading && (
+                  <div className="flex justify-start mb-4">
+                    <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-foxford-gray shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="animate-pulse">.</span>
+                        <span
+                          className="animate-pulse"
+                          style={{ animationDelay: "0.2s" }}
+                        >
+                          .
+                        </span>
+                        <span
+                          className="animate-pulse"
+                          style={{ animationDelay: "0.4s" }}
+                        >
+                          .
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteChat(chat.id);
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="p-4 bg-white  w-[300px] fixed bottom-0 border-gray-300 mb-[35px] rounded-xl shadow-sm z-10">
+                <div className="flex gap-3 items-center max-w-3xl mx-auto">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
                     }}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    placeholder="Задайте вопрос.."
+                    rows={1}
+                    className="flex-1 px-4 py-3 bg-white smaller-text resize-none focus:outline-none focus:border-foxford-green transition-colors"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={loading || !input.trim()}
+                    className="bg-purple-500 cursor-pointer text-white smaller-text rounded-full flex items-center justify-center"
                   >
-                    <Trash className="w-4 h-4" />
+                    <ArrowUp className="w-[15px] h-[15px] m-[6px]" />
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Messages — используем MessageBubble */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 pb-[150px]">
-        {error && (
-          <div className="mb-4 p-2 bg-red-50 border border-red-200 text-red-500 rounded-lg text-xs text-center">
-            {error}
-          </div>
-        )}
-
-        {messages.length === 0 && currentChatId && (
-          <div className="text-center text-gray-400 mt-20">
-            <p className="text-sm mb-2">Начните диалог с ИИ-учителем!</p>
-            <p className="text-xs">Задайте любой вопрос</p>
-          </div>
-        )}
-
-        {/* ✅ Используем MessageBubble для каждого сообщения */}
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            id={message.id}
-            role={message.role}
-            content={message.content}
-            onEdit={message.role === "user" ? editMessage : undefined}
-            onDelete={message.role === "user" ? deleteMessage : undefined}
-            onCopy={copyToClipboard}
-            onRegenerate={
-              message.role === "assistant" ? regenerateMessage : undefined
-            }
-          />
-        ))}
-
-        {loading && (
-          <div className="flex justify-start mb-3">
-            <div className="bg-white border border-gray-200 px-3 py-2 rounded-xl rounded-tl-sm">
-              <div className="flex gap-1">
-                <span className="animate-pulse">.</span>
-                <span
-                  className="animate-pulse"
-                  style={{ animationDelay: "0.2s" }}
-                >
-                  .
-                </span>
-                <span
-                  className="animate-pulse"
-                  style={{ animationDelay: "0.4s" }}
-                >
-                  .
-                </span>
+              <div className="fixed bottom-0 w-[200px] text-center z-20 mb-[10px] text-gray-600 text-[10px]">
+                ИИ может делать ошибки
               </div>
             </div>
           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-4 bg-gray-50 fixed w-[400px] ml-[50px] bottom-0">
-        <div className="flex bg-white gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            placeholder="Задайте вопрос..."
-            rows={1}
-            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-purple-400 transition-colors"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={loading || !input.trim()}
-            className="bg-purple-500 text-white rounded-xl px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-600 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </button>
         </div>
-      </div>
-    </div>
-  );
+
+        <div
+          onClick={toggleAiSpace}
+          className={` ${aispaceState ? "hidden" : "flex"} cursor-pointer hover:mr-[10px] transition-all duration-300 border-[1px] border-gray-200 fixed items-center p-[10px] z-20 m-[20px] shadow-lg bottom-0 right-0 rounded-[20px] w-[200px] h-[70px] rounde-lg bg-white  `}
+        >
+          <div className="w-[3px] h-full bg-orange-300"></div>
+          <img
+            src="/aiclose.png"
+            className="w-[40px] h-[40px] ml-[10px] rounded-full"
+          />
+          <p className="smaller-text ml-[10px] font-semibold">ИИ-учитель Мао</p>
+        </div>
+      </main>
+    );
 }

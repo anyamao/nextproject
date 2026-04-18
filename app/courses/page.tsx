@@ -1,4 +1,3 @@
-// app/courses/page.tsx
 import Link from "next/link";
 import { BookOpen, Calculator, Atom, Languages, ArrowLeft } from "lucide-react";
 
@@ -8,6 +7,7 @@ type Course = {
   name: string;
   subject: string | null;
   description: string | null;
+  image: string;
   created_at: string;
 };
 
@@ -23,7 +23,7 @@ export default async function CoursesPage() {
   try {
     if (supabaseUrl && supabaseKey) {
       const res = await fetch(
-        `${supabaseUrl}/rest/v1/courses?select=id,slug,name,subject,description,created_at&is_published=eq.true&order=name`,
+        `${supabaseUrl}/rest/v1/courses?select=id,slug,name,subject,image,description,created_at&is_published=eq.true&order=name`,
         {
           headers: {
             apikey: supabaseKey,
@@ -43,20 +43,6 @@ export default async function CoursesPage() {
     console.error("❌ Failed to fetch courses:", err);
     error = "Ошибка подключения к базе данных";
   }
-
-  const getSubjectIcon = (subject: string | null) => {
-    switch (subject) {
-      case "math":
-        return <Calculator className="w-8 h-8 text-purple-600" />;
-      case "physics":
-        return <Atom className="w-8 h-8 text-blue-600" />;
-      case "russian":
-        return <BookOpen className="w-8 h-8 text-amber-600" />;
-      default:
-        return <BookOpen className="w-8 h-8 text-gray-600" />;
-    }
-  };
-
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
       <div className="w-full">
@@ -99,10 +85,12 @@ export default async function CoursesPage() {
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
             >
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
-                  {getSubjectIcon(course.subject)}
+                <div className="bg-gray-50 group-hover:bg-purple-50 transition-colors rounded-lg w-[100px] h-[130px] overflow-hidden">
+                  <img
+                    src={`/${course.image}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-
                 <div className="flex-1 min-w-0">
                   {course.subject && (
                     <p className="text-sm font-medium text-purple-600 mb-1">
