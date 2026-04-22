@@ -9,6 +9,7 @@ import {
   ThumbsDown,
   ArrowRight,
   Loader2,
+  Eye,
   Send,
 } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +35,7 @@ type Lesson = {
   passing_score: number;
   clear_count: number;
   unclear_count: number;
+  view_count: number; // Add this line
 };
 
 type Comment = {
@@ -359,118 +361,64 @@ export default function LessonClient({
     }
   }, [lesson?.id]);
 
+  // ─────────────────────────────────────────────────────────────
+  // RECORD UNIQUE VIEW (only once per user per lesson)
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!lesson?.id) return;
 
-    const fetchComments = async () => {
+    const recordView = async () => {
       try {
-        const { data: commentsData, error } = await supabase
-          .from("comments")
-          .select(
-            `
-              id,
-              user_id,
-              content,
-              created_at,
-              updated_at,
-              parent_id,
-              likes_count,
-              dislikes_count
-            `,
-          )
-          .eq("lesson_id", lesson.id)
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: true });
+        // Check if user already viewed this lesson
+        let query = supabase
+          .from("lesson_views")
+          .select("id")
+          .eq("lesson_id", lesson.id);
 
-        if (error) throw error;
-        if (!commentsData) {
-          setComments([]);
-          return;
+        // If authenticated, filter by user_id
+        if (user?.id) {
+          query = query.eq("user_id", user.id);
+        } else {
+          // For anonymous users, use session storage to prevent duplicate views in same session
+          const sessionKey = `viewed_lesson_${lesson.id}`;
+          if (sessionStorage.getItem(sessionKey)) {
+            return; // Already viewed in this session
+          }
+          query = query.is("user_id", null);
         }
 
-        let userLikes: { comment_id: string; like_type: string }[] = [];
-        if (isAuthenticated && user) {
-          const commentIds = commentsData.map((c) => c.id);
-          const { data: likesData } = await supabase
-            .from("comment_likes")
-            .select("comment_id, like_type")
-            .in("comment_id", commentIds)
-            .eq("user_id", user.id);
+        const { data: existingView } = await query.maybeSingle();
 
-          userLikes = likesData || [];
+        // If no existing view, record it
+        if (!existingView) {
+          await supabase.from("lesson_views").insert({
+            lesson_id: lesson.id,
+            user_id: user?.id || null,
+          });
+
+          // Store in session storage for anonymous users
+          if (!user?.id) {
+            sessionStorage.setItem(`viewed_lesson_${lesson.id}`, "true");
+          }
+
+          // Update the view count in UI
+          const { count: newCount } = await supabase
+            .from("lesson_views")
+            .select("*", { count: "exact", head: true })
+            .eq("lesson_id", lesson.id);
+
+          setLesson((prev) => ({
+            ...prev,
+            view_count: newCount || 0,
+          }));
         }
-
-        const userIds = [...new Set(commentsData.map((c) => c.user_id))];
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-
-        const usernameMap = new Map<string, string>();
-        if (profilesData) {
-          profilesData.forEach((profile) => {
-            if (profile.username) {
-              usernameMap.set(profile.id, profile.username);
-            }
-          });
-        }
-
-        const commentsWithUsers: Comment[] = commentsData.map((c) => {
-          const username = usernameMap.get(c.user_id);
-          const userLike = userLikes.find((l) => l.comment_id === c.id);
-
-          return {
-            id: c.id,
-            user_id: c.user_id,
-            content: c.content,
-            created_at: c.created_at,
-            updated_at: c.updated_at,
-            parent_id: c.parent_id,
-            likes_count: c.likes_count || 0,
-            dislikes_count: c.dislikes_count || 0,
-            user_email: username || `User${c.user_id.split("-")[0]}`,
-            replies: [],
-            user_liked: userLike?.like_type as "like" | "dislike" | null,
-          };
-        });
-
-        const nestComments = (comments: Comment[]): Comment[] => {
-          const commentMap = new Map<string, Comment>();
-          const rootComments: Comment[] = [];
-
-          comments.forEach((c) => {
-            commentMap.set(c.id, { ...c, replies: [] });
-          });
-
-          comments.forEach((c) => {
-            const comment = commentMap.get(c.id);
-            if (!comment) return;
-
-            if (c.parent_id) {
-              const parent = commentMap.get(c.parent_id);
-              if (parent) {
-                if (!parent.replies) parent.replies = [];
-                parent.replies.push(comment);
-              }
-            } else {
-              rootComments.push(comment);
-            }
-          });
-
-          return rootComments;
-        };
-
-        setComments(nestComments(commentsWithUsers));
       } catch (err) {
-        console.error("❌ Exception fetching comments:", err);
-      } finally {
-        setLoadingComments(false);
+        console.error("Failed to record view:", err);
       }
     };
 
-    fetchComments();
-  }, [lesson?.id, user, isAuthenticated]);
-
+    recordView();
+  }, [lesson?.id, user?.id]);
   useEffect(() => {
     if (!isAuthenticated || !user || !TEST_ID) {
       setLoadingResult(false);
@@ -843,26 +791,34 @@ export default function LessonClient({
           </button>
         </div>
 
-        <div className="bg-white flex flex-row p-[15px] items-center shadow-xs rounded-lg">
-          <div className="font-semibold smaller-text">
-            {!isAuthenticated
-              ? "Войдите, чтобы видеть результат"
-              : !result
-                ? "Пройдите тест, чтобы узнать свой результат"
-                : result.score >= 75
-                  ? `Ваш результат - ${result.score}%! Так держать!`
-                  : `Ваш результат - ${result.score}%! Вы можете лучше`}
-          </div>
-          <div
-            className={`rounded-full smaller-text ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${
-              result
-                ? result.score >= 75
-                  ? "text-green-900 bg-green-200 border-green-600"
-                  : "border-red-700 text-red-900 bg-red-200"
-                : ""
-            }`}
-          >
-            {badge.text}
+        <div className="flex flex-row items-center">
+          {TEST_ID && (
+            <div className="bg-white flex flex-row p-[15px] items-center shadow-xs rounded-lg">
+              <div className="font-semibold smaller-text">
+                {!isAuthenticated
+                  ? "Войдите, чтобы видеть результат"
+                  : !result
+                    ? "Пройдите тест, чтобы узнать свой результат"
+                    : result.score >= 75
+                      ? `Ваш результат - ${result.score}%! Так держать!`
+                      : `Ваш результат - ${result.score}%! Вы можете лучше`}
+              </div>
+              <div
+                className={`rounded-full text-sm ml-[15px] w-[35px] h-[35px] cursor-default items-center justify-center flex border-[1px] ${
+                  result
+                    ? result.score >= 75
+                      ? "text-green-900 bg-green-200 border-green-600"
+                      : "border-red-700 text-red-900 bg-red-200"
+                    : ""
+                }`}
+              >
+                {badge.text}
+              </div>
+            </div>
+          )}
+          <div className=" flex  flex-row items-center mx-[15px]">
+            <p className="text-[10px] mr-[5px]">{lesson.view_count || 0}</p>
+            <Eye className="w-[15px] h-[15px] text-gray-600"></Eye>
           </div>
         </div>
       </div>

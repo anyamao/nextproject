@@ -26,7 +26,7 @@ export default async function LessonPage({
   }
 
   try {
-    // 1. Получаем курс по slug, чтобы узнать course_id
+    // 1. Get course by slug to find course_id
     const courseRes = await fetch(
       `${supabaseUrl}/rest/v1/courses?select=id,slug,name&slug=eq.${encodeURIComponent(courseSlug)}&is_published=eq.true`,
       {
@@ -55,7 +55,6 @@ export default async function LessonPage({
 
     console.log("✅ Course found:", course.name, "ID:", course.id);
 
-    // 2. Получаем урок из таблицы ege_lessons по course_id и slug
     const lessonRes = await fetch(
       `${supabaseUrl}/rest/v1/ege_lessons?select=*&course_id=eq.${course.id}&slug=eq.${encodeURIComponent(lessonSlug)}&is_published=eq.true`,
       {
@@ -84,7 +83,6 @@ export default async function LessonPage({
         lessonSlug,
       );
 
-      // Для отладки: показываем все уроки в этом курсе
       const allLessonsRes = await fetch(
         `${supabaseUrl}/rest/v1/ege_lessons?select=slug,title&course_id=eq.${course.id}&is_published=eq.true`,
         {
@@ -104,7 +102,22 @@ export default async function LessonPage({
 
     console.log("✅ Lesson found:", egeLesson.title);
 
-    // Форматируем урок для LessonClient
+    const viewsRes = await fetch(
+      `${supabaseUrl}/rest/v1/lesson_views?select=id&lesson_id=eq.${egeLesson.id}`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      },
+    );
+
+    let viewCount = 0;
+    if (viewsRes.ok) {
+      const viewsData = await viewsRes.json();
+      viewCount = Array.isArray(viewsData) ? viewsData.length : 0;
+    }
+
     const lesson = {
       id: egeLesson.id,
       slug: egeLesson.slug,
@@ -116,6 +129,7 @@ export default async function LessonPage({
       clear_count: egeLesson.clear_count || 0,
       unclear_count: egeLesson.unclear_count || 0,
       test_id: egeLesson.test_id || null,
+      view_count: viewCount, // Add view count to lesson
     };
 
     return (

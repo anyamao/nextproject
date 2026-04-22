@@ -92,11 +92,13 @@ export default async function CoursesPage() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  {course.subject && (
-                    <p className="text-sm font-medium text-purple-600 mb-1">
-                      {course.subject}
-                    </p>
-                  )}
+                  <div className="flex flex-row w-full justify-between items-center">
+                    {course.subject && (
+                      <p className="text-sm font-medium text-purple-600 mb-1">
+                        {course.subject}
+                      </p>
+                    )}
+                  </div>
                   <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
                     {course.name}
                   </h2>

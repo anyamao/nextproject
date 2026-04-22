@@ -1,10 +1,11 @@
-// app/articles/page.tsx
 "use client";
 
 import { useState, useEffect, SyntheticEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye } from "lucide-react";
+import FavoriteButton from "@/ui/FavoriteButton";
+
 interface Article {
   id: string;
   slug: string;
@@ -14,6 +15,7 @@ interface Article {
   text: string;
   image: string;
   created_at: string;
+  view_count: number;
 }
 
 export default function ArticlesPage() {
@@ -23,14 +25,47 @@ export default function ArticlesPage() {
 
   useEffect(() => {
     const fetchArticles = async () => {
-      const { data, error } = await supabase
+      const { data: articlesData, error: articlesError } = await supabase
         .from("articles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setArticles(data);
+      if (articlesError || !articlesData) {
+        setLoading(false);
+        return;
       }
+
+      const articleIds = articlesData.map((article) => article.id);
+
+      const { data: viewCounts, error: viewsError } = await supabase
+        .from("article_views")
+        .select("article_id", { count: "exact", head: false })
+        .in("article_id", articleIds);
+
+      const viewCountMap = new Map<string, number>();
+
+      if (viewCounts && !viewsError) {
+        const { data: counts } = await supabase
+          .from("article_views")
+          .select("article_id")
+          .in("article_id", articleIds);
+
+        if (counts) {
+          counts.forEach((view) => {
+            viewCountMap.set(
+              view.article_id,
+              (viewCountMap.get(view.article_id) || 0) + 1,
+            );
+          });
+        }
+      }
+
+      const articlesWithViews = articlesData.map((article) => ({
+        ...article,
+        view_count: viewCountMap.get(article.id) || 0,
+      }));
+
+      setArticles(articlesWithViews);
       setLoading(false);
     };
 
@@ -53,11 +88,9 @@ export default function ArticlesPage() {
       : preview + (preview ? "." : "");
   };
 
-  // ✅ Исправленная функция обработки ошибки загрузки изображения
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
     img.style.display = "none";
-    // Находим следующий элемент (div с заглушкой)
     const placeholder = img.nextElementSibling as HTMLElement;
     if (placeholder) {
       placeholder.style.display = "flex";
@@ -84,7 +117,6 @@ export default function ArticlesPage() {
             href={`/articles/${article.slug}`}
             className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 block"
           >
-            {/* Обложка */}
             <div className="relative h-48 bg-gray-100 overflow-hidden">
               {getImageUrl(article.image) ? (
                 <img
@@ -107,12 +139,21 @@ export default function ArticlesPage() {
               </span>
             </div>
 
-            {/* Контент */}
             <div className="p-4">
-              <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                <span>📚 {article.category || "Без категории"}</span>
-                <span>•</span>
-                <span>⏱️ {article.time || "5 мин"} чтения</span>
+              <div className="flex items-center gap-2 text-xs w-full flex-row justify-between  text-gray-400 mb-2">
+                <div className="flex  flex-row items-center   ">
+                  {" "}
+                  <span>📚 {article.category || "Без категории"}</span>
+                  <span className="mx-[5px]">•</span>
+                  <span>⏱️ {article.time || "5 мин"} чтения</span>
+                </div>
+                <div className=" flex  flex-row items-center mr-[15px]">
+                  <p className="text-[10px] mr-[5px]">
+                    {article.view_count || 0}
+                  </p>
+                  <Eye className="w-[15px] h-[15px] text-gray-400"></Eye>
+                </div>
+                <FavoriteButton articleId={article.id} />
               </div>
               <h2 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
                 {article.name}

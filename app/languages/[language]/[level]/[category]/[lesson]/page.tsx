@@ -14,6 +14,7 @@ type LessonData = {
   passing_score: number;
   clear_count: number;
   unclear_count: number;
+  view_count: number; // Add this line
 };
 
 type RouteParam = {
@@ -49,7 +50,6 @@ export default async function LessonPage({
   });
 
   try {
-    // 1. Сначала получаем язык по slug
     const langRes = await fetch(
       `${supabaseUrl}/rest/v1/languages?select=id&slug=eq.${encodeURIComponent(language)}&is_published=eq.true`,
       {
@@ -69,7 +69,6 @@ export default async function LessonPage({
     }
     console.log("✅ Language ID:", languageId);
 
-    // 2. Получаем уровень по code и language_id
     const levelRes = await fetch(
       `${supabaseUrl}/rest/v1/levels?select=id&code=eq.${level.toUpperCase()}&language_id=eq.${languageId}&is_published=eq.true`,
       {
@@ -89,7 +88,6 @@ export default async function LessonPage({
     }
     console.log("✅ Level ID:", levelId);
 
-    // 3. Получаем категорию по slug, language_id и level_id
     const catRes = await fetch(
       `${supabaseUrl}/rest/v1/categories?select=id&slug=eq.${encodeURIComponent(category)}&language_id=eq.${languageId}&level_id=eq.${levelId}&is_published=eq.true`,
       {
@@ -109,7 +107,6 @@ export default async function LessonPage({
     }
     console.log("✅ Category ID:", categoryId);
 
-    // 4. Получаем урок по slug, language_id, level_id, category_id
     const lessonRes = await fetch(
       `${supabaseUrl}/rest/v1/ege_lessons?select=*&slug=eq.${encodeURIComponent(lessonSlug)}&language_id=eq.${languageId}&level_id=eq.${levelId}&category_id=eq.${categoryId}&is_published=eq.true`,
       {
@@ -133,7 +130,6 @@ export default async function LessonPage({
     if (!lesson) {
       console.error("❌ Lesson not found with slug:", lessonSlug);
 
-      // Отладка: показываем все уроки для этой категории
       const allLessonsRes = await fetch(
         `${supabaseUrl}/rest/v1/ege_lessons?select=slug,title&language_id=eq.${languageId}&level_id=eq.${levelId}&category_id=eq.${categoryId}&is_published=eq.true`,
         {
@@ -153,7 +149,23 @@ export default async function LessonPage({
 
     console.log("✅ Lesson found:", lesson.title);
 
-    // Преобразуем данные в нужный формат для LessonClient
+    const viewsRes = await fetch(
+      `${supabaseUrl}/rest/v1/lesson_views?select=id&lesson_id=eq.${lesson.id}`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 3600 },
+      },
+    );
+
+    let viewCount = 0;
+    if (viewsRes.ok) {
+      const viewsData = await viewsRes.json();
+      viewCount = Array.isArray(viewsData) ? viewsData.length : 0;
+    }
+
     const formattedLesson: LessonData = {
       id: lesson.id,
       slug: lesson.slug,
@@ -167,6 +179,7 @@ export default async function LessonPage({
       passing_score: lesson.passing_score || 75,
       clear_count: lesson.clear_count || 0,
       unclear_count: lesson.unclear_count || 0,
+      view_count: viewCount, // Add the view count
     };
 
     return (

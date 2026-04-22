@@ -115,7 +115,6 @@ export default async function LanguageRoadmapPage({
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{language.name}</h1>
-            {language.icon && <span className="text-2xl">{language.icon}</span>}
           </div>
           <div></div>
         </div>

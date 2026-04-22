@@ -1,4 +1,3 @@
-// app/articles/[slug]/ArticlesClient.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -10,15 +9,15 @@ import {
   ThumbsDown,
   Loader2,
   Send,
+  Bookmark,
+  BookmarkCheck,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import useContactStore from "@/store/states";
 import { createClient } from "@/lib/supabase/client";
-
-// ─────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────
+import FavoriteButton from "@/ui/FavoriteButton";
 type Article = {
   id: string;
   title: string;
@@ -29,6 +28,7 @@ type Article = {
   slug: string;
   image: string;
   unclear_count: number;
+  view_count: number;
 };
 
 type Comment = {
@@ -59,9 +59,6 @@ interface ArticlesClientProps {
   params: { slug: string };
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMMENT ITEM COMPONENT
-// ─────────────────────────────────────────────────────────────
 type CommentItemProps = {
   comment: Comment;
   depth?: number;
@@ -288,9 +285,6 @@ const CommentItem = ({
     </div>
   );
 };
-// ─────────────────────────────────────────────────────────────
-// MAIN ARTICLES CLIENT COMPONENT
-// ─────────────────────────────────────────────────────────────
 export default function ArticlesClient({
   initialArticle,
   initialSlug,
@@ -299,17 +293,14 @@ export default function ArticlesClient({
   const { user, isAuthenticated } = useContactStore();
   const supabase = createClient();
 
-  // State
   const [article, setArticle] = useState<Article>(initialArticle);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
 
-  // UI state
   const [copySuccess, setCopySuccess] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
-  // Comment features state
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -318,9 +309,6 @@ export default function ArticlesClient({
     null,
   );
 
-  // ─────────────────────────────────────────────────────────────
-  // HELPER: Count all comments including replies
-  // ─────────────────────────────────────────────────────────────
   const countAllComments = (commentsList: Comment[]): number => {
     return commentsList.reduce((total, comment) => {
       return (
@@ -329,9 +317,6 @@ export default function ArticlesClient({
     }, 0);
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // SYNC FEEDBACK COUNTS (используем lesson_feedback)
-  // ─────────────────────────────────────────────────────────────
   const syncFeedbackCounts = async (articleId: string) => {
     try {
       const [clearRes, unclearRes] = await Promise.all([
@@ -363,9 +348,6 @@ export default function ArticlesClient({
     }
   }, [article?.id]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH USER'S FEEDBACK (из lesson_feedback)
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated || !user || !article?.id) return;
 
@@ -385,126 +367,62 @@ export default function ArticlesClient({
     fetchUserFeedback();
   }, [article?.id, user, isAuthenticated]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FETCH COMMENTS (из таблицы comments, с lesson_id = article.id)
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!article?.id) return;
 
-    const fetchComments = async () => {
+    const recordView = async () => {
       try {
-        const { data: commentsData, error } = await supabase
-          .from("comments")
-          .select(
-            `
-            id,
-            user_id,
-            content,
-            created_at,
-            updated_at,
-            parent_id,
-            likes_count,
-            dislikes_count
-          `,
-          )
-          .eq("lesson_id", article.id)
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: true });
+        // Check if user already viewed this article
+        let query = supabase
+          .from("article_views")
+          .select("id")
+          .eq("article_id", article.id);
 
-        if (error) throw error;
-        if (!commentsData) {
-          setComments([]);
-          return;
+        // If authenticated, filter by user_id
+        if (user?.id) {
+          query = query.eq("user_id", user.id);
+        } else {
+          // For anonymous users, use session storage to prevent duplicate views in same session
+          const sessionKey = `viewed_${article.id}`;
+          if (sessionStorage.getItem(sessionKey)) {
+            return; // Already viewed in this session
+          }
+          query = query.is("user_id", null);
         }
 
-        // Fetch user's likes
-        let userLikes: { comment_id: string; like_type: string }[] = [];
-        if (isAuthenticated && user) {
-          const commentIds = commentsData.map((c) => c.id);
-          const { data: likesData } = await supabase
-            .from("comment_likes")
-            .select("comment_id, like_type")
-            .in("comment_id", commentIds)
-            .eq("user_id", user.id);
+        const { data: existingView } = await query.maybeSingle();
 
-          userLikes = likesData || [];
+        // If no existing view, record it
+        if (!existingView) {
+          await supabase.from("article_views").insert({
+            article_id: article.id,
+            user_id: user?.id || null,
+          });
+
+          // Store in session storage for anonymous users
+          if (!user?.id) {
+            sessionStorage.setItem(`viewed_${article.id}`, "true");
+          }
+
+          // Update the view count in UI
+          const { count: newCount } = await supabase
+            .from("article_views")
+            .select("*", { count: "exact", head: true })
+            .eq("article_id", article.id);
+
+          setArticle((prev) => ({
+            ...prev,
+            view_count: newCount || 0,
+          }));
         }
-
-        // Fetch usernames from profiles
-        const userIds = [...new Set(commentsData.map((c) => c.user_id))];
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-
-        const usernameMap = new Map<string, string>();
-        if (profilesData) {
-          profilesData.forEach((profile) => {
-            if (profile.username) {
-              usernameMap.set(profile.id, profile.username);
-            }
-          });
-        }
-
-        // Transform comments
-        const commentsWithUsers: Comment[] = commentsData.map((c) => {
-          const username = usernameMap.get(c.user_id);
-          const userLike = userLikes.find((l) => l.comment_id === c.id);
-
-          return {
-            id: c.id,
-            user_id: c.user_id,
-            content: c.content,
-            created_at: c.created_at,
-            updated_at: c.updated_at,
-            parent_id: c.parent_id,
-            likes_count: c.likes_count || 0,
-            dislikes_count: c.dislikes_count || 0,
-            user_email: username || `User${c.user_id.split("-")[0]}`,
-            replies: [],
-            user_liked: userLike?.like_type as "like" | "dislike" | null,
-          };
-        });
-
-        // Nest replies
-        const nestComments = (comments: Comment[]): Comment[] => {
-          const commentMap = new Map<string, Comment>();
-          const rootComments: Comment[] = [];
-
-          comments.forEach((c) => {
-            commentMap.set(c.id, { ...c, replies: [] });
-          });
-
-          comments.forEach((c) => {
-            const comment = commentMap.get(c.id);
-            if (!comment) return;
-
-            if (c.parent_id) {
-              const parent = commentMap.get(c.parent_id);
-              if (parent) {
-                if (!parent.replies) parent.replies = [];
-                parent.replies.push(comment);
-              }
-            } else {
-              rootComments.push(comment);
-            }
-          });
-
-          return rootComments;
-        };
-
-        setComments(nestComments(commentsWithUsers));
       } catch (err) {
-        console.error("❌ Exception fetching comments:", err);
-      } finally {
-        setLoadingComments(false);
+        console.error("Failed to record view:", err);
       }
     };
 
-    fetchComments();
-  }, [article?.id, user, isAuthenticated]);
+    recordView();
+  }, [article?.id, user?.id]);
 
-  // ─────────────────────────────────────────────────────────────
   // HANDLERS
   // ─────────────────────────────────────────────────────────────
   const handleCopyLink = async () => {
@@ -818,11 +736,6 @@ export default function ArticlesClient({
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // MAIN RENDER
-  // ─────────────────────────────────────────────────────────────
-  //
-  //
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     const cleanPath = imagePath.replace(/^['"]|['"]$/g, "");
@@ -831,7 +744,6 @@ export default function ArticlesClient({
   };
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
-      {/* Header - Back Link */}
       <div className="flex flex-row w-full items-center justify-between">
         <Link
           href="/articles"
@@ -863,14 +775,21 @@ export default function ArticlesClient({
             )}
           </button>
         </div>
-
-        <div className="bg-white flex p-[15px] items-center shadow-xs rounded-lg">
-          <div className="font-semibold smaller-text">
-            Время чтения: {article.estimated_minutes} минут
+        <div className="flex flex-row items-center">
+          <div className=" flex  flex-row items-center mr-[15px]">
+            <p className="text-[10px] mr-[5px]">{article.view_count || 0}</p>
+            <Eye className="w-[15px] h-[15px] text-gray-600"></Eye>
           </div>
+
+          <div className="bg-white flex p-[15px] items-center shadow-xs rounded-lg">
+            <div className="font-semibold smaller-text">
+              Время чтения: {article.estimated_minutes} минут
+            </div>
+          </div>
+
+          <FavoriteButton articleId={article.id} className="ml-[10px]" />
         </div>
       </div>
-      {/* Article Content */}
       <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8 shadow-md">
         <div className="bg-purple-500 top-0 mt-[20px] ml-[20px] left-0 px-4 py-2 rounded-full text-sm font-medium text-white absolute  z-60">
           {article.description}
@@ -883,7 +802,6 @@ export default function ArticlesClient({
             className="w-full h-full object-cover"
             onError={(e) => {
               e.currentTarget.style.display = "none";
-              // Показываем заглушку
               const placeholder = e.currentTarget
                 .nextElementSibling as HTMLElement;
               if (placeholder) placeholder.style.display = "flex";
@@ -907,7 +825,6 @@ export default function ArticlesClient({
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
 
-      {/* Feedback Buttons */}
       <div className="text-wrap mt-[30px] flex justify-center items-center flex-col sm:flex-row gap-4">
         <div className="flex flex-col items-center">
           <div className="font-semibold text-sm mb-[10px]">Как вам статья?</div>
@@ -936,7 +853,6 @@ export default function ArticlesClient({
         </div>
       </div>
 
-      {/* Comments Section */}
       <div className="flex flex-col w-full mt-[40px]">
         <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
           Комментарии ({countAllComments(comments)})

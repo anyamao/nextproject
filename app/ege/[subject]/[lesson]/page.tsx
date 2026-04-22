@@ -14,8 +14,11 @@ type Lesson = {
   passing_score: number;
   clear_count: number;
   unclear_count: number;
+  view_count: number; // Add this line
 };
+
 export const revalidate = 60;
+
 export default async function LessonPage({
   params,
 }: {
@@ -50,6 +53,23 @@ export default async function LessonPage({
     notFound();
   }
 
+  const viewsRes = await fetch(
+    `${supabaseUrl}/rest/v1/lesson_views?select=id&lesson_id=eq.${egeLesson.id}`,
+    {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+      next: { revalidate: 60 },
+    },
+  );
+
+  let viewCount = 0;
+  if (viewsRes.ok) {
+    const viewsData = await viewsRes.json();
+    viewCount = Array.isArray(viewsData) ? viewsData.length : 0;
+  }
+
   const lesson: Lesson = {
     id: egeLesson.id,
     slug: egeLesson.slug,
@@ -63,13 +83,9 @@ export default async function LessonPage({
     passing_score: egeLesson.passing_score || 70,
     clear_count: egeLesson.clear_count || 0,
     unclear_count: egeLesson.unclear_count || 0,
+    view_count: viewCount, // Add the view count
   };
 
-  const clientParams = {
-    level: subject,
-    category: subject,
-    lesson: lessonSlug,
-  };
   return (
     <LessonClient
       initialLesson={lesson}

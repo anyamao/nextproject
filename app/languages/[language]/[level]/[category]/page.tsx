@@ -6,6 +6,7 @@ import {
   Clock,
   CheckCircle,
   Lock,
+  Eye,
   PlayCircle,
 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -17,6 +18,20 @@ type Lesson = {
   description: string | null;
   estimated_minutes: number;
   order_number: number;
+  view_count: number;
+};
+
+type LessonFromDB = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  estimated_minutes: number;
+  order_number: number;
+};
+
+type LessonView = {
+  lesson_id: string;
 };
 
 type Category = {
@@ -111,8 +126,54 @@ export default async function CategoryLessonsPage({
       },
     );
 
-    const lessonsData = await lessonsRes.json();
-    const lessons: Lesson[] = Array.isArray(lessonsData) ? lessonsData : [];
+    const lessonsData: LessonFromDB[] = await lessonsRes.json();
+    const lessonsFromDB: LessonFromDB[] = Array.isArray(lessonsData)
+      ? lessonsData
+      : [];
+
+    // Fetch view counts for all lessons
+    let lessons: Lesson[] = [];
+
+    if (lessonsFromDB.length > 0) {
+      const lessonIds = lessonsFromDB.map((lesson) => lesson.id);
+
+      // Fetch all views for these lessons
+      const viewsRes = await fetch(
+        `${supabaseUrl}/rest/v1/lesson_views?select=lesson_id&lesson_id=in.(${lessonIds.join(",")})`,
+        {
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          cache: "no-store",
+        },
+      );
+
+      // Count views per lesson
+      const viewCountMap = new Map<string, number>();
+      if (viewsRes.ok) {
+        const viewsData: LessonView[] = await viewsRes.json();
+        if (Array.isArray(viewsData)) {
+          viewsData.forEach((view: LessonView) => {
+            viewCountMap.set(
+              view.lesson_id,
+              (viewCountMap.get(view.lesson_id) || 0) + 1,
+            );
+          });
+        }
+      }
+
+      // Combine lessons with their view counts
+      lessons = lessonsFromDB.map((lesson: LessonFromDB) => ({
+        ...lesson,
+        view_count: viewCountMap.get(lesson.id) || 0,
+      }));
+    } else {
+      lessons = lessonsFromDB.map((lesson: LessonFromDB) => ({
+        ...lesson,
+        view_count: 0,
+      }));
+    }
 
     const completedLessons: string[] = [];
     const progress =
@@ -170,26 +231,14 @@ export default async function CategoryLessonsPage({
             return (
               <Link
                 key={lesson.id}
-                href={
-                  isLocked
-                    ? "#"
-                    : `/languages/${langSlug}/${levelSlug}/${catSlug}/${lesson.slug}`
-                }
-                className={`block p-6 rounded-xl border-2 transition-all group ${
-                  isLocked
-                    ? "bg-gray-50 border-gray-200 cursor-not-allowed opacity-70"
-                    : "bg-white border-gray-200 hover:border-purple-300 hover:shadow-lg cursor-pointer"
-                }`}
+                href={`/languages/${langSlug}/${levelSlug}/${catSlug}/${lesson.slug}`}
+                className={`block p-6 rounded-xl border-2 transition-all group bg-white border-gray-200 hover:border-purple-300 hover:shadow-lg cursor-pointer`}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     {isCompleted ? (
                       <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                         <CheckCircle className="w-6 h-6 text-white" />
-                      </div>
-                    ) : isLocked ? (
-                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                        <Lock className="w-6 h-6 text-gray-500" />
                       </div>
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -199,10 +248,17 @@ export default async function CategoryLessonsPage({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-purple-700 transition-colors mb-2">
-                      {index + 1}. {lesson.title}
-                    </h3>
-
+                    <div className="flex flex-row items-center w-full justify-between">
+                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-purple-700 transition-colors mb-2">
+                        {index + 1}. {lesson.title}
+                      </h3>
+                      <div className="flex flex-row items-center mb-2 mx-[15px]">
+                        <p className="text-[10px] mr-[5px]">
+                          {lesson.view_count || 0}
+                        </p>
+                        <Eye className="w-[15px] h-[15px] text-gray-400"></Eye>
+                      </div>
+                    </div>
                     {lesson.description && (
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                         {lesson.description}
@@ -221,11 +277,9 @@ export default async function CategoryLessonsPage({
                     </div>
                   </div>
 
-                  {!isLocked && !isCompleted && (
-                    <div className="flex-shrink-0 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all">
-                      <ArrowLeft className="w-5 h-5 rotate-180" />
-                    </div>
-                  )}
+                  <div className="flex-shrink-0 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all">
+                    <ArrowLeft className="w-5 h-5 rotate-180" />
+                  </div>
 
                   {isCompleted && (
                     <div className="flex-shrink-0 text-green-500">

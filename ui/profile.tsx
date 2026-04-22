@@ -9,6 +9,7 @@ import {
   Trophy,
   User,
   MoonStar,
+  Bookmark,
 } from "lucide-react";
 import LogoutButton from "../ui/LogoutButton";
 function ProfilePanel() {
@@ -17,7 +18,7 @@ function ProfilePanel() {
   return (
     <main className="relative z-70">
       {profilenavigationState && (
-        <div className="cursor-pointer p-[15px]  bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[270px] fixed  right-0 top-0 mt-[60px] mr-[10px] sm:mt-[70px] shadow-md flex flex-col items-center text-black   rounded-xl ">
+        <div className="cursor-pointer p-[15px]  bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[320px] fixed  right-0 top-0 mt-[60px] mr-[10px] sm:mt-[70px] shadow-md flex flex-col items-center text-black   rounded-xl ">
           <div className="flex flex-row hidden items-center py-[10px] border-b-[1px] w-full border-gray-300 ">
             <img
               src="/people1.jpg"
@@ -57,6 +58,13 @@ function ProfilePanel() {
               <span className="ml-[10px] smaller-text">Мои курсы</span>
             </a>
           </div>
+          <div className="flex flex-row cursor-pointer items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
+            <a className="flex items-center " href="/my-bookmarks">
+              <Bookmark className="w-[17px] h-[17px] text-gray-500" />
+              <span className="ml-[10px] smaller-text">Мои избранные</span>
+            </a>
+          </div>
+
           <div className="flex flex-row items-center py-[5px] px-[10px]  h-[50px] w-full border-gray-300 ">
             <a className="flex items-center ">
               <Trophy className="w-[17px] h-[17px] text-gray-500" />

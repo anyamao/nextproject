@@ -1,7 +1,6 @@
-// app/articles/[slug]/page.tsx
 import ArticlesClient from "./ArticlesClient";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server"; // ← правильный импорт для Server Component
+import { createClient } from "@/lib/supabase/server";
 
 type Article = {
   id: string;
@@ -17,7 +16,6 @@ type Article = {
 };
 
 export async function generateStaticParams() {
-  // Для generateStaticParams нужно использовать fetch или прямой запрос
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -48,6 +46,7 @@ export async function generateStaticParams() {
     return [{ slug: "example-article" }];
   }
 }
+
 export default async function ArticlePage({
   params,
 }: {
@@ -68,7 +67,11 @@ export default async function ArticlePage({
     notFound();
   }
 
-  // ✅ ДОБАВЛЯЕМ image в formattedArticle
+  const { count: viewCount } = await supabase
+    .from("article_views")
+    .select("*", { count: "exact", head: true })
+    .eq("article_id", article.id);
+
   const formattedArticle = {
     id: article.id,
     title: article.name,
@@ -78,7 +81,8 @@ export default async function ArticlePage({
     clear_count: article.clear_count || 0,
     unclear_count: article.unclear_count || 0,
     slug: article.slug,
-    image: article.image, // ← ЭТО КЛЮЧЕВОЕ ПОЛЕ!
+    image: article.image,
+    view_count: viewCount || 0,
   };
 
   return (

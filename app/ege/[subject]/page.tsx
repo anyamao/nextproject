@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 
 type Lesson = {
   id: string;
@@ -8,6 +8,19 @@ type Lesson = {
   title: string;
   description: string | null;
   estimated_minutes: number | null;
+  view_count: number;
+};
+
+type LessonFromDB = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  estimated_minutes: number | null;
+};
+
+type LessonView = {
+  lesson_id: string;
 };
 
 export default async function SubjectHubPage({
@@ -58,7 +71,45 @@ export default async function SubjectHubPage({
             },
           },
         );
-        lessons = (await lessonsRes.json()) || [];
+        const lessonsData: LessonFromDB[] = await lessonsRes.json();
+
+        if (lessonsData && lessonsData.length > 0) {
+          const lessonIds = lessonsData.map((lesson) => lesson.id);
+
+          const viewsRes = await fetch(
+            `${supabaseUrl}/rest/v1/lesson_views?select=lesson_id&lesson_id=in.(${lessonIds.join(",")})`,
+            {
+              headers: {
+                apikey: supabaseKey,
+                Authorization: `Bearer ${supabaseKey}`,
+              },
+              cache: "no-store",
+            },
+          );
+
+          const viewCountMap = new Map<string, number>();
+          if (viewsRes.ok) {
+            const viewsData: LessonView[] = await viewsRes.json();
+            if (Array.isArray(viewsData)) {
+              viewsData.forEach((view: LessonView) => {
+                viewCountMap.set(
+                  view.lesson_id,
+                  (viewCountMap.get(view.lesson_id) || 0) + 1,
+                );
+              });
+            }
+          }
+
+          lessons = lessonsData.map((lesson: LessonFromDB) => ({
+            ...lesson,
+            view_count: viewCountMap.get(lesson.id) || 0,
+          }));
+        } else {
+          lessons = lessonsData.map((lesson: LessonFromDB) => ({
+            ...lesson,
+            view_count: 0,
+          }));
+        }
       }
     }
   } catch (err) {
@@ -90,10 +141,19 @@ export default async function SubjectHubPage({
                 href={`/ege/${subject}/${lessonPart}`}
                 className="block p-[20px] bg-white hover:ml-[30px] duration-300 shadow-xs transition-all border-[1px]  border-gray-300 rounded-xl flex flex-row justify-between  transition"
               >
-                <div className="flex flex-row">
-                  <div className="bg-purple-400 h-full w-[5px]"></div>
-                  <div className="flex flex-col ml-[10px] items-start">
-                    <h2 className="ord-text font-semibold">{lesson.title}</h2>
+                <div className="flex flex-row w-full">
+                  <div className="bg-purple-400 h-full w-[5px] "></div>
+                  <div className="flex flex-col ml-[10px] w-full items-start">
+                    <div className="flex flex-row items-center w-full flex-1 justify-between">
+                      <h2 className="ord-text font-semibold">{lesson.title}</h2>
+                      <div className=" flex  flex-row items-center mx-[15px]">
+                        <p className="text-[10px] mr-[5px]">
+                          {lesson.view_count || 0}
+                        </p>
+                        <Eye className="w-[15px] h-[15px] text-gray-400"></Eye>
+                      </div>
+                    </div>
+
                     <p className="text-gray-600 mt-1">{lesson.description}</p>
                     <span className="text-sm text-gray-600 mt-[5px] inline-block">
                       ⏱ {lesson.estimated_minutes ?? 30} мин
