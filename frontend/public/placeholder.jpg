@@ -1,0 +1,7 @@
+{article.image ? (
+  <img src={getImageUrl(article.image)} alt={article.name} />
+) : (
+  <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+    <span className="text-4xl">📚</span>
+  </div>
+)}
