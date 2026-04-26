@@ -57,7 +57,6 @@ export default async function LessonPage({
         initialLesson={formattedLesson}
         initialSlug={`${language}/${level}/${category}/${lessonSlug}`}
         params={{ language, level, category, lesson: lessonSlug }}
-        isLanguageLesson={true} // 🔁 Флаг для переключения логики
       />
     );
   } catch (error) {

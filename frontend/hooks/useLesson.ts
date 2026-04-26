@@ -1,8 +1,7 @@
+// hooks/useLesson.ts
 "use client";
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import useContactStore from "@/store/states";
 
 export interface Lesson {
   id: string;
@@ -24,25 +23,20 @@ export interface Lesson {
 
 export interface Comment {
   id: string;
-  user_id: string;
   content: string;
   created_at: string;
-  user_email?: string; // Joined from auth.users
+  user_email?: string;
 }
 
 export function useLesson(slug: string) {
-  const { user } = useContactStore();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
-    null,
-  );
+  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(null);
 
-  // Fetch lesson + comments + user feedback
+  // Fetch lesson + comments
   useEffect(() => {
     if (!slug) return;
-
     const fetchData = async () => {
       try {
         const { data: lesson, error: lessonError } = await supabase
@@ -57,12 +51,7 @@ export function useLesson(slug: string) {
 
         const { data: comments } = await supabase
           .from("comments")
-          .select(
-            `
-            *,
-            profiles:user_id ( username )
-          `,
-          )
+          .select("*")
           .eq("lesson_id", lesson.id)
           .eq("is_deleted", false)
           .order("created_at", { ascending: false });
@@ -71,20 +60,9 @@ export function useLesson(slug: string) {
           setComments(
             comments.map((c) => ({
               ...c,
-              user_email: c.profiles?.username || "Аноним",
-            })),
+              user_email: c.user_email || "Аноним",
+            }))
           );
-        }
-
-        if (user) {
-          const { data: feedback } = await supabase
-            .from("lesson_feedback")
-            .select("feedback_type")
-            .eq("lesson_id", lesson.id)
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-          if (feedback) setUserFeedback(feedback.feedback_type);
         }
       } catch (err) {
         console.error("Error fetching lesson:", err);
@@ -94,35 +72,21 @@ export function useLesson(slug: string) {
     };
 
     fetchData();
-  }, [slug, user]);
+  }, [slug]);
 
+  // ✅ Фидбек — заглушка (без user.id)
   const submitFeedback = async (type: "clear" | "unclear") => {
-    if (!user || !lesson) return;
-
-    const { error } = await supabase.from("lesson_feedback").upsert({
-      lesson_id: lesson.id,
-      user_id: user.id,
-      feedback_type: type,
-    });
-
-    if (!error) {
-      setUserFeedback(type);
-      setLesson((prev) =>
-        prev
-          ? {
-              ...prev,
-              clear_count:
-                type === "clear"
-                  ? prev.clear_count + (userFeedback === "clear" ? 0 : 1)
-                  : prev.clear_count - (userFeedback === "clear" ? 1 : 0),
-              unclear_count:
-                type === "unclear"
-                  ? prev.unclear_count + (userFeedback === "unclear" ? 0 : 1)
-                  : prev.unclear_count - (userFeedback === "unclear" ? 1 : 0),
-            }
-          : null,
-      );
-    }
+    // Заглушка: фидбек не сохраняется без user.id
+    setUserFeedback(type);
+    setLesson((prev) =>
+      prev
+        ? {
+            ...prev,
+            clear_count: type === "clear" ? prev.clear_count + 1 : prev.clear_count,
+            unclear_count: type === "unclear" ? prev.unclear_count + 1 : prev.unclear_count,
+          }
+        : null
+    );
   };
 
   return {

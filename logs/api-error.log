@@ -1,0 +1,1382 @@
+2026-04-25 18:24:07: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:24:07: INFO:     Started parent process [1573857]
+2026-04-25 18:24:12: Process SpawnProcess-2:
+2026-04-25 18:24:12: Process SpawnProcess-1:
+2026-04-25 18:24:12: Traceback (most recent call last):
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:24:12:     self.run()
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:24:12:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:24:12:     target(sockets=sockets)
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:24:12:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:24:12:     return runner.run(main)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:24:12:     return self._loop.run_until_complete(task)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:24:12:     config.load()
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:24:12:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:24:12:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:24:12:     raise exc from None
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:24:12:     module = importlib.import_module(module_str)
+2026-04-25 18:24:12:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:24:12:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:24:12:     from auth import (
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:24:12:     from argon2 import PasswordHasher
+2026-04-25 18:24:12: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:24:12: Traceback (most recent call last):
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:24:12:     self.run()
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:24:12:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:24:12:     target(sockets=sockets)
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:24:12:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:24:12:     return runner.run(main)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:24:12:     return self._loop.run_until_complete(task)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:24:12:     config.load()
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:24:12:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:24:12:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:24:12:     raise exc from None
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:24:12:     module = importlib.import_module(module_str)
+2026-04-25 18:24:12:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:24:12:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:24:12:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:24:12:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:24:12:     from auth import (
+2026-04-25 18:24:12:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:24:12:     from argon2 import PasswordHasher
+2026-04-25 18:24:12: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:31:13: INFO:     Stopping parent process [1573857]
+2026-04-25 18:31:13: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:31:13: INFO:     Started parent process [1587525]
+2026-04-25 18:31:18: Process SpawnProcess-1:
+2026-04-25 18:31:18: Process SpawnProcess-2:
+2026-04-25 18:31:18: Traceback (most recent call last):
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:31:18:     self.run()
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:31:18:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:31:18:     target(sockets=sockets)
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:31:18:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:31:18:     return runner.run(main)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:31:18:     return self._loop.run_until_complete(task)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:31:18:     config.load()
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:31:18:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:31:18:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:31:18:     raise exc from None
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:31:18:     module = importlib.import_module(module_str)
+2026-04-25 18:31:18:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:31:18:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:31:18:     from auth import (
+2026-04-25 18:31:18: Traceback (most recent call last):
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:31:18:     self.run()
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:31:18:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:31:18:     target(sockets=sockets)
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:31:18:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:31:18:     return runner.run(main)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:31:18:     return self._loop.run_until_complete(task)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:31:18:     config.load()
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:31:18:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:31:18:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:31:18:     raise exc from None
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:31:18:     module = importlib.import_module(module_str)
+2026-04-25 18:31:18:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:31:18:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:31:18:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:31:18:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:31:18:     from auth import (
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:31:18:     from argon2 import PasswordHasher
+2026-04-25 18:31:18: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:31:18:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:31:18:     from argon2 import PasswordHasher
+2026-04-25 18:31:18: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:34:15: INFO:     Stopping parent process [1587525]
+2026-04-25 18:34:25: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:34:25: INFO:     Started parent process [1593611]
+2026-04-25 18:34:29: Process SpawnProcess-1:
+2026-04-25 18:34:29: Process SpawnProcess-2:
+2026-04-25 18:34:29: Traceback (most recent call last):
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:34:29:     self.run()
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:34:29:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:34:29:     target(sockets=sockets)
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:34:29:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:34:29:     return runner.run(main)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:34:29:     return self._loop.run_until_complete(task)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:34:29:     config.load()
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:34:29:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:34:29:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:34:29:     raise exc from None
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:34:29:     module = importlib.import_module(module_str)
+2026-04-25 18:34:29:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:34:29:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:34:29:     from auth import (
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:34:29:     from argon2 import PasswordHasher
+2026-04-25 18:34:29: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:34:29: Traceback (most recent call last):
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:34:29:     self.run()
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:34:29:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:34:29:     target(sockets=sockets)
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:34:29:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:34:29:     return runner.run(main)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:34:29:     return self._loop.run_until_complete(task)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:34:29:     config.load()
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:34:29:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:34:29:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 24, in import_from_string
+2026-04-25 18:34:29:     raise exc from None
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:34:29:     module = importlib.import_module(module_str)
+2026-04-25 18:34:29:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:34:29:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:34:29:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:34:29:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/main.py", line 68, in <module>
+2026-04-25 18:34:29:     from auth import (
+2026-04-25 18:34:29:   File "/home/vika/nextproject/backend/auth.py", line 13, in <module>
+2026-04-25 18:34:29:     from argon2 import PasswordHasher
+2026-04-25 18:34:29: ModuleNotFoundError: No module named 'argon2'
+2026-04-25 18:39:37: INFO:     Stopping parent process [1593611]
+2026-04-25 18:39:47: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:39:47: INFO:     Started parent process [1603926]
+2026-04-25 18:39:52: Form data requires "python-multipart" to be installed. 
+2026-04-25 18:39:52: You can install "python-multipart" with: 
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: pip install python-multipart
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: Process SpawnProcess-1:
+2026-04-25 18:39:52: Traceback (most recent call last):
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:39:52:     self.run()
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:39:52:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:39:52:     target(sockets=sockets)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:39:52:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:39:52:     return runner.run(main)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:39:52:     return self._loop.run_until_complete(task)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:39:52:     config.load()
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:39:52:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:39:52:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:39:52:     module = importlib.import_module(module_str)
+2026-04-25 18:39:52:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:39:52:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/main.py", line 379, in <module>
+2026-04-25 18:39:52:     @app.post("/auth/login", response_model=TokenResponse)
+2026-04-25 18:39:52:      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 956, in decorator
+2026-04-25 18:39:52:     self.add_api_route(
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 895, in add_api_route
+2026-04-25 18:39:52:     route = route_class(
+2026-04-25 18:39:52:             ^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 531, in __init__
+2026-04-25 18:39:52:     self.body_field = get_body_field(dependant=self.dependant, name=self.unique_id)
+2026-04-25 18:39:52:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 815, in get_body_field
+2026-04-25 18:39:52:     check_file_field(final_field)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 100, in check_file_field
+2026-04-25 18:39:52:     raise RuntimeError(multipart_not_installed_error) from None
+2026-04-25 18:39:52: RuntimeError: Form data requires "python-multipart" to be installed. 
+2026-04-25 18:39:52: You can install "python-multipart" with: 
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: pip install python-multipart
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: Form data requires "python-multipart" to be installed. 
+2026-04-25 18:39:52: You can install "python-multipart" with: 
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: pip install python-multipart
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: Process SpawnProcess-2:
+2026-04-25 18:39:52: Traceback (most recent call last):
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 18:39:52:     self.run()
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 18:39:52:     self._target(*self._args, **self._kwargs)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 18:39:52:     target(sockets=sockets)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 18:39:52:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 18:39:52:     return runner.run(main)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 18:39:52:     return self._loop.run_until_complete(task)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 18:39:52:     config.load()
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 18:39:52:     self.loaded_app = import_from_string(self.app)
+2026-04-25 18:39:52:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 18:39:52:     module = importlib.import_module(module_str)
+2026-04-25 18:39:52:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 18:39:52:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 18:39:52:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 18:39:52:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/main.py", line 379, in <module>
+2026-04-25 18:39:52:     @app.post("/auth/login", response_model=TokenResponse)
+2026-04-25 18:39:52:      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 956, in decorator
+2026-04-25 18:39:52:     self.add_api_route(
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 895, in add_api_route
+2026-04-25 18:39:52:     route = route_class(
+2026-04-25 18:39:52:             ^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 531, in __init__
+2026-04-25 18:39:52:     self.body_field = get_body_field(dependant=self.dependant, name=self.unique_id)
+2026-04-25 18:39:52:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 815, in get_body_field
+2026-04-25 18:39:52:     check_file_field(final_field)
+2026-04-25 18:39:52:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/dependencies/utils.py", line 100, in check_file_field
+2026-04-25 18:39:52:     raise RuntimeError(multipart_not_installed_error) from None
+2026-04-25 18:39:52: RuntimeError: Form data requires "python-multipart" to be installed. 
+2026-04-25 18:39:52: You can install "python-multipart" with: 
+2026-04-25 18:39:52: 
+2026-04-25 18:39:52: pip install python-multipart
+2026-04-25 18:39:52: 
+2026-04-25 18:41:52: INFO:     Stopping parent process [1603926]
+2026-04-25 18:42:16: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:42:16: INFO:     Started parent process [1608489]
+2026-04-25 18:42:20: INFO:     Started server process [1608491]
+2026-04-25 18:42:20: INFO:     Waiting for application startup.
+2026-04-25 18:42:20: INFO:     Started server process [1608492]
+2026-04-25 18:42:20: INFO:     Waiting for application startup.
+2026-04-25 18:42:20: ERROR:    Traceback (most recent call last):
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+2026-04-25 18:42:20:     self.dialect.do_execute(
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+2026-04-25 18:42:20:     cursor.execute(statement, parameters)
+2026-04-25 18:42:20: sqlite3.OperationalError: table users already exists
+2026-04-25 18:42:20: 
+2026-04-25 18:42:20: The above exception was the direct cause of the following exception:
+2026-04-25 18:42:20: 
+2026-04-25 18:42:20: Traceback (most recent call last):
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 738, in lifespan
+2026-04-25 18:42:20:     async with self.lifespan_context(app) as maybe_state:
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 610, in __aenter__
+2026-04-25 18:42:20:     await self._router.startup()
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in startup
+2026-04-25 18:42:20:     await handler()
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/main.py", line 113, in startup_event
+2026-04-25 18:42:20:     init_db()
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/database.py", line 54, in init_db
+2026-04-25 18:42:20:     Base.metadata.create_all(bind=engine)  # ✅ Исправлено
+2026-04-25 18:42:20:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5832, in create_all
+2026-04-25 18:42:20:     bind._run_ddl_visitor(
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3244, in _run_ddl_visitor
+2026-04-25 18:42:20:     conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _run_ddl_visitor
+2026-04-25 18:42:20:     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+2026-04-25 18:42:20:     return meth(obj, **kw)
+2026-04-25 18:42:20:            ^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 919, in visit_metadata
+2026-04-25 18:42:20:     self.traverse_single(
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+2026-04-25 18:42:20:     return meth(obj, **kw)
+2026-04-25 18:42:20:            ^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 957, in visit_table
+2026-04-25 18:42:20:     )._invoke_with(self.connection)
+2026-04-25 18:42:20:       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 315, in _invoke_with
+2026-04-25 18:42:20:     return bind.execute(self)
+2026-04-25 18:42:20:            ^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+2026-04-25 18:42:20:     return meth(
+2026-04-25 18:42:20:            ^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 181, in _execute_on_connection
+2026-04-25 18:42:20:     return connection._execute_ddl(
+2026-04-25 18:42:20:            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1528, in _execute_ddl
+2026-04-25 18:42:20:     ret = self._execute_context(
+2026-04-25 18:42:20:           ^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+2026-04-25 18:42:20:     return self._exec_single_context(
+2026-04-25 18:42:20:            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+2026-04-25 18:42:20:     self._handle_dbapi_exception(
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2344, in _handle_dbapi_exception
+2026-04-25 18:42:20:     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+2026-04-25 18:42:20:     self.dialect.do_execute(
+2026-04-25 18:42:20:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+2026-04-25 18:42:20:     cursor.execute(statement, parameters)
+2026-04-25 18:42:20: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table users already exists
+2026-04-25 18:42:20: [SQL: 
+2026-04-25 18:42:20: CREATE TABLE users (
+2026-04-25 18:42:20: 	id INTEGER NOT NULL, 
+2026-04-25 18:42:20: 	email VARCHAR NOT NULL, 
+2026-04-25 18:42:20: 	username VARCHAR NOT NULL, 
+2026-04-25 18:42:20: 	hashed_password VARCHAR NOT NULL, 
+2026-04-25 18:42:20: 	is_active BOOLEAN, 
+2026-04-25 18:42:20: 	created_at DATETIME DEFAULT (CURRENT_TIMESTAMP), 
+2026-04-25 18:42:20: 	PRIMARY KEY (id)
+2026-04-25 18:42:20: )
+2026-04-25 18:42:20: 
+2026-04-25 18:42:20: ]
+2026-04-25 18:42:20: (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-25 18:42:20: 
+2026-04-25 18:42:20: ERROR:    Application startup failed. Exiting.
+2026-04-25 18:42:20: INFO:     Application startup complete.
+2026-04-25 18:42:41: ERROR:    Exception in ASGI application
+2026-04-25 18:42:41: Traceback (most recent call last):
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 18:42:41:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 18:42:41:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 18:42:41:     return await self.app(scope, receive, send)
+2026-04-25 18:42:41:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 18:42:41:     await super().__call__(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 18:42:41:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 18:42:41:     raise exc
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 18:42:41:     await self.app(scope, receive, _send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 18:42:41:     await self.app(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 18:42:41:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:42:41:     raise exc
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:42:41:     await app(scope, receive, sender)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 18:42:41:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 18:42:41:     await route.handle(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 18:42:41:     await self.app(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 18:42:41:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:42:41:     raise exc
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:42:41:     await app(scope, receive, sender)
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 18:42:41:     response = await func(request)
+2026-04-25 18:42:41:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 18:42:41:     raise e
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 18:42:41:     raw_response = await run_endpoint_function(
+2026-04-25 18:42:41:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 18:42:41:     return await dependant.call(**values)
+2026-04-25 18:42:41:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 18:42:41:     result = await db.execute(
+2026-04-25 18:42:41:              ^^^^^^^^^^^^^^^^^
+2026-04-25 18:42:41: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 18:51:07: INFO:     Shutting down
+2026-04-25 18:51:08: INFO:     Waiting for application shutdown.
+2026-04-25 18:51:08: INFO:     Application shutdown complete.
+2026-04-25 18:51:08: INFO:     Finished server process [1608491]
+2026-04-25 18:51:08: INFO:     Stopping parent process [1608489]
+2026-04-25 18:51:09: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:51:09: INFO:     Started parent process [1625632]
+2026-04-25 18:51:14: INFO:     Started server process [1625654]
+2026-04-25 18:51:14: INFO:     Waiting for application startup.
+2026-04-25 18:51:14: INFO:     Started server process [1625653]
+2026-04-25 18:51:14: INFO:     Waiting for application startup.
+2026-04-25 18:51:14: ERROR:    Traceback (most recent call last):
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+2026-04-25 18:51:14:     self.dialect.do_execute(
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+2026-04-25 18:51:14:     cursor.execute(statement, parameters)
+2026-04-25 18:51:14: sqlite3.OperationalError: table lesson_views already exists
+2026-04-25 18:51:14: 
+2026-04-25 18:51:14: The above exception was the direct cause of the following exception:
+2026-04-25 18:51:14: 
+2026-04-25 18:51:14: Traceback (most recent call last):
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 738, in lifespan
+2026-04-25 18:51:14:     async with self.lifespan_context(app) as maybe_state:
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 610, in __aenter__
+2026-04-25 18:51:14:     await self._router.startup()
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in startup
+2026-04-25 18:51:14:     await handler()
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/main.py", line 113, in startup_event
+2026-04-25 18:51:14:     init_db()
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/database.py", line 90, in init_db
+2026-04-25 18:51:14:     Base.metadata.create_all(bind=engine)
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5832, in create_all
+2026-04-25 18:51:14:     bind._run_ddl_visitor(
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3244, in _run_ddl_visitor
+2026-04-25 18:51:14:     conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _run_ddl_visitor
+2026-04-25 18:51:14:     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+2026-04-25 18:51:14:     return meth(obj, **kw)
+2026-04-25 18:51:14:            ^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 919, in visit_metadata
+2026-04-25 18:51:14:     self.traverse_single(
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 671, in traverse_single
+2026-04-25 18:51:14:     return meth(obj, **kw)
+2026-04-25 18:51:14:            ^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 957, in visit_table
+2026-04-25 18:51:14:     )._invoke_with(self.connection)
+2026-04-25 18:51:14:       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 315, in _invoke_with
+2026-04-25 18:51:14:     return bind.execute(self)
+2026-04-25 18:51:14:            ^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+2026-04-25 18:51:14:     return meth(
+2026-04-25 18:51:14:            ^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 181, in _execute_on_connection
+2026-04-25 18:51:14:     return connection._execute_ddl(
+2026-04-25 18:51:14:            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1528, in _execute_ddl
+2026-04-25 18:51:14:     ret = self._execute_context(
+2026-04-25 18:51:14:           ^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+2026-04-25 18:51:14:     return self._exec_single_context(
+2026-04-25 18:51:14:            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+2026-04-25 18:51:14:     self._handle_dbapi_exception(
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2344, in _handle_dbapi_exception
+2026-04-25 18:51:14:     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+2026-04-25 18:51:14:     self.dialect.do_execute(
+2026-04-25 18:51:14:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+2026-04-25 18:51:14:     cursor.execute(statement, parameters)
+2026-04-25 18:51:14: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table lesson_views already exists
+2026-04-25 18:51:14: [SQL: 
+2026-04-25 18:51:14: CREATE TABLE lesson_views (
+2026-04-25 18:51:14: 	id INTEGER NOT NULL, 
+2026-04-25 18:51:14: 	lesson_id INTEGER NOT NULL, 
+2026-04-25 18:51:14: 	user_id INTEGER, 
+2026-04-25 18:51:14: 	session_id VARCHAR, 
+2026-04-25 18:51:14: 	viewed_at DATETIME DEFAULT (CURRENT_TIMESTAMP), 
+2026-04-25 18:51:14: 	PRIMARY KEY (id), 
+2026-04-25 18:51:14: 	CONSTRAINT uq_lesson_view_user UNIQUE (lesson_id, user_id), 
+2026-04-25 18:51:14: 	CONSTRAINT uq_lesson_view_anon UNIQUE (lesson_id, session_id), 
+2026-04-25 18:51:14: 	FOREIGN KEY(lesson_id) REFERENCES lessons (id), 
+2026-04-25 18:51:14: 	FOREIGN KEY(user_id) REFERENCES users (id)
+2026-04-25 18:51:14: )
+2026-04-25 18:51:14: 
+2026-04-25 18:51:14: ]
+2026-04-25 18:51:14: (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-25 18:51:14: 
+2026-04-25 18:51:14: ERROR:    Application startup failed. Exiting.
+2026-04-25 18:51:14: INFO:     Application startup complete.
+2026-04-25 18:51:15: ERROR:    Exception in ASGI application
+2026-04-25 18:51:15: Traceback (most recent call last):
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 18:51:15:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 18:51:15:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 18:51:15:     return await self.app(scope, receive, send)
+2026-04-25 18:51:15:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 18:51:15:     await super().__call__(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 18:51:15:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 18:51:15:     raise exc
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 18:51:15:     await self.app(scope, receive, _send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 18:51:15:     await self.app(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 18:51:15:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:51:15:     raise exc
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:51:15:     await app(scope, receive, sender)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 18:51:15:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 18:51:15:     await route.handle(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 18:51:15:     await self.app(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 18:51:15:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:51:15:     raise exc
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:51:15:     await app(scope, receive, sender)
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 18:51:15:     response = await func(request)
+2026-04-25 18:51:15:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 18:51:15:     raise e
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 18:51:15:     raw_response = await run_endpoint_function(
+2026-04-25 18:51:15:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 18:51:15:     return await dependant.call(**values)
+2026-04-25 18:51:15:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 18:51:15:     result = await db.execute(
+2026-04-25 18:51:15:              ^^^^^^^^^^^^^^^^^
+2026-04-25 18:51:15: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 18:52:37: ERROR:    Exception in ASGI application
+2026-04-25 18:52:37: Traceback (most recent call last):
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 18:52:37:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 18:52:37:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 18:52:37:     return await self.app(scope, receive, send)
+2026-04-25 18:52:37:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 18:52:37:     await super().__call__(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 18:52:37:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 18:52:37:     raise exc
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 18:52:37:     await self.app(scope, receive, _send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 18:52:37:     await self.app(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 18:52:37:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:52:37:     raise exc
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:52:37:     await app(scope, receive, sender)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 18:52:37:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 18:52:37:     await route.handle(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 18:52:37:     await self.app(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 18:52:37:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:52:37:     raise exc
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:52:37:     await app(scope, receive, sender)
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 18:52:37:     response = await func(request)
+2026-04-25 18:52:37:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 18:52:37:     raise e
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 18:52:37:     raw_response = await run_endpoint_function(
+2026-04-25 18:52:37:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 18:52:37:     return await dependant.call(**values)
+2026-04-25 18:52:37:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 18:52:37:     result = await db.execute(
+2026-04-25 18:52:37:              ^^^^^^^^^^^^^^^^^
+2026-04-25 18:52:37: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 18:57:13: INFO:     Shutting down
+2026-04-25 18:57:13: INFO:     Waiting for application shutdown.
+2026-04-25 18:57:13: INFO:     Application shutdown complete.
+2026-04-25 18:57:13: INFO:     Finished server process [1625654]
+2026-04-25 18:57:14: INFO:     Stopping parent process [1625632]
+2026-04-25 18:57:14: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 18:57:14: INFO:     Started parent process [1637179]
+2026-04-25 18:57:19: INFO:     Started server process [1637183]
+2026-04-25 18:57:19: INFO:     Started server process [1637182]
+2026-04-25 18:57:19: INFO:     Waiting for application startup.
+2026-04-25 18:57:19: INFO:     Waiting for application startup.
+2026-04-25 18:57:19: INFO:     Application startup complete.
+2026-04-25 18:57:19: INFO:     Application startup complete.
+2026-04-25 18:57:25: ERROR:    Exception in ASGI application
+2026-04-25 18:57:25: Traceback (most recent call last):
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 18:57:25:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 18:57:25:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 18:57:25:     return await self.app(scope, receive, send)
+2026-04-25 18:57:25:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 18:57:25:     await super().__call__(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 18:57:25:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 18:57:25:     raise exc
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 18:57:25:     await self.app(scope, receive, _send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 18:57:25:     await self.app(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 18:57:25:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:57:25:     raise exc
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:57:25:     await app(scope, receive, sender)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 18:57:25:     await self.middleware_stack(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 18:57:25:     await route.handle(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 18:57:25:     await self.app(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 18:57:25:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 18:57:25:     raise exc
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 18:57:25:     await app(scope, receive, sender)
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 18:57:25:     response = await func(request)
+2026-04-25 18:57:25:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 18:57:25:     raise e
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 18:57:25:     raw_response = await run_endpoint_function(
+2026-04-25 18:57:25:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 18:57:25:     return await dependant.call(**values)
+2026-04-25 18:57:25:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 18:57:25:     result = await db.execute(
+2026-04-25 18:57:25:              ^^^^^^^^^^^^^^^^^
+2026-04-25 18:57:25: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 19:02:50: INFO:     Shutting down
+2026-04-25 19:02:50: INFO:     Shutting down
+2026-04-25 19:02:50: INFO:     Waiting for application shutdown.
+2026-04-25 19:02:50: INFO:     Application shutdown complete.
+2026-04-25 19:02:50: INFO:     Finished server process [1637183]
+2026-04-25 19:02:50: INFO:     Waiting for application shutdown.
+2026-04-25 19:02:50: INFO:     Application shutdown complete.
+2026-04-25 19:02:50: INFO:     Finished server process [1637182]
+2026-04-25 19:02:52: INFO:     Stopping parent process [1637179]
+2026-04-25 19:03:55: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 19:03:55: INFO:     Started parent process [1647992]
+2026-04-25 19:03:57: Process SpawnProcess-2:
+2026-04-25 19:03:57: Traceback (most recent call last):
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 19:03:57:     self.run()
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 19:03:57:     self._target(*self._args, **self._kwargs)
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 19:03:57:     target(sockets=sockets)
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 19:03:57:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 19:03:57:     return runner.run(main)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 19:03:57:     return self._loop.run_until_complete(task)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 19:03:57:     config.load()
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 19:03:57:     self.loaded_app = import_from_string(self.app)
+2026-04-25 19:03:57:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 19:03:57:     module = importlib.import_module(module_str)
+2026-04-25 19:03:57:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 19:03:57:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/main.py", line 16, in <module>
+2026-04-25 19:03:57:     from database import engine, Base, get_db, init_db
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/database.py", line 50
+2026-04-25 19:03:57:     print(f"🔁 Using ASYNC get_db() for {DATABASE_URL}")  # ✅ Отладка
+2026-04-25 19:03:57:     ^^^^^
+2026-04-25 19:03:57: IndentationError: expected an indented block after function definition on line 49
+2026-04-25 19:03:57: Process SpawnProcess-1:
+2026-04-25 19:03:57: Traceback (most recent call last):
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 19:03:57:     self.run()
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 19:03:57:     self._target(*self._args, **self._kwargs)
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 19:03:57:     target(sockets=sockets)
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 19:03:57:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 19:03:57:     return runner.run(main)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 19:03:57:     return self._loop.run_until_complete(task)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 19:03:57:     config.load()
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 19:03:57:     self.loaded_app = import_from_string(self.app)
+2026-04-25 19:03:57:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 19:03:57:     module = importlib.import_module(module_str)
+2026-04-25 19:03:57:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 19:03:57:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 19:03:57:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-04-25 19:03:57:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/main.py", line 16, in <module>
+2026-04-25 19:03:57:     from database import engine, Base, get_db, init_db
+2026-04-25 19:03:57:   File "/home/vika/nextproject/backend/database.py", line 50
+2026-04-25 19:03:57:     print(f"🔁 Using ASYNC get_db() for {DATABASE_URL}")  # ✅ Отладка
+2026-04-25 19:03:57:     ^^^^^
+2026-04-25 19:03:57: IndentationError: expected an indented block after function definition on line 49
+2026-04-25 19:08:28: INFO:     Stopping parent process [1647992]
+2026-04-25 19:08:45: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 19:08:45: INFO:     Started parent process [1648683]
+2026-04-25 19:08:47: INFO:     Started server process [1648686]
+2026-04-25 19:08:47: INFO:     Waiting for application startup.
+2026-04-25 19:08:48: INFO:     Application startup complete.
+2026-04-25 19:08:48: INFO:     Started server process [1648685]
+2026-04-25 19:08:48: INFO:     Waiting for application startup.
+2026-04-25 19:08:48: INFO:     Application startup complete.
+2026-04-25 19:09:51: ERROR:    Exception in ASGI application
+2026-04-25 19:09:51: Traceback (most recent call last):
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 19:09:51:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 19:09:51:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 19:09:51:     return await self.app(scope, receive, send)
+2026-04-25 19:09:51:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 19:09:51:     await super().__call__(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 19:09:51:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 19:09:51:     raise exc
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 19:09:51:     await self.app(scope, receive, _send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 19:09:51:     await self.app(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 19:09:51:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:09:51:     raise exc
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:09:51:     await app(scope, receive, sender)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 19:09:51:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 19:09:51:     await route.handle(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 19:09:51:     await self.app(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 19:09:51:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:09:51:     raise exc
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:09:51:     await app(scope, receive, sender)
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 19:09:51:     response = await func(request)
+2026-04-25 19:09:51:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 19:09:51:     raise e
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 19:09:51:     raw_response = await run_endpoint_function(
+2026-04-25 19:09:51:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 19:09:51:     return await dependant.call(**values)
+2026-04-25 19:09:51:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 19:09:51:     result = await db.execute(
+2026-04-25 19:09:51:              ^^^^^^^^^^^^^^^^^
+2026-04-25 19:09:51: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 19:41:06: INFO:     Shutting down
+2026-04-25 19:41:06: INFO:     Shutting down
+2026-04-25 19:41:06: INFO:     Waiting for application shutdown.
+2026-04-25 19:41:06: INFO:     Application shutdown complete.
+2026-04-25 19:41:06: INFO:     Finished server process [1648685]
+2026-04-25 19:41:06: INFO:     Waiting for application shutdown.
+2026-04-25 19:41:06: INFO:     Application shutdown complete.
+2026-04-25 19:41:06: INFO:     Finished server process [1648686]
+2026-04-25 19:41:07: INFO:     Stopping parent process [1648683]
+2026-04-25 19:41:18: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 19:41:18: INFO:     Started parent process [1652724]
+2026-04-25 19:41:21: INFO:     Started server process [1652727]
+2026-04-25 19:41:21: INFO:     Waiting for application startup.
+2026-04-25 19:41:21: INFO:     Started server process [1652726]
+2026-04-25 19:41:21: INFO:     Waiting for application startup.
+2026-04-25 19:41:21: INFO:     Application startup complete.
+2026-04-25 19:41:21: INFO:     Application startup complete.
+2026-04-25 19:41:44: ERROR:    Exception in ASGI application
+2026-04-25 19:41:44: Traceback (most recent call last):
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 19:41:44:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 19:41:44:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 19:41:44:     return await self.app(scope, receive, send)
+2026-04-25 19:41:44:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 19:41:44:     await super().__call__(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 19:41:44:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 19:41:44:     raise exc
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 19:41:44:     await self.app(scope, receive, _send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 19:41:44:     await self.app(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 19:41:44:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:41:44:     raise exc
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:41:44:     await app(scope, receive, sender)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 19:41:44:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 19:41:44:     await route.handle(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 19:41:44:     await self.app(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 19:41:44:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:41:44:     raise exc
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:41:44:     await app(scope, receive, sender)
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 19:41:44:     response = await func(request)
+2026-04-25 19:41:44:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 19:41:44:     raise e
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 19:41:44:     raw_response = await run_endpoint_function(
+2026-04-25 19:41:44:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 19:41:44:     return await dependant.call(**values)
+2026-04-25 19:41:44:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 19:41:44:     result = await db.execute(
+2026-04-25 19:41:44:              ^^^^^^^^^^^^^^^^^
+2026-04-25 19:41:44: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 19:42:04: ERROR:    Exception in ASGI application
+2026-04-25 19:42:04: Traceback (most recent call last):
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 19:42:04:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 19:42:04:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 19:42:04:     return await self.app(scope, receive, send)
+2026-04-25 19:42:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 19:42:04:     await super().__call__(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 19:42:04:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 19:42:04:     raise exc
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 19:42:04:     await self.app(scope, receive, _send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 19:42:04:     await self.app(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 19:42:04:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:42:04:     raise exc
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:42:04:     await app(scope, receive, sender)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 19:42:04:     await self.middleware_stack(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 19:42:04:     await route.handle(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 19:42:04:     await self.app(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 19:42:04:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 19:42:04:     raise exc
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 19:42:04:     await app(scope, receive, sender)
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 19:42:04:     response = await func(request)
+2026-04-25 19:42:04:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 19:42:04:     raise e
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 19:42:04:     raw_response = await run_endpoint_function(
+2026-04-25 19:42:04:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 19:42:04:     return await dependant.call(**values)
+2026-04-25 19:42:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04:   File "/home/vika/nextproject/backend/main.py", line 648, in get_languages
+2026-04-25 19:42:04:     result = await db.execute(
+2026-04-25 19:42:04:              ^^^^^^^^^^^^^^^^^
+2026-04-25 19:42:04: TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+2026-04-25 19:54:19: INFO:     Shutting down
+2026-04-25 19:54:19: INFO:     Shutting down
+2026-04-25 19:54:19: INFO:     Waiting for application shutdown.
+2026-04-25 19:54:19: INFO:     Application shutdown complete.
+2026-04-25 19:54:19: INFO:     Finished server process [1652727]
+2026-04-25 19:54:19: INFO:     Waiting for application shutdown.
+2026-04-25 19:54:19: INFO:     Application shutdown complete.
+2026-04-25 19:54:19: INFO:     Finished server process [1652726]
+2026-04-25 19:54:20: INFO:     Stopping parent process [1652724]
+2026-04-25 19:54:31: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 19:54:31: INFO:     Started parent process [1654382]
+2026-04-25 19:54:34: INFO:     Started server process [1654384]
+2026-04-25 19:54:34: INFO:     Started server process [1654385]
+2026-04-25 19:54:34: INFO:     Waiting for application startup.
+2026-04-25 19:54:34: INFO:     Waiting for application startup.
+2026-04-25 19:54:34: INFO:     Application startup complete.
+2026-04-25 19:54:34: INFO:     Application startup complete.
+2026-04-25 19:59:23: INFO:     Shutting down
+2026-04-25 19:59:23: INFO:     Shutting down
+2026-04-25 19:59:23: INFO:     Waiting for application shutdown.
+2026-04-25 19:59:23: INFO:     Application shutdown complete.
+2026-04-25 19:59:23: INFO:     Finished server process [1654385]
+2026-04-25 19:59:23: INFO:     Waiting for application shutdown.
+2026-04-25 19:59:23: INFO:     Application shutdown complete.
+2026-04-25 19:59:23: INFO:     Finished server process [1654384]
+2026-04-25 19:59:24: INFO:     Stopping parent process [1654382]
+2026-04-25 19:59:36: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 19:59:36: INFO:     Started parent process [1655050]
+2026-04-25 19:59:41: INFO:     Started server process [1655052]
+2026-04-25 19:59:41: INFO:     Waiting for application startup.
+2026-04-25 19:59:41: INFO:     Started server process [1655053]
+2026-04-25 19:59:41: INFO:     Waiting for application startup.
+2026-04-25 19:59:41: INFO:     Application startup complete.
+2026-04-25 19:59:41: INFO:     Application startup complete.
+2026-04-25 20:02:59: ERROR:    Exception in ASGI application
+2026-04-25 20:02:59: Traceback (most recent call last):
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+2026-04-25 20:02:59:     result = await app(  # type: ignore[func-returns-value]
+2026-04-25 20:02:59:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+2026-04-25 20:02:59:     return await self.app(scope, receive, send)
+2026-04-25 20:02:59:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-04-25 20:02:59:     await super().__call__(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 123, in __call__
+2026-04-25 20:02:59:     await self.middleware_stack(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-04-25 20:02:59:     raise exc
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-04-25 20:02:59:     await self.app(scope, receive, _send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 83, in __call__
+2026-04-25 20:02:59:     await self.app(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-04-25 20:02:59:     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 20:02:59:     raise exc
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 20:02:59:     await app(scope, receive, sender)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 762, in __call__
+2026-04-25 20:02:59:     await self.middleware_stack(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 782, in app
+2026-04-25 20:02:59:     await route.handle(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 297, in handle
+2026-04-25 20:02:59:     await self.app(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 77, in app
+2026-04-25 20:02:59:     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-04-25 20:02:59:     raise exc
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-04-25 20:02:59:     await app(scope, receive, sender)
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+2026-04-25 20:02:59:     response = await func(request)
+2026-04-25 20:02:59:                ^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 299, in app
+2026-04-25 20:02:59:     raise e
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 294, in app
+2026-04-25 20:02:59:     raw_response = await run_endpoint_function(
+2026-04-25 20:02:59:                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-04-25 20:02:59:     return await dependant.call(**values)
+2026-04-25 20:02:59:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:02:59:   File "/home/vika/nextproject/backend/main.py", line 1497, in seed_language
+2026-04-25 20:02:59:     await db.commit()
+2026-04-25 20:02:59: TypeError: object NoneType can't be used in 'await' expression
+2026-04-25 20:11:52: INFO:     Shutting down
+2026-04-25 20:11:52: INFO:     Shutting down
+2026-04-25 20:11:52: INFO:     Waiting for application shutdown.
+2026-04-25 20:11:52: INFO:     Application shutdown complete.
+2026-04-25 20:11:52: INFO:     Waiting for application shutdown.
+2026-04-25 20:11:52: INFO:     Application shutdown complete.
+2026-04-25 20:11:52: INFO:     Finished server process [1655053]
+2026-04-25 20:11:52: INFO:     Finished server process [1655052]
+2026-04-25 20:11:53: INFO:     Stopping parent process [1655050]
+2026-04-25 20:12:04: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 20:12:04: INFO:     Started parent process [1656611]
+2026-04-25 20:12:04: Process SpawnProcess-2:
+2026-04-25 20:12:04: Process SpawnProcess-1:
+2026-04-25 20:12:04: Traceback (most recent call last):
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 20:12:04:     self.run()
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 20:12:04:     self._target(*self._args, **self._kwargs)
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 20:12:04:     target(sockets=sockets)
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 20:12:04:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 20:12:04:     return runner.run(main)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 20:12:04:     return self._loop.run_until_complete(task)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 20:12:04:     config.load()
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 20:12:04:     self.loaded_app = import_from_string(self.app)
+2026-04-25 20:12:04:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 20:12:04:     module = importlib.import_module(module_str)
+2026-04-25 20:12:04:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 20:12:04:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 991, in exec_module
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 1129, in get_code
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 1059, in source_to_code
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 20:12:04: Traceback (most recent call last):
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 20:12:04:     self.run()
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 20:12:04:     self._target(*self._args, **self._kwargs)
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 20:12:04:     target(sockets=sockets)
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 20:12:04:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 20:12:04:     return runner.run(main)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 20:12:04:     return self._loop.run_until_complete(task)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 20:12:04:     config.load()
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 20:12:04:     self.loaded_app = import_from_string(self.app)
+2026-04-25 20:12:04:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 20:12:04:     module = importlib.import_module(module_str)
+2026-04-25 20:12:04:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 20:12:04:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 20:12:04:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 991, in exec_module
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 1129, in get_code
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap_external>", line 1059, in source_to_code
+2026-04-25 20:12:04:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/main.py", line 1539
+2026-04-25 20:12:04:     db.commit()
+2026-04-25 20:12:04: IndentationError: unexpected indent
+2026-04-25 20:12:04:   File "/home/vika/nextproject/backend/main.py", line 1539
+2026-04-25 20:12:04:     db.commit()
+2026-04-25 20:12:04: IndentationError: unexpected indent
+2026-04-25 20:20:27: INFO:     Stopping parent process [1656611]
+2026-04-25 20:20:38: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 20:20:38: INFO:     Started parent process [1657812]
+2026-04-25 20:20:38: Process SpawnProcess-2:
+2026-04-25 20:20:38: Process SpawnProcess-1:
+2026-04-25 20:20:38: Traceback (most recent call last):
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 20:20:38:     self.run()
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 20:20:38:     self._target(*self._args, **self._kwargs)
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 20:20:38:     target(sockets=sockets)
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 20:20:38:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 20:20:38:     return runner.run(main)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 20:20:38:     return self._loop.run_until_complete(task)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 20:20:38:     config.load()
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 20:20:38:     self.loaded_app = import_from_string(self.app)
+2026-04-25 20:20:38:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 20:20:38:     module = importlib.import_module(module_str)
+2026-04-25 20:20:38:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 20:20:38:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 991, in exec_module
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 1129, in get_code
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 1059, in source_to_code
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/main.py", line 1539
+2026-04-25 20:20:38:     db.commit()
+2026-04-25 20:20:38: IndentationError: unexpected indent
+2026-04-25 20:20:38: Traceback (most recent call last):
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+2026-04-25 20:20:38:     self.run()
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+2026-04-25 20:20:38:     self._target(*self._args, **self._kwargs)
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 78, in subprocess_started
+2026-04-25 20:20:38:     target(sockets=sockets)
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 62, in run
+2026-04-25 20:20:38:     return asyncio.run(self.serve(sockets=sockets))
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+2026-04-25 20:20:38:     return runner.run(main)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+2026-04-25 20:20:38:     return self._loop.run_until_complete(task)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+2026-04-25 20:20:38:     config.load()
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 458, in load
+2026-04-25 20:20:38:     self.loaded_app = import_from_string(self.app)
+2026-04-25 20:20:38:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2026-04-25 20:20:38:     module = importlib.import_module(module_str)
+2026-04-25 20:20:38:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-04-25 20:20:38:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-04-25 20:20:38:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 991, in exec_module
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 1129, in get_code
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap_external>", line 1059, in source_to_code
+2026-04-25 20:20:38:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25 20:20:38:   File "/home/vika/nextproject/backend/main.py", line 1539
+2026-04-25 20:20:38:     db.commit()
+2026-04-25 20:20:38: IndentationError: unexpected indent
+2026-04-25 20:24:27: INFO:     Stopping parent process [1657812]
+2026-04-25 20:24:39: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 20:24:39: INFO:     Started parent process [1658341]
+2026-04-25 20:24:43: INFO:     Started server process [1658343]
+2026-04-25 20:24:43: INFO:     Waiting for application startup.
+2026-04-25 20:24:43: INFO:     Started server process [1658344]
+2026-04-25 20:24:43: INFO:     Waiting for application startup.
+2026-04-25 20:24:43: INFO:     Application startup complete.
+2026-04-25 20:24:43: INFO:     Application startup complete.
+2026-04-25 20:28:03: INFO:     Shutting down
+2026-04-25 20:28:03: INFO:     Shutting down
+2026-04-25 20:28:03: INFO:     Finished server process [1658343]
+2026-04-25 20:28:03: ERROR:    Traceback (most recent call last):
+2026-04-25 20:28:03:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 747, in lifespan
+2026-04-25 20:28:03:     await receive()
+2026-04-25 20:28:03:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+2026-04-25 20:28:03:     return await self.receive_queue.get()
+2026-04-25 20:28:03:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25 20:28:03:   File "/usr/lib/python3.12/asyncio/queues.py", line 158, in get
+2026-04-25 20:28:03:     await getter
+2026-04-25 20:28:03: asyncio.exceptions.CancelledError
+2026-04-25 20:28:03: 
+2026-04-25 20:28:03: INFO:     Waiting for application shutdown.
+2026-04-25 20:28:03: INFO:     Application shutdown complete.
+2026-04-25 20:28:03: INFO:     Finished server process [1658344]
+2026-04-25 20:28:04: INFO:     Stopping parent process [1658341]
+2026-04-25 20:28:04: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-25 20:28:04: INFO:     Started parent process [1658829]
+2026-04-25 20:28:07: INFO:     Started server process [1658832]
+2026-04-25 20:28:07: INFO:     Waiting for application startup.
+2026-04-25 20:28:07: INFO:     Started server process [1658833]
+2026-04-25 20:28:07: INFO:     Waiting for application startup.
+2026-04-25 20:28:07: INFO:     Application startup complete.
+2026-04-25 20:28:07: INFO:     Application startup complete.
+2026-04-26 00:31:19: INFO:     Shutting down
+2026-04-26 00:31:19: INFO:     Shutting down
+2026-04-26 00:31:19: INFO:     Finished server process [1658832]
+2026-04-26 00:31:19: ERROR:    Traceback (most recent call last):
+2026-04-26 00:31:19:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 747, in lifespan
+2026-04-26 00:31:19:     await receive()
+2026-04-26 00:31:19:   File "/home/vika/nextproject/backend/venv/lib/python3.12/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+2026-04-26 00:31:19:     return await self.receive_queue.get()
+2026-04-26 00:31:19:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-26 00:31:19:   File "/usr/lib/python3.12/asyncio/queues.py", line 158, in get
+2026-04-26 00:31:19:     await getter
+2026-04-26 00:31:19: asyncio.exceptions.CancelledError
+2026-04-26 00:31:19: 
+2026-04-26 00:31:19: INFO:     Waiting for application shutdown.
+2026-04-26 00:31:19: INFO:     Application shutdown complete.
+2026-04-26 00:31:19: INFO:     Finished server process [1658833]
+2026-04-26 00:31:20: INFO:     Stopping parent process [1658829]
+2026-04-26 00:31:20: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-26 00:31:20: INFO:     Started parent process [1691267]
+2026-04-26 00:31:22: INFO:     Started server process [1691270]
+2026-04-26 00:31:22: INFO:     Waiting for application startup.
+2026-04-26 00:31:22: INFO:     Started server process [1691269]
+2026-04-26 00:31:22: INFO:     Waiting for application startup.
+2026-04-26 00:31:22: INFO:     Application startup complete.
+2026-04-26 00:31:22: INFO:     Application startup complete.
+2026-04-26 01:40:41: INFO:     Shutting down
+2026-04-26 01:40:41: INFO:     Shutting down
+2026-04-26 01:40:41: INFO:     Waiting for application shutdown.
+2026-04-26 01:40:41: INFO:     Application shutdown complete.
+2026-04-26 01:40:41: INFO:     Finished server process [1691269]
+2026-04-26 01:40:41: INFO:     Waiting for application shutdown.
+2026-04-26 01:40:41: INFO:     Application shutdown complete.
+2026-04-26 01:40:41: INFO:     Finished server process [1691270]
+2026-04-26 01:40:42: INFO:     Stopping parent process [1691267]
+2026-04-26 01:40:42: INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+2026-04-26 01:40:42: INFO:     Started parent process [1700596]
+2026-04-26 01:40:45: INFO:     Started server process [1700599]
+2026-04-26 01:40:45: INFO:     Started server process [1700598]
+2026-04-26 01:40:45: INFO:     Waiting for application startup.
+2026-04-26 01:40:45: INFO:     Waiting for application startup.
+2026-04-26 01:40:45: INFO:     Application startup complete.
+2026-04-26 01:40:45: INFO:     Application startup complete.

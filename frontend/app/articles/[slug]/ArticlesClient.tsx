@@ -1,12 +1,9 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Copy,
   Check,
-  ThumbsUp,
-  ThumbsDown,
   Loader2,
   Send,
   Bookmark,
@@ -15,9 +12,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import useContactStore from "@/store/states";
 import { createClient } from "@/lib/supabase/client";
 import FavoriteButton from "@/ui/FavoriteButton";
+
 type Article = {
   id: string;
   title: string;
@@ -33,7 +30,6 @@ type Article = {
 
 type Comment = {
   id: string;
-  user_id: string;
   content: string;
   created_at: string;
   updated_at?: string;
@@ -45,14 +41,6 @@ type Comment = {
   user_liked?: "like" | "dislike" | null;
 };
 
-type User = {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    username?: string;
-  };
-};
-
 interface ArticlesClientProps {
   initialArticle: Article;
   initialSlug: string;
@@ -62,7 +50,6 @@ interface ArticlesClientProps {
 type CommentItemProps = {
   comment: Comment;
   depth?: number;
-  user: User | null;
   isAuthenticated: boolean;
   editingCommentId: string | null;
   editContent: string;
@@ -81,7 +68,6 @@ type CommentItemProps = {
 const CommentItem = ({
   comment,
   depth = 0,
-  user,
   isAuthenticated,
   editingCommentId,
   editContent,
@@ -96,7 +82,6 @@ const CommentItem = ({
   setReplyingTo,
   setReplyContent,
 }: CommentItemProps) => {
-  const isOwner = user?.id === comment.user_id;
   const isReplying = replyingTo === comment.id;
   const isEditing = editingCommentId === comment.id;
 
@@ -105,16 +90,12 @@ const CommentItem = ({
 
   return (
     <div style={{ marginLeft: `${marginLeft}px` }} className="">
-      <div className="flex gap-3 p-4   overflow-x-auto">
-        <Link
-          href={`/profile-page?id=${comment.user_id}`}
-          className="flex-shrink-0 group"
-          title="View profile"
-        >
+      <div className="flex gap-3 p-4 overflow-x-auto">
+        <div className="flex-shrink-0 group">
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0">
             {comment.user_email?.[0]?.toUpperCase() || "U"}
           </div>
-        </Link>
+        </div>
         <div className="">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-medium text-sm break-word">
@@ -164,7 +145,7 @@ const CommentItem = ({
             </p>
           )}
 
-          <div className="flex items-center gap-4 mt-3 ">
+          <div className="flex items-center gap-4 mt-3">
             {isAuthenticated && (
               <div className="flex items-center gap-2">
                 <button
@@ -175,7 +156,6 @@ const CommentItem = ({
                       : "text-gray-500 hover:text-blue-600"
                   }`}
                 >
-                  <ThumbsUp size={14} />
                   <span>{comment.likes_count}</span>
                 </button>
                 <button
@@ -186,7 +166,6 @@ const CommentItem = ({
                       : "text-gray-500 hover:text-red-600"
                   }`}
                 >
-                  <ThumbsDown size={14} />
                   <span>{comment.dislikes_count}</span>
                 </button>
               </div>
@@ -202,26 +181,6 @@ const CommentItem = ({
               >
                 Ответить
               </button>
-            )}
-
-            {isOwner && !isEditing && (
-              <div className="flex gap-2 ml-auto">
-                <button
-                  onClick={() => {
-                    setEditingCommentId(comment.id);
-                    setEditContent(comment.content);
-                  }}
-                  className="smaller-text text-gray-500 hover:text-blue-600"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => onDelete(comment.id)}
-                  className="smaller-text text-gray-500 hover:text-red-600"
-                >
-                  Удалить
-                </button>
-              </div>
             )}
           </div>
 
@@ -264,7 +223,6 @@ const CommentItem = ({
               key={reply.id}
               comment={reply}
               depth={depth + 1}
-              user={user}
               isAuthenticated={isAuthenticated}
               editingCommentId={editingCommentId}
               editContent={editContent}
@@ -285,29 +243,23 @@ const CommentItem = ({
     </div>
   );
 };
+
 export default function ArticlesClient({
   initialArticle,
   initialSlug,
   params,
 }: ArticlesClientProps) {
-  const { user, isAuthenticated } = useContactStore();
   const supabase = createClient();
-
-  const [article, setArticle] = useState<Article>(initialArticle);
+  const [article, setArticle] = useState(initialArticle);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
-
   const [copySuccess, setCopySuccess] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
-
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
-    null,
-  );
 
   const countAllComments = (commentsList: Comment[]): number => {
     return commentsList.reduce((total, comment) => {
@@ -317,114 +269,82 @@ export default function ArticlesClient({
     }, 0);
   };
 
-  const syncFeedbackCounts = async (articleId: string) => {
-    try {
-      const [clearRes, unclearRes] = await Promise.all([
-        supabase
-          .from("lesson_feedback")
-          .select("*", { count: "exact", head: true })
-          .eq("lesson_id", articleId)
-          .eq("feedback_type", "clear"),
-        supabase
-          .from("lesson_feedback")
-          .select("*", { count: "exact", head: true })
-          .eq("lesson_id", articleId)
-          .eq("feedback_type", "unclear"),
-      ]);
-
-      setArticle((prev) => ({
-        ...prev,
-        clear_count: clearRes.count ?? 0,
-        unclear_count: unclearRes.count ?? 0,
-      }));
-    } catch (err) {
-      console.error("Failed to sync feedback counts:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (article?.id) {
-      syncFeedbackCounts(article.id);
-    }
-  }, [article?.id]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !user || !article?.id) return;
-
-    const fetchUserFeedback = async () => {
-      const { data } = await supabase
-        .from("lesson_feedback")
-        .select("feedback_type")
-        .eq("lesson_id", article.id)
-        .eq("user_id", user.id)
-        .single();
-
-      if (data) {
-        setUserFeedback(data.feedback_type as "clear" | "unclear");
-      }
-    };
-
-    fetchUserFeedback();
-  }, [article?.id, user, isAuthenticated]);
-
+  // Record view count
   useEffect(() => {
     if (!article?.id) return;
-
     const recordView = async () => {
       try {
-        // Check if user already viewed this article
-        let query = supabase
+        const sessionKey = `viewed_${article.id}`;
+        if (sessionStorage.getItem(sessionKey)) {
+          return; // Already viewed in this session
+        }
+
+        await supabase.from("article_views").insert({
+          article_id: article.id,
+        });
+
+        sessionStorage.setItem(sessionKey, "true");
+
+        // Update the view count in UI
+        const { count: newCount } = await supabase
           .from("article_views")
-          .select("id")
+          .select("*", { count: "exact", head: true })
           .eq("article_id", article.id);
 
-        // If authenticated, filter by user_id
-        if (user?.id) {
-          query = query.eq("user_id", user.id);
-        } else {
-          // For anonymous users, use session storage to prevent duplicate views in same session
-          const sessionKey = `viewed_${article.id}`;
-          if (sessionStorage.getItem(sessionKey)) {
-            return; // Already viewed in this session
-          }
-          query = query.is("user_id", null);
-        }
-
-        const { data: existingView } = await query.maybeSingle();
-
-        // If no existing view, record it
-        if (!existingView) {
-          await supabase.from("article_views").insert({
-            article_id: article.id,
-            user_id: user?.id || null,
-          });
-
-          // Store in session storage for anonymous users
-          if (!user?.id) {
-            sessionStorage.setItem(`viewed_${article.id}`, "true");
-          }
-
-          // Update the view count in UI
-          const { count: newCount } = await supabase
-            .from("article_views")
-            .select("*", { count: "exact", head: true })
-            .eq("article_id", article.id);
-
-          setArticle((prev) => ({
-            ...prev,
-            view_count: newCount || 0,
-          }));
-        }
+        setArticle((prev) => ({
+          ...prev,
+          view_count: newCount || 0,
+        }));
       } catch (err) {
         console.error("Failed to record view:", err);
       }
     };
 
     recordView();
-  }, [article?.id, user?.id]);
+  }, [article?.id]);
+
+  // Load comments
+  useEffect(() => {
+    const loadComments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("lesson_id", article.id)
+          .is("parent_id", null)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        // Load replies for each comment
+        const commentsWithReplies = await Promise.all(
+          (data || []).map(async (comment) => {
+            const { data: replies } = await supabase
+              .from("comments")
+              .select("*")
+              .eq("parent_id", comment.id)
+              .order("created_at", { ascending: true });
+
+            return {
+              ...comment,
+              replies: replies || [],
+              user_liked: null,
+            };
+          })
+        );
+
+        setComments(commentsWithReplies);
+      } catch (err) {
+        console.error("Failed to load comments:", err);
+      } finally {
+        setLoadingComments(false);
+      }
+    };
+
+    loadComments();
+  }, [article.id]);
 
   // HANDLERS
-  // ─────────────────────────────────────────────────────────────
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -435,50 +355,22 @@ export default function ArticlesClient({
     }
   };
 
-  const submitFeedback = async (type: "clear" | "unclear") => {
-    if (!user) {
-      alert("Пожалуйста, войдите чтобы оставить отзыв");
-      return;
-    }
-
-    try {
-      const { error: upsertError } = await supabase
-        .from("lesson_feedback")
-        .upsert(
-          { lesson_id: article.id, user_id: user.id, feedback_type: type },
-          { onConflict: "lesson_id,user_id" },
-        );
-
-      if (upsertError) throw upsertError;
-
-      setUserFeedback(type);
-      await syncFeedbackCounts(article.id);
-    } catch (err) {
-      console.error("❌ Feedback error:", err);
-    }
-  };
-
   const addComment = async (content: string, parentId?: string) => {
-    if (!user) return;
-
     try {
       const { data: comment, error } = await supabase
         .from("comments")
         .insert({
           lesson_id: article.id,
-          user_id: user.id,
           content: content.trim(),
           parent_id: parentId || null,
+          user_email: "Anonymous",
         })
         .select()
         .single();
 
       if (!error && comment) {
-        const username =
-          user?.user_metadata?.username || `User${user.id.split("-")[0]}`;
         const newCommentObj: Comment = {
           ...comment,
-          user_email: username,
           replies: [],
           user_liked: null,
         };
@@ -527,7 +419,6 @@ export default function ArticlesClient({
 
   const handleEditComment = async (commentId: string, newContent: string) => {
     if (!newContent.trim()) return;
-
     try {
       const { error } = await supabase
         .from("comments")
@@ -570,7 +461,6 @@ export default function ArticlesClient({
 
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Удалить этот комментарий и все ответы?")) return;
-
     try {
       const { error } = await supabase
         .from("comments")
@@ -600,7 +490,7 @@ export default function ArticlesClient({
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!content.trim() || !user) return;
+    if (!content.trim()) return;
     await addComment(content, parentCommentId);
     setReplyingTo(null);
     setReplyContent("");
@@ -610,8 +500,6 @@ export default function ArticlesClient({
     commentId: string,
     type: "like" | "dislike",
   ) => {
-    if (!user) return;
-
     try {
       let currentComment: Comment | null = null;
 
@@ -636,8 +524,7 @@ export default function ArticlesClient({
         const { error } = await supabase
           .from("comment_likes")
           .delete()
-          .eq("comment_id", commentId)
-          .eq("user_id", user.id);
+          .eq("comment_id", commentId);
 
         if (error) throw error;
 
@@ -676,11 +563,10 @@ export default function ArticlesClient({
         const { error } = await supabase.from("comment_likes").upsert(
           {
             comment_id: commentId,
-            user_id: user.id,
             like_type: type,
           },
           {
-            onConflict: "comment_id,user_id",
+            onConflict: "comment_id",
           },
         );
 
@@ -742,18 +628,19 @@ export default function ArticlesClient({
     if (cleanPath.startsWith("http")) return cleanPath;
     return cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
   };
+
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
-      <div className="flex flex-row w-full items-center justify-between">
-        <Link
-          href="/articles"
-          className="text-gray-600 hover:text-purple-600 transition mb-4 inline-flex items-center gap-2"
-        >
-          <ArrowLeft className="w-[20px] h-[20px]" />
-          <span>Назад к статьям</span>
-        </Link>
+      <Link
+        href="/articles"
+        className="text-gray-600 hover:text-purple-600 transition flex items-center justify-between w-full mb-[25px]"
+      >
+        <ArrowLeft className="w-[20px] h-[20px]" />
+        <div className="bg-purple-100 px-4 py-2 rounded-full text-sm font-medium text-purple-700 capitalize">
+          Назад к статьям
+        </div>
         <div className="w-6" />
-      </div>
+      </Link>
 
       {/* Stats Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full mb-8">
@@ -776,7 +663,7 @@ export default function ArticlesClient({
           </button>
         </div>
         <div className="flex flex-row items-center">
-          <div className=" flex  flex-row items-center mr-[15px]">
+          <div className="flex flex-row items-center mr-[15px]">
             <p className="text-[10px] mr-[5px]">{article.view_count || 0}</p>
             <Eye className="w-[15px] h-[15px] text-gray-600"></Eye>
           </div>
@@ -790,8 +677,9 @@ export default function ArticlesClient({
           <FavoriteButton articleId={article.id} className="ml-[10px]" />
         </div>
       </div>
+
       <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8 shadow-md">
-        <div className="bg-purple-500 top-0 mt-[20px] ml-[20px] left-0 px-4 py-2 rounded-full text-sm font-medium text-white absolute  z-60">
+        <div className="bg-purple-500 top-0 mt-[20px] ml-[20px] left-0 px-4 py-2 rounded-full text-sm font-medium text-white absolute z-60">
           {article.description}
         </div>
 
@@ -816,7 +704,8 @@ export default function ArticlesClient({
           <span className="text-6xl">📖</span>
         </div>
       </div>
-      <div className=" px-4 py-2 rounded-full bigger-text font-semibold text-black">
+
+      <div className="px-4 py-2 rounded-full bigger-text font-semibold text-black">
         {article.title}
       </div>
 
@@ -824,34 +713,6 @@ export default function ArticlesClient({
         className="flex flex-col items-center prose prose-purple max-w-none mb-10"
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
-
-      <div className="text-wrap mt-[30px] flex justify-center items-center flex-col sm:flex-row gap-4">
-        <div className="flex flex-col items-center">
-          <div className="font-semibold text-sm mb-[10px]">Как вам статья?</div>
-          <div className="flex flex-row gap-3">
-            <button
-              onClick={() => submitFeedback("clear")}
-              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${
-                userFeedback === "clear" ? "bg-black text-white" : ""
-              }`}
-            >
-              <p>Понятно</p>
-              <ThumbsUp className="ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{article.clear_count}</p>
-            </button>
-            <button
-              onClick={() => submitFeedback("unclear")}
-              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${
-                userFeedback === "unclear" ? "bg-black text-white" : ""
-              }`}
-            >
-              <p>Не понятно</p>
-              <ThumbsDown className="ml-[5px] w-[15px] h-[15px]" />
-              <p className="ml-[5px]">{article.unclear_count}</p>
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="flex flex-col w-full mt-[40px]">
         <p className="font-semibold border-b-[1px] border-b-gray-300 pb-[10px] mb-[20px]">
@@ -893,8 +754,7 @@ export default function ArticlesClient({
               <CommentItem
                 key={comment.id}
                 comment={comment}
-                user={user}
-                isAuthenticated={isAuthenticated}
+                isAuthenticated={true}
                 editingCommentId={editingCommentId}
                 editContent={editContent}
                 replyingTo={replyingTo}

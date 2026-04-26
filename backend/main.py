@@ -80,9 +80,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://localhost:3000",
+        "http://localhost:3010",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
+        "https://maoschool.ru",  # ✅ Должна быть эта строка!
+        "https://www.maoschool.ru",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -108,7 +110,7 @@ async def startup_event():
     if IS_SQLITE and not IS_ALEMBIC:
         # 🔁 init_db() уже знает, какой движок использовать
         if hasattr(init_db, "__await__"):  # Если async функция
-            await init_db()
+            init_db()
         else:  # Если sync функция
             init_db()
         print("✅ SQLite tables created (dev only)")
@@ -130,10 +132,10 @@ async def get_lesson_feedback(
     db: AsyncSession = Depends(get_db),
 ):
     # 🕵️ Определяем тип урока
-    lang_lesson = await db.get(LanguageLesson, lesson_id)
+    lang_lesson =  db.get(LanguageLesson, lesson_id)
     lesson_type = "language" if lang_lesson else "ege"
 
-    clear_result = await db.execute(
+    clear_result =  db.execute(
         select(func.count(LessonFeedback.id)).where(
             LessonFeedback.lesson_id == lesson_id,
             LessonFeedback.feedback_type == "clear",
@@ -142,7 +144,7 @@ async def get_lesson_feedback(
     )
     clear_count = clear_result.scalar() or 0
 
-    unclear_result = await db.execute(
+    unclear_result =  db.execute(
         select(func.count(LessonFeedback.id)).where(
             LessonFeedback.lesson_id == lesson_id,
             LessonFeedback.feedback_type == "unclear",
@@ -153,7 +155,7 @@ async def get_lesson_feedback(
 
     user_feedback = None
     if current_user:
-        result = await db.execute(
+        result =  db.execute(
             select(LessonFeedback.feedback_type).where(
                 LessonFeedback.lesson_id == lesson_id,
                 LessonFeedback.user_id == current_user.id,
@@ -171,7 +173,7 @@ async def get_lesson_feedback(
 
 @app.get("/api/ege/subjects", response_model=CourseListResponse)
 async def get_ege_subjects(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    result =  db.execute(
         select(Course)
         .where(Course.subject.in_(EGE_SUBJECTS), Course.is_published == True)
         .order_by(Course.name)
@@ -212,7 +214,7 @@ async def record_lesson_view(
     session_id = request.headers.get("X-Session-ID")
 
     # 🕵️ Определяем тип урока
-    lang_lesson = await db.get(LanguageLesson, lesson_id)
+    lang_lesson =  db.get(LanguageLesson, lesson_id)
     lesson_type = "language" if lang_lesson else "ege"
     target_model = LanguageLesson if lang_lesson else Lesson
 
@@ -232,7 +234,7 @@ async def record_lesson_view(
     else:
         return LessonViewResponse(view_count=0, is_new_view=False)
 
-    existing_view = await db.execute(view_query)
+    existing_view =  db.execute(view_query)
     existing = existing_view.scalar_one_or_none()
     is_new_view = existing is None
 
@@ -245,14 +247,14 @@ async def record_lesson_view(
         )
         db.add(new_view)
 
-        await db.execute(
+        db.execute(
             update(target_model)
             .where(target_model.id == lesson_id)
             .values(view_count=target_model.view_count + 1)
         )
-        await db.commit()
+        db.commit()
 
-    result = await db.execute(
+    result =  db.execute(
         select(target_model.view_count).where(target_model.id == lesson_id)
     )
     count = result.scalar() or 0
@@ -261,7 +263,7 @@ async def record_lesson_view(
 
 
 async def get_languages(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    result = db.execute(
         select(Language).where(Language.is_active == True).order_by(Language.name)
     )
     languages = result.scalars().all()
@@ -282,7 +284,27 @@ async def get_languages(db: AsyncSession = Depends(get_db)):
         total=len(languages),
     )
 
-
+@app.post("/api/languages/seed", status_code=201)
+async def seed_language(db: AsyncSession = Depends(get_db)):
+    # Проверяем, нет ли уже английского (без await для sync!)
+    result = db.execute(select(Language).where(Language.slug == "english"))
+    if result.scalar_one_or_none():
+        return {"message": "English already exists"}
+    
+    # Создаём язык (без пробелов в строках!)
+    english = Language(
+        slug="english",
+        name="Английский",
+        description="Полный курс от A1 до C1: грамматика, лексика, аудирование, говорение",
+        icon="🇬🇧",
+        image="/english-flag.png",
+        is_active=True,
+    )
+    
+    db.add(english)
+    db.commit()  # ✅ Sync: без await!
+    
+    return {"message": "English language created", "slug": english.slug}
 # 📝 Получить тест для урока языка
 @app.get(
     "/api/languages/{language_slug}/levels/{level_code}/categories/{category_slug}/lessons/{lesson_slug}/test",
@@ -296,14 +318,14 @@ async def get_lesson_test(
     db: AsyncSession = Depends(get_db),
 ):
     # Находим урок (аналогично эндпоинту урока)
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(Language.slug == language_slug)
     )
     language = lang_result.scalar_one_or_none()
     if not language:
         raise HTTPException(status_code=404, detail="Language not found")
 
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id, Level.code == level_code.upper()
         )
@@ -312,7 +334,7 @@ async def get_lesson_test(
     if not level:
         raise HTTPException(status_code=404, detail="Level not found")
 
-    cat_result = await db.execute(
+    cat_result =  db.execute(
         select(Category).where(
             Category.language_id == language.id,
             Category.level_id == level.id,
@@ -323,7 +345,7 @@ async def get_lesson_test(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    lesson_result = await db.execute(
+    lesson_result =  db.execute(
         select(LanguageLesson).where(
             LanguageLesson.language_id == language.id,
             LanguageLesson.level_id == level.id,
@@ -336,7 +358,7 @@ async def get_lesson_test(
         raise HTTPException(status_code=404, detail="Lesson not found")
 
     # Находим тест для этого урока
-    test_result = await db.execute(
+    test_result =  db.execute(
         select(Test).where(Test.lesson_id == lesson.id, Test.is_published == True)
     )
     test = test_result.scalar_one_or_none()
@@ -344,7 +366,7 @@ async def get_lesson_test(
         raise HTTPException(status_code=404, detail="Test not found for this lesson")
 
     # Получаем вопросы (без correct_answer!)
-    questions_result = await db.execute(
+    questions_result =  db.execute(
         select(Question)
         .where(Question.test_id == test.id)
         .order_by(Question.order_number)
@@ -382,7 +404,7 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     # 🔁 Ищем пользователя по email (OAuth2 использует поле "username")
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    result =  db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -411,13 +433,13 @@ async def seed_math_test(
     course_slug = request_data.get("course_slug")
 
     # Находим курс
-    course_result = await db.execute(select(Course).where(Course.slug == course_slug))
+    course_result =  db.execute(select(Course).where(Course.slug == course_slug))
     course = course_result.scalar_one_or_none()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
     # Находим урок
-    lesson_result = await db.execute(
+    lesson_result =  db.execute(
         select(Lesson).where(Lesson.slug == lesson_slug, Lesson.course_id == course.id)
     )
     lesson = lesson_result.scalar_one_or_none()
@@ -425,7 +447,7 @@ async def seed_math_test(
         raise HTTPException(status_code=404, detail="Lesson not found")
 
     # Проверяем, нет ли уже теста
-    existing_test = await db.execute(select(Test).where(Test.lesson_id == lesson.id))
+    existing_test =  db.execute(select(Test).where(Test.lesson_id == lesson.id))
     if existing_test.scalar_one_or_none():
         return {"message": "Test already exists for this lesson"}
 
@@ -439,7 +461,7 @@ async def seed_math_test(
         is_published=True,
     )
     db.add(test)
-    await db.flush()  # Чтобы получить test.id
+    db.flush()  # Чтобы получить test.id
 
     # Добавляем вопросы
     for q_data in request_data.get("questions", []):  # ✅ Используем q_data
@@ -458,11 +480,11 @@ async def seed_math_test(
         )
         db.add(question)
 
-    await db.commit()
+    db.commit()
 
     # Обновляем урок с test_id
     lesson.test_id = test.id
-    await db.commit()
+    db.commit()
 
     return {"message": "Test created", "test_id": test.id, "lesson_slug": lesson_slug}
 
@@ -475,7 +497,7 @@ async def get_test_result(
     db: AsyncSession = Depends(get_db),
 ):
     # Находим лучший результат пользователя для этого теста
-    result = await db.execute(
+    result =  db.execute(
         select(TestResult)
         .where(TestResult.test_id == test_id, TestResult.user_id == current_user.id)
         .order_by(TestResult.score.desc())  # 🔁 Сортируем по убыванию — берём лучший
@@ -506,7 +528,7 @@ async def get_test_result(
 @app.get("/api/tests/{test_id}", response_model=TestResponse)
 async def get_test_by_id(test_id: int, db: AsyncSession = Depends(get_db)):
     # Находим тест
-    test_result = await db.execute(
+    test_result =  db.execute(
         select(Test).where(Test.id == test_id, Test.is_published == True)
     )
     test = test_result.scalar_one_or_none()
@@ -515,7 +537,7 @@ async def get_test_by_id(test_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Test not found")
 
     # Получаем вопросы (без correct_answer!)
-    questions_result = await db.execute(
+    questions_result =  db.execute(
         select(Question)
         .where(Question.test_id == test_id)
         .order_by(Question.order_number)
@@ -555,10 +577,10 @@ async def submit_lesson_feedback(
     db: AsyncSession = Depends(get_db),
 ):
     # 🕵️ Определяем тип урока
-    lang_lesson = await db.get(LanguageLesson, lesson_id)
+    lang_lesson =  db.get(LanguageLesson, lesson_id)
     lesson_type = "language" if lang_lesson else "ege"
 
-    existing = await db.execute(
+    existing =  db.execute(
         select(LessonFeedback).where(
             LessonFeedback.lesson_id == lesson_id,
             LessonFeedback.user_id == current_user.id,
@@ -578,8 +600,8 @@ async def submit_lesson_feedback(
         )
         db.add(new_feedback)
 
-    await db.commit()
-    return await get_lesson_feedback(lesson_id, current_user, db)
+    db.commit()
+    return get_lesson_feedback(lesson_id, current_user, db)
 
 
 # ✅ Проверка ответов теста
@@ -591,12 +613,12 @@ async def submit_test(
     db: AsyncSession = Depends(get_db),
 ):
     # Находим тест
-    test = await db.get(Test, test_id)
+    test =  db.get(Test, test_id)
     if not test or not test.is_published:
         raise HTTPException(status_code=404, detail="Test not found")
 
     # Получаем правильные ответы (только на сервере!)
-    questions_result = await db.execute(
+    questions_result =  db.execute(
         select(Question).where(Question.test_id == test_id)
     )
     questions = questions_result.scalars().all()
@@ -629,7 +651,7 @@ async def submit_test(
         answers=submission.answers,
     )
     db.add(result)
-    await db.commit()
+    db.commit()
 
     return TestResultResponse(
         score=score,
@@ -645,7 +667,7 @@ async def submit_test(
 # ✅ ОСТАВЬ ЭТОТ (где-то после строки ~1000):
 @app.get("/api/languages", response_model=LanguageListResponse)
 async def get_languages(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    result = db.execute(
         select(Language).where(Language.is_active == True).order_by(Language.name)
     )
     languages = result.scalars().all()
@@ -676,7 +698,7 @@ async def get_level_categories(
     language_slug: str, level_code: str, db: AsyncSession = Depends(get_db)
 ):
     # Находим язык
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(
             Language.slug == language_slug, Language.is_active == True
         )
@@ -687,7 +709,7 @@ async def get_level_categories(
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Находим уровень по коду (A2, B1, etc.)
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),
@@ -700,7 +722,7 @@ async def get_level_categories(
         raise HTTPException(status_code=404, detail="Level not found")
 
     # Получаем категории
-    result = await db.execute(
+    result =  db.execute(
         select(Category)
         .where(
             Category.language_id == language.id,
@@ -745,7 +767,7 @@ async def get_category_lessons(
     db: AsyncSession = Depends(get_db),
 ):
     # Находим язык
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(
             Language.slug == language_slug, Language.is_active == True
         )
@@ -755,7 +777,7 @@ async def get_category_lessons(
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Находим уровень
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),
@@ -767,7 +789,7 @@ async def get_category_lessons(
         raise HTTPException(status_code=404, detail="Level not found")
 
     # Находим категорию
-    cat_result = await db.execute(
+    cat_result =  db.execute(
         select(Category).where(
             Category.language_id == language.id,
             Category.level_id == level.id,
@@ -780,7 +802,7 @@ async def get_category_lessons(
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Получаем уроки
-    result = await db.execute(
+    result =  db.execute(
         select(LanguageLesson)
         .where(
             LanguageLesson.language_id == language.id,
@@ -834,7 +856,7 @@ async def get_language_lesson(
     db: AsyncSession = Depends(get_db),
 ):
     # Находим язык
-    lang_result = await db.execute(
+    lang_result = db.execute(
         select(Language).where(
             Language.slug == language_slug, Language.is_active == True
         )
@@ -844,7 +866,7 @@ async def get_language_lesson(
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Находим уровень
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),
@@ -856,7 +878,7 @@ async def get_language_lesson(
         raise HTTPException(status_code=404, detail="Level not found")
 
     # Находим категорию
-    cat_result = await db.execute(
+    cat_result =  db.execute(
         select(Category).where(
             Category.language_id == language.id,
             Category.level_id == level.id,
@@ -869,7 +891,7 @@ async def get_language_lesson(
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Находим урок
-    lesson_result = await db.execute(
+    lesson_result =  db.execute(
         select(LanguageLesson).where(
             LanguageLesson.language_id == language.id,
             LanguageLesson.level_id == level.id,
@@ -916,7 +938,7 @@ async def seed_category(
         raise HTTPException(status_code=403, detail="Only available in development")
 
     # Find language
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(Language.slug == language_slug)
     )
     language = lang_result.scalar_one_or_none()
@@ -924,7 +946,7 @@ async def seed_category(
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Find level
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),  # "a2" → "A2"
@@ -935,7 +957,7 @@ async def seed_category(
         raise HTTPException(status_code=404, detail="Level not found")
 
     # Check if category already exists
-    existing = await db.execute(
+    existing =  db.execute(
         select(Category).where(
             Category.slug == category_data.slug.strip(),
             Category.level_id == level.id,
@@ -956,7 +978,7 @@ async def seed_category(
     )
 
     db.add(new_category)
-    await db.commit()
+    db.commit()
 
     return {
         "message": "Category created",
@@ -982,14 +1004,14 @@ async def seed_lesson(
         raise HTTPException(status_code=403, detail="Only available in development")
 
     # Find language → level → category (same pattern as above)
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(Language.slug == language_slug)
     )
     language = lang_result.scalar_one_or_none()
     if not language:
         raise HTTPException(status_code=404, detail="Language not found")
 
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),
@@ -999,7 +1021,7 @@ async def seed_lesson(
     if not level:
         raise HTTPException(status_code=404, detail="Level not found")
 
-    cat_result = await db.execute(
+    cat_result =  db.execute(
         select(Category).where(
             Category.language_id == language.id,
             Category.level_id == level.id,
@@ -1011,7 +1033,7 @@ async def seed_lesson(
         raise HTTPException(status_code=404, detail="Category not found")
 
     # Check if lesson already exists
-    existing = await db.execute(
+    existing =  db.execute(
         select(LanguageLesson).where(
             LanguageLesson.slug == lesson_data.slug.strip(),
             LanguageLesson.category_id == category.id,
@@ -1035,7 +1057,7 @@ async def seed_lesson(
     )
 
     db.add(new_lesson)
-    await db.commit()
+    db.commit()
 
     return {
         "message": "Lesson created",
@@ -1049,7 +1071,7 @@ async def seed_lesson(
 @app.get("/api/ege/{subject_slug}/lessons", response_model=LessonListResponse)
 async def get_ege_lessons(subject_slug: str, db: AsyncSession = Depends(get_db)):
     # Находим курс по slug (предмет = курс в нашей модели)
-    course_result = await db.execute(
+    course_result =  db.execute(
         select(Course).where(Course.slug == subject_slug, Course.is_published == True)
     )
     course = course_result.scalar_one_or_none()
@@ -1058,7 +1080,7 @@ async def get_ege_lessons(subject_slug: str, db: AsyncSession = Depends(get_db))
         raise HTTPException(status_code=404, detail="Subject not found")
 
     # Получаем уроки этого курса
-    result = await db.execute(
+    result =  db.execute(
         select(Lesson)
         .where(Lesson.course_id == course.id, Lesson.is_published == True)
         .order_by(Lesson.order_number)
@@ -1093,7 +1115,7 @@ async def get_ege_lessons(subject_slug: str, db: AsyncSession = Depends(get_db))
 @app.get("/api/languages/{language_slug}/levels", response_model=LevelListResponse)
 async def get_language_levels(language_slug: str, db: AsyncSession = Depends(get_db)):
     # Находим язык
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(
             Language.slug == language_slug, Language.is_active == True
         )
@@ -1104,7 +1126,7 @@ async def get_language_levels(language_slug: str, db: AsyncSession = Depends(get
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Получаем уровни
-    result = await db.execute(
+    result =  db.execute(
         select(Level)
         .where(Level.language_id == language.id, Level.is_published == True)
         .order_by(Level.display_order)
@@ -1149,7 +1171,7 @@ async def seed_category(
         raise HTTPException(status_code=403, detail="Only available in development")
 
     # Find language
-    lang_result = await db.execute(
+    lang_result =  db.execute(
         select(Language).where(Language.slug == language_slug)
     )
     language = lang_result.scalar_one_or_none()
@@ -1157,7 +1179,7 @@ async def seed_category(
         raise HTTPException(status_code=404, detail="Language not found")
 
     # Find level
-    level_result = await db.execute(
+    level_result =  db.execute(
         select(Level).where(
             Level.language_id == language.id,
             Level.code == level_code.upper(),  # "a2" → "A2"
@@ -1168,7 +1190,7 @@ async def seed_category(
         raise HTTPException(status_code=404, detail="Level not found")
 
     # Check if category already exists
-    existing = await db.execute(
+    existing =  db.execute(
         select(Category).where(
             Category.slug == category_data.slug,  # ✅ No trailing spaces!
             Category.level_id == level.id,
@@ -1189,7 +1211,7 @@ async def seed_category(
     )
 
     db.add(new_category)
-    await db.commit()
+    db.commit()
 
     return {
         "message": "Category created",
@@ -1204,13 +1226,13 @@ async def seed_category(
 async def seed_a2_level(db: AsyncSession = Depends(get_db)):
     """Создаёт уровень A2 для английского (только dev)"""
     # Находим английский язык
-    lang_result = await db.execute(select(Language).where(Language.slug == "english"))
+    lang_result =  db.execute(select(Language).where(Language.slug == "english"))
     language = lang_result.scalar_one_or_none()
     if not language:
         raise HTTPException(status_code=404, detail="English language not found")
 
     # Проверяем, нет ли уже A2 (🔥 Убраны пробелы в "A2")
-    result = await db.execute(
+    result =  db.execute(
         select(Level).where(
             Level.code == "A2",  # ✅ Без пробелов!
             Level.language_id == language.id,
@@ -1229,7 +1251,7 @@ async def seed_a2_level(db: AsyncSession = Depends(get_db)):
     )
 
     db.add(a2_level)
-    await db.commit()
+    db.commit()
 
     return {"message": "A2 level created", "code": a2_level.code, "id": a2_level.id}
 
@@ -1237,7 +1259,7 @@ async def seed_a2_level(db: AsyncSession = Depends(get_db)):
 # === Получить один язык по slug ===
 @app.get("/api/languages/{language_slug}", response_model=LanguageResponse)
 async def get_language(language_slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    result =  db.execute(
         select(Language).where(
             Language.slug == language_slug, Language.is_active == True
         )
@@ -1263,7 +1285,7 @@ async def get_language(language_slug: str, db: AsyncSession = Depends(get_db)):
 @app.post("/api/ege/math-profile-ege/lessons/seed", status_code=201)
 async def seed_math_lesson(db: AsyncSession = Depends(get_db)):
     # Находим курс "Профильная математика ЕГЭ"
-    course_result = await db.execute(
+    course_result =  db.execute(
         select(Course).where(Course.slug == "math-profile-ege")
     )
     course = course_result.scalar_one_or_none()
@@ -1272,7 +1294,7 @@ async def seed_math_lesson(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Math course not found")
 
     # Проверяем, нет ли уже тестового урока
-    result = await db.execute(
+    result =  db.execute(
         select(Lesson).where(
             Lesson.slug == "algebra-basics", Lesson.course_id == course.id
         )
@@ -1292,7 +1314,7 @@ async def seed_math_lesson(db: AsyncSession = Depends(get_db)):
     )
 
     db.add(test_lesson)
-    await db.commit()
+    db.commit()
 
     return {"message": "Math lesson created", "slug": test_lesson.slug}
 
@@ -1312,7 +1334,7 @@ async def seed_ege_full_lesson(
 
     # === 1. Создаём или находим курс ЕГЭ ===
     course_slug = request_data.get("course_slug", "math-profile-ege")
-    course_result = await db.execute(select(Course).where(Course.slug == course_slug))
+    course_result =  db.execute(select(Course).where(Course.slug == course_slug))
     course = course_result.scalar_one_or_none()
 
     if not course:
@@ -1327,11 +1349,11 @@ async def seed_ege_full_lesson(
             is_published=True,
         )
         db.add(course)
-        await db.flush()
+        db.flush()
 
     # === 2. Создаём или находим урок ===
     lesson_slug = request_data.get("lesson_slug", "algebra-basics")
-    lesson_result = await db.execute(
+    lesson_result =  db.execute(
         select(Lesson).where(Lesson.slug == lesson_slug, Lesson.course_id == course.id)
     )
     lesson = lesson_result.scalar_one_or_none()
@@ -1353,10 +1375,10 @@ async def seed_ege_full_lesson(
             is_published=True,
         )
         db.add(lesson)
-        await db.flush()
+        db.flush()
 
     # === 3. Создаём или находим тест ===
-    test_result = await db.execute(
+    test_result =  db.execute(
         select(Test).where(Test.course_lesson_id == lesson.id)
     )
     test = test_result.scalar_one_or_none()
@@ -1371,7 +1393,7 @@ async def seed_ege_full_lesson(
             is_published=True,
         )
         db.add(test)
-        await db.flush()
+        db.flush()
 
         # === 4. Добавляем вопросы ===
         for q_data in request_data.get("questions", []):  # ✅ Используем q_data
@@ -1393,7 +1415,7 @@ async def seed_ege_full_lesson(
         # === 5. Привязываем test_id к уроку ===
         lesson.test_id = test.id
 
-    await db.commit()
+    db.commit()
 
     return {
         "message": "Full EGE lesson with test created",
@@ -1446,7 +1468,7 @@ async def seed_ege_subjects(db: AsyncSession = Depends(get_db)):
 
     for course_ in ege_courses:  # 🔁 Переменная называется course_
         # Проверяем, нет ли уже такого курса
-        result = await db.execute(
+        result =  db.execute(
             select(Course).where(Course.slug == course_["slug"])
         )  # ✅ course_["slug"]
         if result.scalar_one_or_none():
@@ -1464,7 +1486,7 @@ async def seed_ege_subjects(db: AsyncSession = Depends(get_db)):
         db.add(new_course)
         created.append(new_course.slug)
 
-    await db.commit()
+    db.commit()
 
     return {"message": f"Created {len(created)} EGE courses", "slugs": created}
 
@@ -1477,26 +1499,6 @@ fake_users_db = []
 
 
 # ✨ Создать тестовый язык — Английский (только для dev!)
-@app.post("/api/languages/seed", status_code=201)
-async def seed_language(db: AsyncSession = Depends(get_db)):
-    # Проверяем, нет ли уже английского
-    result = await db.execute(select(Language).where(Language.slug == "english"))
-    if result.scalar_one_or_none():
-        return {"message": "English already exists"}
-
-    english = Language(
-        slug="english",
-        name="Английский",
-        description="Полный курс от A1 до C1: грамматика, лексика, аудирование, говорение",
-        icon="🇬🇧",  # Или URL: "https://flagcdn.com/w40/gb.png"
-        image="/english-flag.png",  # Картинка для карточки
-        is_active=True,
-    )
-
-    db.add(english)
-    await db.commit()
-
-    return {"message": "English language created", "slug": english.slug}
 
 
 @app.post(
@@ -1515,7 +1517,7 @@ async def register(
         )
 
         # Проверка существующего пользователя
-        result = await db.execute(
+        result =  db.execute(
             select(User).where(
                 (User.email == user_data.email) | (User.username == user_data.username)
             )
@@ -1536,8 +1538,8 @@ async def register(
         )
 
         db.add(new_user)
-        await db.commit()
-        await db.refresh(new_user)
+        db.commit()
+        db.refresh(new_user)
 
         return UserResponse(
             message="Успешно! Аккаунт создан",
@@ -1557,7 +1559,7 @@ async def register(
 
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     # Проверка существующего пользователя
-    result = await db.execute(
+    result = db.execute(
         select(User).where(
             (User.email == user_data.email) | (User.username == user_data.username)
         )
@@ -1578,8 +1580,8 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     )
 
     db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     return UserResponse(
         message="Успешно! Аккаунт создан",
@@ -1613,7 +1615,7 @@ async def get_courses(db: AsyncSession = Depends(get_db)):
         .order_by(Course.created_at.desc())
     )
 
-    result = await db.execute(query)
+    result =  db.execute(query)
     courses = result.scalars().all()
 
     return CourseListResponse(
@@ -1630,7 +1632,7 @@ async def get_courses(db: AsyncSession = Depends(get_db)):
 # 📖 Получить один курс по slug
 @app.get("/api/courses/{slug}", response_model=CourseResponse)
 async def get_course_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    result =  db.execute(
         select(Course).where(Course.slug == slug, Course.is_published == True)
     )
     course = result.scalar_one_or_none()
@@ -1654,7 +1656,7 @@ async def get_course_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 @app.post("/api/courses/seed", status_code=201)
 async def seed_course(db: AsyncSession = Depends(get_db)):
     # Проверяем, нет ли уже тестового курса
-    result = await db.execute(select(Course).where(Course.slug == "test-course"))
+    result =  db.execute(select(Course).where(Course.slug == "test-course"))
     if result.scalar_one_or_none():
         return {"message": "Test course already exists"}
 
@@ -1668,7 +1670,7 @@ async def seed_course(db: AsyncSession = Depends(get_db)):
     )
 
     db.add(test_course)
-    await db.commit()
+    db.commit()
 
     return {"message": "Test course created", "slug": test_course.slug}
 
@@ -1680,14 +1682,14 @@ async def seed_course(db: AsyncSession = Depends(get_db)):
 @app.get("/api/courses/{course_slug}/lessons", response_model=LessonListResponse)
 async def get_course_lessons(course_slug: str, db: AsyncSession = Depends(get_db)):
     # Находим курс по slug
-    course_result = await db.execute(select(Course).where(Course.slug == course_slug))
+    course_result =  db.execute(select(Course).where(Course.slug == course_slug))
     course = course_result.scalar_one_or_none()
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
     # Получаем уроки этого курса
-    result = await db.execute(
+    result =db.execute(
         select(Lesson)
         .where(Lesson.course_id == course.id, Lesson.is_published == True)
         .order_by(Lesson.order_number)
@@ -1723,13 +1725,13 @@ async def get_lesson_by_slug(
     course_slug: str, lesson_slug: str, db: AsyncSession = Depends(get_db)
 ):
     # Находим курс
-    course_result = await db.execute(select(Course).where(Course.slug == course_slug))
+    course_result =  db.execute(select(Course).where(Course.slug == course_slug))
     course = course_result.scalar_one_or_none()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
     # 🔁 ВАЖНО: Выбираем ВСЕ поля урока, включая test_id
-    lesson_result = await db.execute(
+    lesson_result =  db.execute(
         select(Lesson).where(  # ✅ select(Lesson) выбирает все колонки!
             Lesson.slug == lesson_slug,
             Lesson.course_id == course.id,
@@ -1748,14 +1750,14 @@ async def get_lesson_by_slug(
 @app.post("/api/courses/{course_slug}/lessons/seed", status_code=201)
 async def seed_lesson(course_slug: str, db: AsyncSession = Depends(get_db)):
     # Находим курс
-    course_result = await db.execute(select(Course).where(Course.slug == course_slug))
+    course_result =  db.execute(select(Course).where(Course.slug == course_slug))
     course = course_result.scalar_one_or_none()
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
     # Проверяем, нет ли уже тестового урока
-    result = await db.execute(
+    result =  db.execute(
         select(Lesson).where(
             Lesson.slug == "intro-lesson", Lesson.course_id == course.id
         )
@@ -1775,7 +1777,7 @@ async def seed_lesson(course_slug: str, db: AsyncSession = Depends(get_db)):
     )
 
     db.add(test_lesson)
-    await db.commit()
+    db.commit()
 
     return {"message": "Test lesson created", "slug": test_lesson.slug}
 
@@ -1785,7 +1787,7 @@ async def seed_lesson(course_slug: str, db: AsyncSession = Depends(get_db)):
 
 @app.get("/api/articles", response_model=ArticleListResponse)
 async def get_articles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Article).order_by(Article.created_at.desc()))
+    result =  db.execute(select(Article).order_by(Article.created_at.desc()))
     articles = result.scalars().all()
 
     return ArticleListResponse(
@@ -1809,7 +1811,7 @@ async def get_articles(db: AsyncSession = Depends(get_db)):
 
 @app.get("/api/articles/{slug}", response_model=ArticleResponse)
 async def get_article_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Article).where(Article.slug == slug))
+    result = db.execute(select(Article).where(Article.slug == slug))
     article = result.scalar_one_or_none()
 
     if not article:
@@ -1830,7 +1832,7 @@ async def get_article_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 
 @app.post("/api/articles/seed", status_code=201)
 async def seed_article(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Article).where(Article.slug == "test-article"))
+    result =  db.execute(select(Article).where(Article.slug == "test-article"))
     if result.scalar_one_or_none():
         return {"message": "Test article already exists"}
 
@@ -1844,7 +1846,7 @@ async def seed_article(db: AsyncSession = Depends(get_db)):
     )
 
     db.add(test_article)
-    await db.commit()
+    db.commit()
 
     return {"message": "Test article created", "slug": test_article.slug}
 

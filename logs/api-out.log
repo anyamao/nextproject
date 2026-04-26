@@ -1,0 +1,148 @@
+2026-04-25 18:24:12: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:24:12: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:31:18: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:31:18: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:34:29: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:34:29: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:39:52: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:39:52: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:42:20: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:42:29: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:42:29: ✅ Tables created (sync)
+2026-04-25 18:42:29: ✅ SQLite tables created (dev only)
+2026-04-25 18:42:29: INFO:     127.0.0.1:35912 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 18:42:41: INFO:     127.0.0.1:34790 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 18:51:14: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:51:15: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:51:15: ✅ Tables created (sync)
+2026-04-25 18:51:15: ✅ SQLite tables created (dev only)
+2026-04-25 18:51:15: INFO:     127.0.0.1:36472 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 18:52:37: INFO:     127.0.0.1:60856 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 18:57:19: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 18:57:19: ✅ Tables created (sync)
+2026-04-25 18:57:19: ✅ SQLite tables created (dev only)
+2026-04-25 18:57:19: INFO:     127.0.0.1:43648 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 18:57:25: INFO:     127.0.0.1:51360 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 19:02:50: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:02:50: ✅ Tables created (sync)
+2026-04-25 19:02:50: ✅ SQLite tables created (dev only)
+2026-04-25 19:09:46: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:09:46: ✅ Tables created (sync)
+2026-04-25 19:09:46: ✅ SQLite tables created (dev only)
+2026-04-25 19:09:46: INFO:     127.0.0.1:49602 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 19:09:51: INFO:     127.0.0.1:54552 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 19:41:06: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:41:06: ✅ Tables created (sync)
+2026-04-25 19:41:06: ✅ SQLite tables created (dev only)
+2026-04-25 19:41:37: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:41:37: ✅ Tables created (sync)
+2026-04-25 19:41:37: ✅ SQLite tables created (dev only)
+2026-04-25 19:41:37: INFO:     127.0.0.1:60738 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 19:41:44: INFO:     127.0.0.1:40634 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 19:42:04: INFO:     127.0.0.1:42524 - "GET /api/languages HTTP/1.1" 500 Internal Server Error
+2026-04-25 19:54:19: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:54:19: ✅ Tables created (sync)
+2026-04-25 19:54:19: ✅ SQLite tables created (dev only)
+2026-04-25 19:59:23: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:59:23: ✅ Tables created (sync)
+2026-04-25 19:59:23: ✅ SQLite tables created (dev only)
+2026-04-25 19:59:23: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:59:23: ✅ Tables created (sync)
+2026-04-25 19:59:23: ✅ SQLite tables created (dev only)
+2026-04-25 19:59:57: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 19:59:57: ✅ Tables created (sync)
+2026-04-25 19:59:57: ✅ SQLite tables created (dev only)
+2026-04-25 19:59:57: INFO:     127.0.0.1:55444 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 20:00:03: INFO:     127.0.0.1:60406 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 20:00:10: INFO:     127.0.0.1:60418 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 20:02:59: INFO:     127.0.0.1:55814 - "POST /api/languages/seed HTTP/1.1" 500 Internal Server Error
+2026-04-25 20:11:52: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 20:11:52: ✅ Tables created (sync)
+2026-04-25 20:11:52: ✅ SQLite tables created (dev only)
+2026-04-25 20:24:44: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 20:24:44: ✅ Tables created (sync)
+2026-04-25 20:24:44: ✅ SQLite tables created (dev only)
+2026-04-25 20:24:44: INFO:     127.0.0.1:55978 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 20:26:23: INFO:     127.0.0.1:47228 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 20:27:22: INFO:     127.0.0.1:40394 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 20:28:03: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 20:28:03: ✅ Tables created (sync)
+2026-04-25 20:28:03: ✅ SQLite tables created (dev only)
+2026-04-25 20:35:06: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-25 20:35:06: ✅ Tables created (sync)
+2026-04-25 20:35:06: ✅ SQLite tables created (dev only)
+2026-04-25 20:35:06: INFO:     31.130.135.139:0 - "HEAD /health HTTP/1.1" 405 Method Not Allowed
+2026-04-25 20:35:17: INFO:     31.130.135.139:0 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 21:44:30: INFO:     127.0.0.1:45736 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 21:46:33: INFO:     127.0.0.1:44812 - "GET /health HTTP/1.1" 200 OK
+2026-04-25 21:46:36: INFO:     127.0.0.1:44816 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 21:47:40: INFO:     127.0.0.1:43146 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-25 21:47:54: INFO:     31.130.135.139:0 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 00:31:19: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-26 00:31:19: ✅ Tables created (sync)
+2026-04-26 00:31:19: ✅ SQLite tables created (dev only)
+2026-04-26 00:56:44: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-26 00:56:44: ✅ Tables created (sync)
+2026-04-26 00:56:44: ✅ SQLite tables created (dev only)
+2026-04-26 00:56:44: INFO:     127.0.0.1:39908 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:33:53: INFO:     127.0.0.1:58136 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:34:09: INFO:     127.0.0.1:59840 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:34:11: INFO:     127.0.0.1:59840 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:34:11: INFO:     127.0.0.1:59846 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:34:12: INFO:     127.0.0.1:59840 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:34:47: INFO:     127.0.0.1:59358 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:34:47: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-26 01:34:47: ✅ Tables created (sync)
+2026-04-26 01:34:47: ✅ SQLite tables created (dev only)
+2026-04-26 01:34:47: INFO:     127.0.0.1:59364 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:34:49: INFO:     127.0.0.1:59358 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:34:53: INFO:     127.0.0.1:53106 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:34:53: INFO:     127.0.0.1:53118 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:36:15: INFO:     127.0.0.1:41794 - "POST /api/languages/english/levels/seed HTTP/1.1" 201 Created
+2026-04-26 01:36:20: INFO:     127.0.0.1:41800 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:36:20: INFO:     127.0.0.1:41802 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:36:22: INFO:     127.0.0.1:41800 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:36:22: INFO:     127.0.0.1:41802 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:36:22: INFO:     127.0.0.1:41800 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 01:39:21: INFO:     127.0.0.1:39860 - "POST /api/languages/english/levels/a2/categories/seed HTTP/1.1" 403 Forbidden
+2026-04-26 01:40:01: INFO:     127.0.0.1:47160 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:40:01: INFO:     127.0.0.1:47168 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:40:47: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-26 01:40:47: ✅ Tables created (sync)
+2026-04-26 01:40:47: ✅ SQLite tables created (dev only)
+2026-04-26 01:40:47: INFO:     127.0.0.1:45458 - "POST /api/languages/english/levels/a2/categories/seed HTTP/1.1" 403 Forbidden
+2026-04-26 01:42:10: INFO:     127.0.0.1:40464 - "POST /api/languages/english/levels/a2/categories/seed HTTP/1.1" 403 Forbidden
+2026-04-26 01:43:53: INFO:     127.0.0.1:56718 - "GET /api/ege/subjects HTTP/1.1" 200 OK
+2026-04-26 01:43:54: INFO:     127.0.0.1:56718 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 01:43:55: INFO:     127.0.0.1:56718 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:43:55: INFO:     127.0.0.1:56726 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:43:55: INFO:     127.0.0.1:56718 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:43:55: INFO:     127.0.0.1:56726 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:43:55: INFO:     127.0.0.1:56718 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 01:43:57: INFO:     127.0.0.1:56718 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:43:57: INFO:     127.0.0.1:56726 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:43:57: INFO:     127.0.0.1:56718 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 01:43:57: INFO:     127.0.0.1:56726 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons HTTP/1.1" 200 OK
+2026-04-26 01:46:31: INFO:     127.0.0.1:53446 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 01:46:31: ⚙️ Using SYNC engine: sqlite:///./dementia.db
+2026-04-26 01:46:31: ✅ Tables created (sync)
+2026-04-26 01:46:31: ✅ SQLite tables created (dev only)
+2026-04-26 01:46:31: INFO:     127.0.0.1:53456 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 01:46:31: INFO:     127.0.0.1:53446 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 01:46:31: INFO:     127.0.0.1:53456 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons HTTP/1.1" 200 OK
+2026-04-26 01:46:33: INFO:     127.0.0.1:53446 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK
+2026-04-26 02:55:33: INFO:     127.0.0.1:46976 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK
+2026-04-26 03:03:47: INFO:     127.0.0.1:50378 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK
+2026-04-26 03:04:00: INFO:     127.0.0.1:41278 - "GET /api/languages HTTP/1.1" 200 OK
+2026-04-26 03:04:01: INFO:     127.0.0.1:41278 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 03:04:01: INFO:     127.0.0.1:41284 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41278 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41284 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41278 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41278 - "GET /api/languages/english HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41284 - "GET /api/languages/english/levels HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41278 - "GET /api/languages/english/levels/A2/categories HTTP/1.1" 200 OK
+2026-04-26 03:04:02: INFO:     127.0.0.1:41284 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons HTTP/1.1" 200 OK
+2026-04-26 03:04:03: INFO:     127.0.0.1:41278 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK
+2026-04-26 03:06:33: INFO:     127.0.0.1:55980 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK
+2026-04-26 03:06:37: INFO:     127.0.0.1:55980 - "GET /api/languages/english/levels/A2/categories/all-about-me/lessons/grammar-basics HTTP/1.1" 200 OK

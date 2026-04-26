@@ -1,0 +1,45 @@
+2026-04-25 21:43:53: 
+2026-04-25 21:43:53: > nextproject@0.1.0 start /home/vika/nextproject/frontend
+2026-04-25 21:43:53: > next start -p 3010
+2026-04-25 21:43:53: 
+2026-04-25 21:43:54: ▲ Next.js 16.1.7
+2026-04-25 21:43:54: - Local:         http://localhost:3010
+2026-04-25 21:43:54: - Network:       http://31.130.135.139:3010
+2026-04-25 21:43:54: 
+2026-04-25 21:43:54: ✓ Starting...
+2026-04-25 21:43:54: ✓ Ready in 333ms
+2026-04-26 00:28:52:  ELIFECYCLE  Command failed.
+2026-04-26 00:29:42: 
+2026-04-26 00:29:42: > nextproject@0.1.0 start /home/vika/nextproject/frontend
+2026-04-26 00:29:42: > next start -p 3010
+2026-04-26 00:29:42: 
+2026-04-26 00:29:42: ▲ Next.js 16.1.7
+2026-04-26 00:29:42: - Local:         http://localhost:3010
+2026-04-26 00:29:42: - Network:       http://31.130.135.139:3010
+2026-04-26 00:29:42: 
+2026-04-26 00:29:42: ✓ Starting...
+2026-04-26 00:29:42: ✓ Ready in 325ms
+2026-04-26 00:58:42:  ELIFECYCLE  Command failed.
+2026-04-26 00:58:42: 
+2026-04-26 00:58:42: > nextproject@0.1.0 start /home/vika/nextproject/frontend
+2026-04-26 00:58:42: > next start -p 3010
+2026-04-26 00:58:42: 
+2026-04-26 00:58:43: ▲ Next.js 16.1.7
+2026-04-26 00:58:43: - Local:         http://localhost:3010
+2026-04-26 00:58:43: - Network:       http://31.130.135.139:3010
+2026-04-26 00:58:43: 
+2026-04-26 00:58:43: ✓ Starting...
+2026-04-26 00:58:43: ✓ Ready in 398ms
+2026-04-26 00:59:01: 🔍 apiFetch: GET http://localhost:8000/api/api/languages
+2026-04-26 01:28:04: 🔍 apiFetch: GET http://localhost:8000/api/api/languages
+2026-04-26 01:33:02:  ELIFECYCLE  Command failed.
+2026-04-26 01:33:46: 
+2026-04-26 01:33:46: > nextproject@0.1.0 start /home/vika/nextproject/frontend
+2026-04-26 01:33:46: > next start -p 3010
+2026-04-26 01:33:46: 
+2026-04-26 01:33:46: ▲ Next.js 16.1.7
+2026-04-26 01:33:46: - Local:         http://localhost:3010
+2026-04-26 01:33:46: - Network:       http://31.130.135.139:3010
+2026-04-26 01:33:46: 
+2026-04-26 01:33:46: ✓ Starting...
+2026-04-26 01:33:46: ✓ Ready in 269ms
