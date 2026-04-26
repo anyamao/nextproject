@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     func,
     Text,
+    UniqueConstraint,
 )
 from database import Base
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -51,6 +52,7 @@ class EgeLesson(Base):
     subject_id = Column(
         Integer, ForeignKey("ege_subjects.id"), nullable=False, index=True
     )
+    view_count = Column(Integer, default=0, nullable=False)
     title = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False, index=True)
     description = Column(String, nullable=True)
@@ -94,6 +96,35 @@ class EgeTestQuestion(Base):
 
     # ✅ Обратная связь на тест (единственная, которая нужна с back_populates)
     test = relationship("EgeTest", back_populates="questions")
+
+
+class LessonView(Base):
+    __tablename__ = "lesson_views"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 🔗 Связи
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lesson_id = Column(
+        Integer,
+        ForeignKey("ege_lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # 📅 Метаданные
+    viewed_at = Column(DateTime, server_default=func.now())
+
+    # 🔗 Relationships
+    user = relationship("User")
+    lesson = relationship("EgeLesson")
+
+    # ✅ Уникальность: один просмотр на пользователя на урок (навечно)
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_view"),
+    )
 
 
 class TestResult(Base):

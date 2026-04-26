@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Trophy, Lock } from "lucide-react";
+import { ArrowLeft, Eye, Trophy, Lock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 type Lesson = {
@@ -35,13 +35,23 @@ export default function LessonClient({
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loadingResult, setLoadingResult] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const [viewCount, setViewCount] = useState<number | null>(null);
   // 🔍 Проверка авторизации при загрузке
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
   }, []);
-
+  useEffect(() => {
+    const fetchViews = async () => {
+      try {
+        const data = await apiFetch(`/ege/${subjectSlug}/${lessonSlug}/views`);
+        setViewCount(data.view_count);
+      } catch (err) {
+        console.log("ℹ️ Could not fetch view count");
+      }
+    };
+    fetchViews();
+  }, [subjectSlug, lessonSlug]);
   // 📥 Загрузка результата теста (если авторизован и есть тест)
   useEffect(() => {
     if (!isAuthenticated || !testId) return;
@@ -61,7 +71,36 @@ export default function LessonClient({
     };
     fetchResult();
   }, [isAuthenticated, testId]);
+  useEffect(() => {
+    if (!isAuthenticated || !testId) return; // testId здесь — просто маркер, что урок загружен
 
+    const recordView = async () => {
+      try {
+        // Проверяем, не записывали ли уже в этой сессии (оптимизация)
+        const sessionKey = `viewed_lesson_${subjectSlug}_${lessonSlug}`;
+        if (sessionStorage.getItem(sessionKey)) {
+          return;
+        }
+
+        await apiFetch(`/ege/${subjectSlug}/${lessonSlug}/view`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        // Помечаем, что уже записали (чтобы не дублировать при ре-рендере)
+        sessionStorage.setItem(sessionKey, "true");
+
+        console.log("✅ View recorded");
+      } catch (err) {
+        // Игнорируем ошибки: если не записалось — не страшно
+        console.log("ℹ️ View not recorded (might be duplicate or offline)");
+      }
+    };
+
+    recordView();
+  }, [isAuthenticated, subjectSlug, lessonSlug]);
   return (
     <main className="flex-1 flex flex-col lg:flex-row items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
       {/* 📄 Основной контент урока */}
@@ -77,7 +116,18 @@ export default function LessonClient({
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           {lesson.title}
         </h1>
-
+        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-blue-500" />
+            Просмотры
+          </h3>
+          <p className="text-2xl font-bold text-gray-900 text-center">
+            {viewCount?.toLocaleString("ru-RU") || "—"}
+          </p>
+          <p className="text-xs text-gray-500 text-center mt-1">
+            уникальных пользователей
+          </p>
+        </div>
         {lesson.time_minutes && (
           <p className="text-gray-500 text-sm mb-6">
             ~{lesson.time_minutes} минут

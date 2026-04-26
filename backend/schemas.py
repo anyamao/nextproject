@@ -151,6 +151,16 @@ class TestResultOut(BaseModel):
     completed_at: datetime
 
 
+class LessonViewCreate(BaseModel):
+    # Пустая схема — всё берём из контекста (токен + URL)
+    pass
+
+
+class LessonViewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    viewed_at: datetime
+
+
 # конец #######################################################
 
 
@@ -173,4 +183,6 @@ __all__ = [
     "TestResultOut",
     "TestResultCreate",
     "TestSubmissionResult",
+    "LessonViewCreate",
+    "LessonViewOut",
 ]

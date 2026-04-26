@@ -4,11 +4,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 import os
+from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from database import engine, Base, get_db
 from sqlalchemy.dialects.postgresql import insert
-from models import User, EgeSubject, EgeLesson, EgeTest, EgeTestQuestion, TestResult
+from models import (
+    User,
+    EgeSubject,
+    EgeLesson,
+    EgeTest,
+    EgeTestQuestion,
+    TestResult,
+    LessonView,
+)
 from schemas import (
     UserRegister,
     UserLogin,
@@ -27,6 +36,8 @@ from schemas import (
     TestResultCreate,
     TestResultOut,
     TestSubmissionResult,
+    LessonViewOut,
+    LessonViewCreate,
 )
 from auth import (
     get_password_hash,
@@ -136,6 +147,60 @@ async def read_me(current_user: User = Depends(get_current_user)):
     return UserOut(
         id=current_user.id, email=current_user.email, username=current_user.username
     )
+
+
+# ============================================================================
+# 👁️ ПРОСМОТРЫ УРОКОВ
+# ============================================================================
+
+
+# 📤 Записать просмотр урока (только авторизованные, идемпотентно)
+@app.post("/ege/{subject}/{lesson}/view", status_code=status.HTTP_201_CREATED)
+async def record_lesson_view(
+    subject: str,
+    lesson: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # 🔐 Только авторизованные
+):
+    # Находим урок по slug
+    stmt = select(EgeLesson).where(EgeLesson.slug == lesson)
+    lesson_obj = await db.scalar(stmt)
+
+    if not lesson_obj:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # 🔁 INSERT ... ON CONFLICT DO NOTHING (идемпотентность)
+
+    stmt = insert(LessonView).values(user_id=current_user.id, lesson_id=lesson_obj.id)
+    stmt = stmt.on_conflict_do_nothing(  # ✅ Если уже есть — ничего не делаем
+        index_elements=["user_id", "lesson_id"]
+    )
+
+    await db.execute(stmt)
+    await db.commit()
+
+    return {"message": "View recorded"}
+
+
+# 📥 Получить количество просмотров урока (публичный)
+@app.get("/ege/{subject}/{lesson}/views")
+async def get_lesson_views(
+    subject: str, lesson: str, db: AsyncSession = Depends(get_db)
+):
+    # Находим урок
+    stmt = select(EgeLesson).where(EgeLesson.slug == lesson)
+    lesson_obj = await db.scalar(stmt)
+
+    if not lesson_obj:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Считаем уникальные просмотры
+    count_stmt = select(func.count(LessonView.id)).where(
+        LessonView.lesson_id == lesson_obj.id
+    )
+    count = await db.scalar(count_stmt)
+
+    return {"view_count": count or 0}
 
 
 # ЕГЭ ЭНДПОИНТЫ ТУТ!! ege_native
