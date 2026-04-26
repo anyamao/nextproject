@@ -262,13 +262,17 @@ export default function LessonClient({
   const [editContent, setEditContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(null);
+  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
+    null,
+  );
 
   const TEST_ID = lesson?.test_id || undefined;
 
   const countAllComments = (commentsList: Comment[]): number => {
     return commentsList.reduce((total, comment) => {
-      return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+      return (
+        total + 1 + (comment.replies ? countAllComments(comment.replies) : 0)
+      );
     }, 0);
   };
 
@@ -298,7 +302,8 @@ export default function LessonClient({
         }
 
         // Записываем просмотр без user_id через FastAPI
-        const sessionId = sessionStorage.getItem("anonymous_session_id") || crypto.randomUUID();
+        const sessionId =
+          sessionStorage.getItem("anonymous_session_id") || crypto.randomUUID();
         sessionStorage.setItem("anonymous_session_id", sessionId);
 
         await apiFetch(`/api/lessons/${lesson.id}/view`, {
@@ -363,7 +368,9 @@ export default function LessonClient({
   const handleEditComment = async (commentId: string, newContent: string) => {
     if (!newContent.trim()) return;
     setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, content: newContent.trim() } : c))
+      prev.map((c) =>
+        c.id === commentId ? { ...c, content: newContent.trim() } : c,
+      ),
     );
     setEditingCommentId(null);
     setEditContent("");
@@ -372,10 +379,12 @@ export default function LessonClient({
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Удалить этот комментарий и все ответы?")) return;
     const remove = (list: Comment[], id: string): Comment[] =>
-      list.filter((c) => c.id !== id).map((c) => ({
-        ...c,
-        replies: c.replies ? remove(c.replies, id) : undefined,
-      }));
+      list
+        .filter((c) => c.id !== id)
+        .map((c) => ({
+          ...c,
+          replies: c.replies ? remove(c.replies, id) : undefined,
+        }));
     setComments((prev) => remove(prev, commentId));
   };
 
@@ -386,14 +395,29 @@ export default function LessonClient({
     setReplyContent("");
   };
 
-  const handleLikeComment = async (commentId: string, type: "like" | "dislike") => {
+  const handleLikeComment = async (
+    commentId: string,
+    type: "like" | "dislike",
+  ) => {
     // Лайки через Supabase пока заглушка
     console.log("Like via Supabase - placeholder");
   };
 
   const getResultBadge = () => {
-    if (loadingResult) return { text: "...", border: "border-gray-300", bg: "bg-gray-100", textColor: "text-gray-500" };
-    if (!result) return { text: "—", border: "border-gray-300", bg: "bg-gray-100", textColor: "text-gray-500" };
+    if (loadingResult)
+      return {
+        text: "...",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
+    if (!result)
+      return {
+        text: "—",
+        border: "border-gray-300",
+        bg: "bg-gray-100",
+        textColor: "text-gray-500",
+      };
     return {
       text: `${result.score}%`,
       border: result.score >= 75 ? "border-green-500" : "border-red-500",
@@ -405,7 +429,10 @@ export default function LessonClient({
 
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full max-w-5xl mx-auto">
-      <Link href={`/ege/${params.subject}`} className="text-gray-600 hover:text-purple-600 transition mb-4 inline-flex items-center gap-2">
+      <Link
+        href={`/ege/${params.subject}`}
+        className="text-gray-600 hover:text-purple-600 transition mb-4 inline-flex items-center gap-2"
+      >
         <ArrowLeft className="w-[20px] h-[20px]" />
         <div className="bg-purple-100 px-4 py-2 rounded-full text-sm font-medium text-purple-700 capitalize">
           {lesson.title}
@@ -417,8 +444,15 @@ export default function LessonClient({
       <div className="flex flex-wrap items-center justify-between gap-3 w-full mb-8">
         <div className="bg-white flex p-[15px] items-center shadow-xs rounded-lg">
           <div className="font-semibold smaller-text">Поделитесь уроком</div>
-          <button onClick={handleCopyLink} className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400 hover:bg-gray-50 transition relative">
-            {copySuccess ? <Check className="w-[15px] h-[15px] text-green-600" /> : <Copy className="w-[15px] h-[15px] text-gray-700" />}
+          <button
+            onClick={handleCopyLink}
+            className="rounded-full ml-[15px] cursor-pointer items-center justify-center p-[7px] border-[1px] border-gray-400 hover:bg-gray-50 transition relative"
+          >
+            {copySuccess ? (
+              <Check className="w-[15px] h-[15px] text-green-600" />
+            ) : (
+              <Copy className="w-[15px] h-[15px] text-gray-700" />
+            )}
           </button>
         </div>
         <div className="flex flex-row items-center">
@@ -429,30 +463,45 @@ export default function LessonClient({
         </div>
       </div>
 
-      <article className="flex flex-col items-center prose prose-purple max-w-none mb-10 w-full" dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      <article
+        className="flex flex-col items-center prose prose-purple max-w-none mb-10 w-full"
+        dangerouslySetInnerHTML={{ __html: lesson.content }}
+      />
 
       <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row gap-4">
         {TEST_ID && (
-          <button onClick={handleTakeTest} className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-5px] hover:shadow-md transition-all flex text-[16px] items-center justify-center font-semibold rounded-xl h-[50px] w-[220px]">
+          <button
+            onClick={handleTakeTest}
+            className="bg-purple-600 cursor-pointer text-white hover:translate-y-[-5px] hover:shadow-md transition-all flex text-[16px] items-center justify-center font-semibold rounded-xl h-[50px] w-[220px]"
+          >
             <p>{result ? "Перепройти тест" : "Пройти тест"}</p>
           </button>
         )}
         <div className="flex flex-col items-center">
           <div className="font-semibold text-sm mb-[10px]">Как вам урок?</div>
           <div className="flex flex-row gap-3">
-            <button onClick={() => submitFeedback("clear")} className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${userFeedback === "clear" ? "bg-black text-white" : ""}`}>
+            <button
+              onClick={() => submitFeedback("clear")}
+              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${userFeedback === "clear" ? "bg-black text-white" : ""}`}
+            >
               <p>Понятно</p>
               <ThumbsUp className="ml-[5px] w-[15px] h-[15px]" />
               <p className="ml-[5px]">{lesson.clear_count}</p>
             </button>
-            <button onClick={() => submitFeedback("unclear")} className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${userFeedback === "unclear" ? "bg-black text-white" : ""}`}>
+            <button
+              onClick={() => submitFeedback("unclear")}
+              className={`rounded-full text-sm p-[3px] px-[10px] cursor-pointer items-center justify-center flex border-[1px] border-gray-400 transition hover:bg-black hover:text-white duration-300 ${userFeedback === "unclear" ? "bg-black text-white" : ""}`}
+            >
               <p>Не понятно</p>
               <ThumbsDown className="ml-[5px] w-[15px] h-[15px]" />
               <p className="ml-[5px]">{lesson.unclear_count}</p>
             </button>
           </div>
         </div>
-        <Link href={`/ege/${params.subject}`} className="bg-gray-200 rounded-xl border-[1px] border-gray-300 w-[180px] flex flex-row items-center hover:translate-y-[-3px] hover:shadow-md transition-all justify-center text-sm text-gray-700 p-[10px]">
+        <Link
+          href={`/ege/${params.subject}`}
+          className="bg-gray-200 rounded-xl border-[1px] border-gray-300 w-[180px] flex flex-row items-center hover:translate-y-[-3px] hover:shadow-md transition-all justify-center text-sm text-gray-700 p-[10px]"
+        >
           <p>Следующий урок</p>
           <ArrowRight className="text-gray-700 w-[16px] ml-[8px] h-[16px]" />
         </Link>
@@ -463,21 +512,60 @@ export default function LessonClient({
           Комментарии ({countAllComments(comments)})
         </p>
         <div className="flex flex-row items-center mb-6 mt-[10px]">
-          <img src="/aiclose.png" className="w-[40px] h-[40px] rounded-full bg-gray-200" alt="Avatar" />
-          <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Оставить комментарий" className="ml-[10px] flex-1 border-b border-gray-300 pb-2 outline-none focus:border-purple-500 transition" onKeyDown={(e) => e.key === "Enter" && handleSendComment()} />
-          <button onClick={handleSendComment} disabled={!newComment.trim() || sendingComment} className="ml-2 p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
-            {sendingComment ? <Loader2 className="animate-spin w-4 h-4" /> : <Send className="w-4 h-4" />}
+          <img
+            src="/aiclose.png"
+            className="w-[40px] h-[40px] rounded-full bg-gray-200"
+            alt="Avatar"
+          />
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Оставить комментарий"
+            className="ml-[10px] flex-1 border-b border-gray-300 pb-2 outline-none focus:border-purple-500 transition"
+            onKeyDown={(e) => e.key === "Enter" && handleSendComment()}
+          />
+          <button
+            onClick={handleSendComment}
+            disabled={!newComment.trim() || sendingComment}
+            className="ml-2 p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition"
+          >
+            {sendingComment ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </button>
         </div>
         <div className="space-y-4">
           {loadingComments ? (
-            <div className="flex justify-center py-8"><Loader2 className="animate-spin w-6 h-6 text-gray-400" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
+            </div>
           ) : comments.length > 0 ? (
             comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} isAuthenticated={true} editingCommentId={editingCommentId} editContent={editContent} replyingTo={replyingTo} replyContent={replyContent} onEdit={handleEditComment} onDelete={handleDeleteComment} onReply={handleAddReply} onLike={handleLikeComment} setEditingCommentId={setEditingCommentId} setEditContent={setEditContent} setReplyingTo={setReplyingTo} setReplyContent={setReplyContent} />
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                isAuthenticated={true}
+                editingCommentId={editingCommentId}
+                editContent={editContent}
+                replyingTo={replyingTo}
+                replyContent={replyContent}
+                onEdit={handleEditComment}
+                onDelete={handleDeleteComment}
+                onReply={handleAddReply}
+                onLike={handleLikeComment}
+                setEditingCommentId={setEditingCommentId}
+                setEditContent={setEditContent}
+                setReplyingTo={setReplyingTo}
+                setReplyContent={setReplyContent}
+              />
             ))
           ) : (
-            <p className="text-gray-500 text-center py-4">Пока нет комментариев. Будьте первым!</p>
+            <p className="text-gray-500 text-center py-4">
+              Пока нет комментариев. Будьте первым!
+            </p>
           )}
         </div>
       </div>

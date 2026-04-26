@@ -1,42 +1,48 @@
-// frontend/lib/api.ts
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-// 🔁 Для сервера используем относительный путь или переменную без NEXT_PUBLIC_
-const SERVER_API_URL =
-  process.env.API_URL || "http://127.0.0.1:8010"; // ✅ Порт 8010!
-
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  // 🔁 Определяем, где выполняется код: на сервере или в браузере
-  const isServer = typeof window === "undefined";
-  const baseUrl = isServer ? SERVER_API_URL : API_URL;
-  
-  // 🔁 Для сервера используем относительный путь, если запрос к /api/
-  // nginx сам проксирует /api/ → 127.0.0.1:8010
-  const url = isServer && endpoint.startsWith("/api/")
-    ? `http://127.0.0.1:8010${endpoint}`  // ✅ Прямой запрос к бэкенду на сервере
-    : `${baseUrl}${endpoint}`;
-
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-
-  // Токен добавляем только в браузере
+// 🔁 Определяем базовый URL: относительный для prod, localhost для dev
+const getBaseUrl = () => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
+    // В браузере: если на домене — используем относительный путь
+    if (
+      window.location.hostname === "maoschool.ru" ||
+      window.location.hostname === "www.maoschool.ru"
+    ) {
+      return ""; // Относительный: /api/... → nginx проксирует
     }
+    // Для localhost — явный порт бэкенда
+    return "http://localhost:8010";
   }
+  // На сервере (SSR): используем env или дефолт
+  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8010";
+};
 
-  const response = await fetch(url, {
+// lib/api.ts
+export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
+
+  // Получаем токен из localStorage (только на клиенте)
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers,
-    cache: options.cache || "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
   });
 
+  // Обработка 401 — токен истёк
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/"; // или редирект на логин
+    throw new Error("Session expired");
+  }
+
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API Error ${response.status}: ${error}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP ${response.status}`);
   }
 
   return response.json();

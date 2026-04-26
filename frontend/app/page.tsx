@@ -2,7 +2,6 @@ import Mainnav from "./../ui/mainnav";
 import ContactForm from "./../ui/contactform";
 import NavigationPanel from "./../ui/navigationpanel";
 import MessageBubble from "@/ui/MessageBubble";
-import ChatSidebar from "@/ui/ChatSidebar";
 export default async function Home() {
   return (
     <div className="flex-1 flex flex-col items-center px-[5px] sm:px-[0px] py-[30px]  min-w-full min-h-full relative bg-gray-100 ">
