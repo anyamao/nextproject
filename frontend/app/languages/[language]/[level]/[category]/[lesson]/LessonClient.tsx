@@ -106,7 +106,9 @@ const CommentItem = ({
         <div className="flex-1">
           {/* Автор и дата */}
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-medium text-sm">{comment.user_email || "Аноним"}</span>
+            <span className="font-medium text-sm">
+              {comment.user_email || "Аноним"}
+            </span>
             <span className="text-xs text-gray-400">
               {new Date(comment.created_at).toLocaleDateString("ru-RU")}
             </span>
@@ -265,13 +267,18 @@ export default function LessonClient({
   const [editContent, setEditContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(null);
-
+  const [userFeedback, setUserFeedback] = useState<"clear" | "unclear" | null>(
+    null,
+  );
+  const [result, setResult] = useState<TestResult | null>(null);
+  const [loadingResult, setLoadingResult] = useState(true);
   const TEST_ID = lesson?.test_id || undefined;
 
   const countAllComments = (commentsList: Comment[]): number => {
     return commentsList.reduce((total, comment) => {
-      return total + 1 + (comment.replies ? countAllComments(comment.replies) : 0);
+      return (
+        total + 1 + (comment.replies ? countAllComments(comment.replies) : 0)
+      );
     }, 0);
   };
 
@@ -332,7 +339,46 @@ export default function LessonClient({
       console.error("Failed to copy:", err);
     }
   };
+  const handleTakeTest = () => {
+    if (!TEST_ID) return;
+    const returnUrl = encodeURIComponent(window.location.pathname);
+    router.push(`/tests?id=${TEST_ID}&returnUrl=${returnUrl}`);
+  };
 
+  // 🔁 Загрузка результата теста (упрощённо, без auth)
+  useEffect(() => {
+    if (!TEST_ID) {
+      setLoadingResult(false);
+      return;
+    }
+
+    const fetchResult = async () => {
+      try {
+        // 🔁 Пробуем получить результат через сессию (если бэкенд поддерживает)
+        const sessionId =
+          sessionStorage.getItem("anonymous_session_id") || crypto.randomUUID();
+        sessionStorage.setItem("anonymous_session_id", sessionId);
+
+        const data = await apiFetch(`/api/tests/${TEST_ID}/result`, {
+          headers: { "X-Session-ID": sessionId },
+        });
+
+        if (data?.score !== undefined) {
+          setResult({
+            score: data.score,
+            completed_at: data.completed_at || null,
+          });
+        }
+      } catch (err) {
+        // Если результата нет — это нормально, просто не показываем
+        console.log("No test result found (this is OK)");
+      } finally {
+        setLoadingResult(false);
+      }
+    };
+
+    fetchResult();
+  }, [TEST_ID]);
   // ✅ Фидбек — заглушка
   const submitFeedback = async (type: "clear" | "unclear") => {
     setUserFeedback(type);
@@ -353,9 +399,13 @@ export default function LessonClient({
     };
 
     if (parentId) {
-      const addReply = (list: Comment[], id: string, reply: Comment): Comment[] =>
+      const addReply = (
+        list: Comment[],
+        id: string,
+        reply: Comment,
+      ): Comment[] =>
         list.map((c) =>
-          c.id === id ? { ...c, replies: [...(c.replies || []), reply] } : c
+          c.id === id ? { ...c, replies: [...(c.replies || []), reply] } : c,
         );
       setComments((prev) => addReply(prev, parentId, newCommentObj));
     } else {
@@ -374,7 +424,9 @@ export default function LessonClient({
   const handleEditComment = async (commentId: string, newContent: string) => {
     if (!newContent.trim()) return;
     setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, content: newContent.trim() } : c))
+      prev.map((c) =>
+        c.id === commentId ? { ...c, content: newContent.trim() } : c,
+      ),
     );
     setEditingCommentId(null);
     setEditContent("");
@@ -383,10 +435,12 @@ export default function LessonClient({
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Удалить этот комментарий и все ответы?")) return;
     const remove = (list: Comment[], id: string): Comment[] =>
-      list.filter((c) => c.id !== id).map((c) => ({
-        ...c,
-        replies: c.replies ? remove(c.replies, id) : undefined,
-      }));
+      list
+        .filter((c) => c.id !== id)
+        .map((c) => ({
+          ...c,
+          replies: c.replies ? remove(c.replies, id) : undefined,
+        }));
     setComments((prev) => remove(prev, commentId));
   };
 
@@ -397,7 +451,10 @@ export default function LessonClient({
     setReplyContent("");
   };
 
-  const handleLikeComment = async (commentId: string, type: "like" | "dislike") => {
+  const handleLikeComment = async (
+    commentId: string,
+    type: "like" | "dislike",
+  ) => {
     // Заглушка: лайки не сохраняются без бэкенда
     const find = (list: Comment[], id: string): Comment | null => {
       for (const c of list) {
@@ -412,14 +469,26 @@ export default function LessonClient({
     const current = find(comments, commentId);
     const existing = current?.user_liked;
 
-    const update = (list: Comment[], id: string, t: "like" | "dislike", old: string | null): Comment[] =>
+    const update = (
+      list: Comment[],
+      id: string,
+      t: "like" | "dislike",
+      old: string | null,
+    ): Comment[] =>
       list.map((c) => {
         if (c.id === id) {
-          let likes = c.likes_count, dislikes = c.dislikes_count;
+          let likes = c.likes_count,
+            dislikes = c.dislikes_count;
           if (old === "like") likes = Math.max(0, likes - 1);
           if (old === "dislike") dislikes = Math.max(0, dislikes - 1);
-          if (t === "like") likes += 1; else dislikes += 1;
-          return { ...c, likes_count: likes, dislikes_count: dislikes, user_liked: t };
+          if (t === "like") likes += 1;
+          else dislikes += 1;
+          return {
+            ...c,
+            likes_count: likes,
+            dislikes_count: dislikes,
+            user_liked: t,
+          };
         }
         if (c.replies) return { ...c, replies: update(c.replies, id, t, old) };
         return c;
@@ -429,7 +498,12 @@ export default function LessonClient({
   };
 
   const getResultBadge = () => {
-    return { text: "—", border: "border-gray-300", bg: "bg-gray-100", textColor: "text-gray-500" };
+    return {
+      text: "—",
+      border: "border-gray-300",
+      bg: "bg-gray-100",
+      textColor: "text-gray-500",
+    };
   };
   const badge = getResultBadge();
 
@@ -478,6 +552,58 @@ export default function LessonClient({
 
       {/* Feedback + Next Lesson */}
       <div className="text-wrap mt-[30px] flex justify-between items-center flex-col sm:flex-row gap-4">
+        {/* Test Result / Button */}
+        {TEST_ID && (
+          <div className="w-full max-w-3xl mx-auto mb-10 p-4 bg-purple-50 rounded-xl text-center border border-purple-200">
+            {!result && !loadingResult && (
+              <>
+                <p className="text-sm text-gray-700 mb-3">
+                  Проверь свои знания по этому уроку!
+                </p>
+                <button
+                  onClick={handleTakeTest}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                >
+                  🎯 Пройти тест
+                </button>
+              </>
+            )}
+
+            {loadingResult && (
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <Loader2 className="animate-spin w-4 h-4" />
+                <span>Загрузка результата...</span>
+              </div>
+            )}
+
+            {result && (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-700">
+                  Ваш последний результат:
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <div
+                    className={`rounded-full text-lg font-bold w-12 h-12 flex items-center justify-center border-2 ${
+                      result.score >= 75
+                        ? "text-green-900 bg-green-200 border-green-600"
+                        : "text-red-900 bg-red-200 border-red-600"
+                    }`}
+                  >
+                    {result.score}%
+                  </div>
+                  <button
+                    onClick={handleTakeTest}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
+                  >
+                    Пройти ещё раз
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">Проходной балл: 75%</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col items-center">
           <div className="font-semibold text-sm mb-[10px]">Как вам урок?</div>
           <div className="flex flex-row gap-3">
