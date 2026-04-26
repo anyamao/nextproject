@@ -53,12 +53,13 @@ export default function TestClient({
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
 
-  // ✅ СТАЛО (правильно):
+  // 🔁 Сброс состояния ТОЛЬКО при смене индекса вопроса
   useEffect(() => {
     setCurrentAnswer(questions[currentIndex]?.user_answer || "");
     setFeedback(null);
     setIsChecking(false);
   }, [currentIndex]);
+
   const handleAnswerSubmit = async () => {
     if (!currentAnswer.trim() || isChecking) return;
 
@@ -94,27 +95,50 @@ export default function TestClient({
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Переход к следующему вопросу
     if (currentIndex < questions.length - 1) {
-      // Просто переходим к следующему — useEffect сбросит feedback и answer
       setCurrentIndex((prev) => prev + 1);
-    } else {
-      // Завершение теста
-      const correctCount = questions.filter((q) => q.is_correct).length;
-      const score = Math.round((correctCount / questions.length) * 100);
-
-      sessionStorage.setItem(
-        `test_${test.id}_result`,
-        JSON.stringify({
-          score,
-          correct: correctCount,
-          total: questions.length,
-          passed: score >= test.passing_score,
-        }),
-      );
-
-      window.location.href = `/tests/${test.id}/results?returnTo=/ege/${subjectSlug}/${lessonSlug}`;
+      return;
     }
+
+    // 🎯 Тест завершён — считаем результат
+    const correctCount = questions.filter((q) => q.is_correct).length;
+    const score = Math.round((correctCount / questions.length) * 100);
+    const passed = score >= test.passing_score;
+
+    // 🔐 Если пользователь авторизован — сохраняем результат в БД
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await apiFetch(`/tests/${test.id}/complete`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ score, passed }),
+        });
+        console.log("✅ Result saved to database");
+      }
+    } catch (err) {
+      console.error("❌ Failed to save result:", err);
+      // Не блокируем пользователя, если сохранение не удалось
+    }
+
+    // Сохраняем в sessionStorage для мгновенного отображения результатов
+    sessionStorage.setItem(
+      `test_${test.id}_result`,
+      JSON.stringify({
+        score,
+        correct: correctCount,
+        total: questions.length,
+        passed,
+      }),
+    );
+
+    // Редирект на страницу результатов
+    window.location.href = `/tests/${test.id}/results?returnTo=/ege/${subjectSlug}/${lessonSlug}`;
   };
 
   const handleRetry = () => {
@@ -186,7 +210,9 @@ export default function TestClient({
               />
               {feedback && (
                 <div
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 ${feedback.correct ? "text-green-500" : "text-red-500"}`}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 ${
+                    feedback.correct ? "text-green-500" : "text-red-500"
+                  }`}
                 >
                   {feedback.correct ? (
                     <Check className="w-6 h-6" />
@@ -222,7 +248,9 @@ export default function TestClient({
                   </div>
                   <div className="flex-1">
                     <p
-                      className={`font-semibold ${feedback.correct ? "text-green-800" : "text-red-800"}`}
+                      className={`font-semibold ${
+                        feedback.correct ? "text-green-800" : "text-red-800"
+                      }`}
                     >
                       {feedback.correct ? "✅ Правильно!" : "❌ Неверно"}
                     </p>

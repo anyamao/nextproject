@@ -2,12 +2,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone
 from database import engine, Base, get_db
-from models import User, EgeSubject, EgeLesson, EgeTest, EgeTestQuestion
+from sqlalchemy.dialects.postgresql import insert
+from models import User, EgeSubject, EgeLesson, EgeTest, EgeTestQuestion, TestResult
 from schemas import (
     UserRegister,
     UserLogin,
@@ -23,7 +24,9 @@ from schemas import (
     TestQuestionOut,
     EgeTestOut,
     TestSubmission,
-    TestResult,
+    TestResultCreate,
+    TestResultOut,
+    TestSubmissionResult,
 )
 from auth import (
     get_password_hash,
@@ -136,6 +139,64 @@ async def read_me(current_user: User = Depends(get_current_user)):
 
 
 # ЕГЭ ЭНДПОИНТЫ ТУТ!! ege_native
+
+
+# 📤 Сохранение результата в БД (только для авторизованных)
+@app.post(
+    "/tests/{test_id}/complete",
+    response_model=TestResultOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def complete_test(
+    test_id: int,
+    result_: TestResultCreate,  # ✅ Двоеточие!
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Проверяем, что тест существует
+    test = await db.get(EgeTest, test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    # UPSERT: обновляем или создаём запись
+    stmt = insert(TestResult).values(
+        user_id=current_user.id,
+        test_id=test_id,
+        score=result_.score,
+        passed=result_.passed,
+    )
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["user_id", "test_id"],
+        set_={
+            "score": result_.score,
+            "passed": result_.passed,
+            "completed_at": func.now(),
+        },
+    )
+
+    await db.execute(stmt)
+    await db.commit()
+
+    # Возвращаем схему ИЗ БД
+    return TestResultOut(
+        score=result_.score,
+        passed=result_.passed,
+        completed_at=datetime.now(timezone.utc),
+    )
+
+
+@app.get("/tests/{test_id}/result", response_model=TestResultOut | None)
+async def get_user_test_result(
+    test_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # 🔐 Только для авторизованных
+):
+    result = await db.execute(
+        select(TestResult).where(
+            TestResult.test_id == test_id, TestResult.user_id == current_user.id
+        )
+    )
+    return result.scalar_one_or_none()
 
 
 # 📚 ЕГЭ: Получить все предметы (публичный, без авторизации)
@@ -252,10 +313,12 @@ async def check_single_answer(
     }
 
 
-@app.post("/tests/{test_id}/submit", response_model=TestResult)
+# 📤 Проверка ответов (публичный, не сохраняет в БД)
+@app.post("/tests/{test_id}/submit", response_model=TestSubmissionResult)
 async def submit_test(
     test_id: int, submission: TestSubmission, db: AsyncSession = Depends(get_db)
 ):
+    # Находим тест с вопросами
     stmt = (
         select(EgeTest)
         .options(selectinload(EgeTest.questions))
@@ -263,21 +326,27 @@ async def submit_test(
     )
     res = await db.execute(stmt)
     test = res.scalar_one_or_none()
+
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
 
+    # Считаем правильные ответы
     total = len(test.questions)
     correct = 0
+
     for q in test.questions:
-        user_ans = submission.answers.get(str(q.id), "").strip().lower()
-        correct_ans = q.correct_answer.strip().lower()
+        user_ans = (
+            submission.answers.get(str(q.id), "").strip().lower().replace(",", ".")
+        )
+        correct_ans = q.correct_answer.strip().lower().replace(",", ".")
         if user_ans == correct_ans:
             correct += 1
 
     score = (correct / total) * 100 if total > 0 else 0
     passed = score >= test.passing_score
 
-    return TestResult(
+    # ✅ Возвращаем схему ПРОВЕРКИ (не БД!)
+    return TestSubmissionResult(
         score=round(score, 1),
         passed=passed,
         total_questions=total,

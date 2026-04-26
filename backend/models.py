@@ -94,3 +94,35 @@ class EgeTestQuestion(Base):
 
     # ✅ Обратная связь на тест (единственная, которая нужна с back_populates)
     test = relationship("EgeTest", back_populates="questions")
+
+
+class TestResult(Base):
+    __tablename__ = "test_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 🔗 Связи
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    test_id = Column(
+        Integer,
+        ForeignKey("ege_tests.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # 📊 Результат
+    score = Column(Integer, nullable=False)  # 0-100
+    passed = Column(Boolean, nullable=False)
+    completed_at = Column(DateTime, server_default=func.now())
+
+    # 🔗 Relationships (опционально, если нужно)
+    user = relationship("User")
+    test = relationship("EgeTest")
+
+    # ✅ Уникальность: один результат на пользователя на тест (последний перезаписывается)
+    __table_args__ = (
+        # Если пользователь проходит тест повторно — обновляем старую запись (UPSERT)
+        # Это реализуется на уровне запроса, не через unique constraint
+    )

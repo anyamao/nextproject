@@ -127,15 +127,28 @@ class EgeTestOut(BaseModel):
     questions: list[TestQuestionOut] = []
 
 
+class TestSubmissionResult(BaseModel):
+    score: float  # Может быть дробным, например 75.5
+    passed: bool
+    total_questions: int
+    correct_count: int
+
+
 class TestSubmission(BaseModel):
     answers: dict[str, str]  # {question_id: "user_answer"}
 
 
-class TestResult(BaseModel):
-    score: float
+class TestResultCreate(BaseModel):
+    score: int = Field(..., ge=0, le=100)
     passed: bool
-    total_questions: int
-    correct_count: int
+    # test_id и user_id берём из контекста (не от клиента)
+
+
+class TestResultOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    score: int
+    passed: bool
+    completed_at: datetime
 
 
 # конец #######################################################
@@ -157,5 +170,7 @@ __all__ = [
     "TestQuestionOut",
     "EgeTestOut",
     "TestSubmission",
-    "TestResult",
+    "TestResultOut",
+    "TestResultCreate",
+    "TestSubmissionResult",
 ]
