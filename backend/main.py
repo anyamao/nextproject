@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from database import engine, Base, get_db
-from models import User, EgeSubject, EgeLesson
+from models import User, EgeSubject, EgeLesson, EgeTest, EgeTestQuestion
 from schemas import (
     UserRegister,
     UserLogin,
@@ -18,6 +18,12 @@ from schemas import (
     EgeLessonCreate,
     EgeLessonOut,
     EgeLessonList,
+    TestQuestionCreate,
+    EgeTestCreate,
+    TestQuestionOut,
+    EgeTestOut,
+    TestSubmission,
+    TestResult,
 )
 from auth import (
     get_password_hash,
@@ -25,6 +31,9 @@ from auth import (
     create_access_token,
     get_current_user,
 )
+
+
+from sqlalchemy.orm import selectinload
 
 load_dotenv()
 
@@ -178,6 +187,102 @@ async def get_single_lesson(
         raise HTTPException(status_code=404, detail="Lesson not found")
 
     return lesson_obj
+
+
+@app.get("/tests/{test_id}", response_model=EgeTestOut)
+async def get_test(test_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(EgeTest)
+        .options(
+            selectinload(EgeTest.questions).load_only(
+                EgeTestQuestion.id,
+                EgeTestQuestion.question_text,
+                EgeTestQuestion.order_index,
+            )
+        )
+        .where(EgeTest.id == test_id)
+    )
+    res = await db.execute(stmt)
+    test = res.scalar_one_or_none()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    questions_out = [
+        TestQuestionOut(
+            id=q.id, question_text=q.question_text, order_index=q.order_index
+        )
+        for q in test.questions
+    ]
+    return EgeTestOut(
+        id=test.id,
+        lesson_id=test.lesson_id,
+        title=test.title,
+        passing_score=test.passing_score,
+        questions=questions_out,
+    )
+
+
+# ✅ Проверка ОДНОГО ответа (для пошагового режима)
+@app.post("/tests/{test_id}/question/{question_id}/check")
+async def check_single_answer(
+    test_id: int, question_id: int, answer: str, db: AsyncSession = Depends(get_db)
+):
+    # Находим вопрос и проверяем, что он принадлежит этому тесту
+    stmt = select(EgeTestQuestion).where(
+        EgeTestQuestion.id == question_id, EgeTestQuestion.test_id == test_id
+    )
+    res = await db.execute(stmt)
+    question = res.scalar_one_or_none()
+
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    # Нормализуем ответы для сравнения
+    user_ans = answer.strip().lower().replace(",", ".")
+    correct_ans = question.correct_answer.strip().lower().replace(",", ".")
+
+    is_correct = user_ans == correct_ans
+
+    return {
+        "correct": is_correct,
+        "expected": correct_ans
+        if not is_correct
+        else None,  # Показываем правильный ответ только если ошибся
+        "question_id": question_id,
+    }
+
+
+@app.post("/tests/{test_id}/submit", response_model=TestResult)
+async def submit_test(
+    test_id: int, submission: TestSubmission, db: AsyncSession = Depends(get_db)
+):
+    stmt = (
+        select(EgeTest)
+        .options(selectinload(EgeTest.questions))
+        .where(EgeTest.id == test_id)
+    )
+    res = await db.execute(stmt)
+    test = res.scalar_one_or_none()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    total = len(test.questions)
+    correct = 0
+    for q in test.questions:
+        user_ans = submission.answers.get(str(q.id), "").strip().lower()
+        correct_ans = q.correct_answer.strip().lower()
+        if user_ans == correct_ans:
+            correct += 1
+
+    score = (correct / total) * 100 if total > 0 else 0
+    passed = score >= test.passing_score
+
+    return TestResult(
+        score=round(score, 1),
+        passed=passed,
+        total_questions=total,
+        correct_count=correct,
+    )
 
 
 ##снизу конец!!!!!!!1###############

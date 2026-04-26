@@ -10,6 +10,7 @@ type Lesson = {
   description: string | null;
   content: string | null;
   time_minutes: number | null;
+  test_id: number | null; // ✅ Убедитесь, что это поле есть!
 };
 
 export const dynamic = "force-dynamic";
@@ -22,14 +23,27 @@ export default async function LessonPage({
   const { slug: subjectSlug, lesson: lessonSlug } = await params;
 
   try {
-    // ✅ Запрос к новому эндпоинту: /ege/{subject}/{lesson}
+    // 🔍 Отладка: лог на сервере
+    // console.log("🔍 SERVER DEBUG: Fetching lesson", {
+    //  subjectSlug,
+    //   lessonSlug,
+    // });
+
     const lesson: Lesson = await apiFetch(`/ege/${subjectSlug}/${lessonSlug}`);
+
+    //console.log("🔍 SERVER DEBUG: Lesson received", {
+    // id: lesson.id,
+    // title: lesson.title,
+    // test_id: lesson.test_id,
+    // testIdType: typeof lesson.test_id,
+    // });
 
     return (
       <LessonClient
         lesson={lesson}
         subjectSlug={subjectSlug}
         lessonSlug={lessonSlug}
+        testId={lesson.test_id ?? null} // ✅ Гарантируем, что это null или number
       />
     );
   } catch (error) {

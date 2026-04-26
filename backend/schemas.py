@@ -97,6 +97,47 @@ class EgeLessonList(BaseModel):
     lessons: list[EgeLessonOut]
 
 
+class TestQuestionCreate(BaseModel):
+    question_text: str
+    correct_answer: str
+    order_index: int = 0
+
+
+class EgeTestCreate(BaseModel):
+    lesson_id: int
+    title: str
+    passing_score: int = 75
+    questions: list[TestQuestionCreate] = []
+
+
+class TestQuestionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    question_text: str
+    order_index: int
+    # ❌ correct_answer НЕ возвращаем клиенту!
+
+
+class EgeTestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    lesson_id: int
+    title: str
+    passing_score: int
+    questions: list[TestQuestionOut] = []
+
+
+class TestSubmission(BaseModel):
+    answers: dict[str, str]  # {question_id: "user_answer"}
+
+
+class TestResult(BaseModel):
+    score: float
+    passed: bool
+    total_questions: int
+    correct_count: int
+
+
 # конец #######################################################
 
 
@@ -111,4 +152,10 @@ __all__ = [
     "EgeLessonCreate",
     "EgeLessonOut",
     "EgeLessonList",
+    "TestQuestionCreate",
+    "EgeTestCreate",
+    "TestQuestionOut",
+    "EgeTestOut",
+    "TestSubmission",
+    "TestResult",
 ]

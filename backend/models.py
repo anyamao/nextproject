@@ -33,45 +33,64 @@ class EgeSubject(Base):
     __tablename__ = "ege_subjects"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(100), nullable=False)  # Название: "Математика профиль"
-    slug = Column(
-        String(100), unique=True, index=True, nullable=False
-    )  # "math-profile"
-    description = Column(Text, nullable=True)  # Описание курса
-    image = Column(String(255), nullable=True)  # URL картинки: "/subjects/math.png"
+    title = Column(String, nullable=False, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    image = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
-    lessons = relationship(
-        "EgeLesson", back_populates="subject", cascade="all, delete-orphan"
-    )
+
+    # ❌ УДАЛИТЕ back_populates, если в EgeLesson нет обратной связи:
+    # ✅ Просто список уроков (без back_populates — безопасно)
+    lessons = relationship("EgeLesson", cascade="all, delete-orphan")
 
 
 class EgeLesson(Base):
     __tablename__ = "ege_lessons"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    # 🔗 Связь с предметом (обязательная)
     subject_id = Column(
         Integer, ForeignKey("ege_subjects.id"), nullable=False, index=True
     )
-
-    # 📝 Контент урока
-    title = Column(String, nullable=False)  # "Задание 4: Теория вероятностей"
-    slug = Column(
-        String, unique=True, nullable=False, index=True
-    )  # "theory-of-probability-4"
-    description = Column(String, nullable=True)  # Краткое описание
-    content = Column(Text, nullable=True)  # Полный контент (можно Markdown/HTML)
-    time_minutes = Column(Integer, nullable=True)  # Время в минутах
-
-    # 🧪 Опциональная связь с тестом (будет в будущем)
-    test_id = Column(
-        Integer, nullable=True
-    )  # Пока просто nullable, позже — ForeignKey("ege_tests.id")
-
-    # 📅 Метаданные
+    title = Column(String, nullable=False)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    content = Column(Text, nullable=True)
+    time_minutes = Column(Integer, nullable=True)
+    test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)  # Просто FK
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    # 🔗 SQLAlchemy relationship (удобно для eager loading)
-    subject = relationship("EgeSubject", back_populates="lessons")
+
+class EgeTest(Base):
+    __tablename__ = "ege_tests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(
+        Integer,
+        ForeignKey("ege_lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    title = Column(String, nullable=False)
+    passing_score = Column(Integer, default=75)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # ✅ Эта связь нужна: тест → вопросы
+    questions = relationship(
+        "EgeTestQuestion", back_populates="test", cascade="all, delete-orphan"
+    )
+
+
+class EgeTestQuestion(Base):
+    __tablename__ = "ege_test_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(
+        Integer, ForeignKey("ege_tests.id", ondelete="CASCADE"), nullable=False
+    )
+    question_text = Column(Text, nullable=False)
+    correct_answer = Column(String, nullable=False)
+    order_index = Column(Integer, default=0)
+
+    # ✅ Обратная связь на тест (единственная, которая нужна с back_populates)
+    test = relationship("EgeTest", back_populates="questions")
