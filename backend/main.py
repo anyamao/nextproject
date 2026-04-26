@@ -5,10 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import os
 from dotenv import load_dotenv
-
+from datetime import datetime
 from database import engine, Base, get_db
-from models import User
-from schemas import UserRegister, UserLogin, Token, UserOut
+from models import User, EgeSubject
+from schemas import (
+    UserRegister,
+    UserLogin,
+    Token,
+    UserOut,
+    EgeSubjectCreate,
+    EgeSubjectOut,
+)
 from auth import (
     get_password_hash,
     verify_password,
@@ -114,6 +121,51 @@ async def read_me(current_user: User = Depends(get_current_user)):
     return UserOut(
         id=current_user.id, email=current_user.email, username=current_user.username
     )
+
+
+# ЕГЭ ЭНДПОИНТЫ ТУТ!! ege_native
+
+
+# 📚 ЕГЭ: Получить все предметы (публичный, без авторизации)
+@app.get("/ege/subjects", response_model=list[EgeSubjectOut])
+async def get_ege_subjects(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(EgeSubject).order_by(EgeSubject.title))
+    return result.scalars().all()
+
+
+# 📚 ЕГЭ: Получить один предмет по slug
+@app.get("/ege/subjects/{slug}", response_model=EgeSubjectOut)
+async def get_ege_subject(slug: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    subject = result.scalar_one_or_none()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    return subject
+
+
+@app.post(
+    "/ege/subjects", response_model=EgeSubjectOut, status_code=status.HTTP_201_CREATED
+)
+async def create_ege_subject(
+    subject_data: EgeSubjectCreate,  # ✅ ИСПРАВЛЕНО: было subject_ EgeSubjectCreate
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Проверка на дубликат slug
+    existing = await db.execute(
+        select(EgeSubject).where(EgeSubject.slug == subject_data.slug)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Slug already exists")
+
+    new_subject = EgeSubject(**subject_data.model_dump())
+    db.add(new_subject)
+    await db.commit()
+    await db.refresh(new_subject)
+    return new_subject
+
+
+##снизу конец!!!!!!!1###############
 
 
 @app.get("/health")

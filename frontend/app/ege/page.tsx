@@ -1,47 +1,40 @@
 // frontend/app/ege/page.tsx
+"use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Calculator, Atom, Languages, ArrowLeft } from "lucide-react";
-import { apiFetch } from "@/lib/api"; // ✅ Универсальный fetch для dev/prod
+import { BookOpen, ArrowLeft } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 type Subject = {
-  id: number; // 🔁 Теперь int (из FastAPI)
+  id: number;
+  title: string;
   slug: string;
-  name: string;
   description: string | null;
+  image: string | null;
   created_at: string;
 };
 
-export const dynamic = "force-dynamic";
+export default function EgePage() {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function EGEHubPage() {
-  let subjects: Subject[] = [];
-  let error: string | null = null;
-
-  try {
-    // 🔁 Fetch к твоему FastAPI бэкенду
-    const data = await apiFetch("/api/ege/subjects");
-    subjects = data.courses;
-  } catch (err) {
-    console.error("❌ Failed to fetch EGE subjects:", err);
-    error = "Не удалось загрузить предметы";
-  }
-
-  // 🎨 Иконки для предметов (обновлённые slug'и!)
-  const getSubjectIcon = (slug: string) => {
-    switch (slug) {
-      case "math-profile-ege": // ✅ Было "math"
-        return <Calculator className="w-8 h-8 text-purple-600" />;
-      case "physics-ege": // ✅ Было "physics"
-        return <Atom className="w-8 h-8 text-blue-600" />;
-      case "russian-ege": // ✅ Было "russian"
-        return <Languages className="w-8 h-8 text-amber-600" />;
-      case "informatics-ege": // ✅ Было "informatics"
-        return <BookOpen className="w-8 h-8 text-green-600" />;
-      default:
-        return <BookOpen className="w-8 h-8 text-gray-500" />;
+  useEffect(() => {
+    async function fetchSubjects() {
+      try {
+        // ✅ Запрос к новому эндпоинту (без авторизации, публичный)
+        const data = await apiFetch("/ege/subjects");
+        setSubjects(data);
+      } catch (err) {
+        console.error("Failed to fetch subjects:", err);
+        setError("Не удалось загрузить предметы");
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+    fetchSubjects();
+  }, []);
 
   return (
     <main className="flex-1 flex flex-col items-center px-[10px] sm:px-[20px] py-[30px] w-full min-h-full max-w-5xl mx-auto">
@@ -62,13 +55,15 @@ export default async function EGEHubPage() {
         </p>
       </div>
 
-      {subjects.length === 0 && !error && (
+      {/* Загрузка */}
+      {loading && (
         <div className="flex justify-center py-20 mt-[20px]">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
         </div>
       )}
 
-      {error && (
+      {/* Ошибка */}
+      {error && !loading && (
         <div className="text-center py-20">
           <p className="text-red-600 text-lg mb-4">{error}</p>
           <p className="text-gray-500">
@@ -77,21 +72,31 @@ export default async function EGEHubPage() {
         </div>
       )}
 
-      {subjects.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-[20px]">
+      {/* Список предметов */}
+      {!loading && !error && subjects.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-[20px] w-full">
           {subjects.map((subject) => (
             <Link
               key={subject.id}
-              href={`/ege/${subject.slug}`} // 🔁 Теперь slug = "math-profile-ege"
+              href={`/ege/${subject.slug}`}
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
             >
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
-                  {getSubjectIcon(subject.slug)}
-                </div>
+                {subject.image && (
+                  <img
+                    src={subject.image}
+                    alt={subject.title}
+                    className="w-12 h-12 rounded-lg object-cover bg-gray-100"
+                    onError={(e) => {
+                      // Если картинка не загрузилась — показываем заглушку
+                      (e.target as HTMLImageElement).src =
+                        "/subjects/placeholder.svg";
+                    }}
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
-                    {subject.name}
+                    {subject.title}
                   </h2>
                   <p className="text-gray-600 mt-2 text-sm line-clamp-2">
                     {subject.description || "Курс подготовки к ЕГЭ"}
@@ -106,8 +111,9 @@ export default async function EGEHubPage() {
         </div>
       )}
 
-      {subjects.length === 0 && !error && (
-        <div className="text-center py-20 bg-gray-50 rounded-2xl">
+      {/* Пустой список */}
+      {!loading && !error && subjects.length === 0 && (
+        <div className="text-center py-20 bg-gray-50 rounded-2xl w-full">
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Предметы пока не добавлены

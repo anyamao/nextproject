@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from datetime import datetime
 
 
 class UserRegister(BaseModel):
@@ -36,4 +37,35 @@ class Token(BaseModel):
     user: UserOut
 
 
+# ЕГЭ СХЕМЫ СНИЗУ ege_native ###############"""
+
+
+class EgeSubjectCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=100)
+    slug: str = Field(
+        ..., pattern=r"^[a-z0-9\-]+$", description="Только латиница, цифры, дефис"
+    )
+    description: str | None = Field(None, max_length=500)
+    image: str | None = None
+
+
+class EgeSubjectOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    slug: str
+    description: str | None
+    image: str | None
+    created_at: datetime
+
+
+class EgeSubjectList(BaseModel):
+    subjects: list[EgeSubjectOut]
+    total: int
+
+
+# конец #######################################################
+
+
+# экспорт не трогать!!!
 __all__ = ["UserRegister", "UserLogin", "UserOut", "Token"]
