@@ -17,6 +17,7 @@ from models import (
     EgeTestQuestion,
     TestResult,
     LessonView,
+    LessonReaction,
 )
 from schemas import (
     UserRegister,
@@ -38,6 +39,8 @@ from schemas import (
     TestSubmissionResult,
     LessonViewOut,
     LessonViewCreate,
+    ReactionCreate,
+    LessonStatsOut,
 )
 from auth import (
     get_password_hash,
@@ -147,6 +150,90 @@ async def read_me(current_user: User = Depends(get_current_user)):
     return UserOut(
         id=current_user.id, email=current_user.email, username=current_user.username
     )
+
+
+# ============================================================================
+# 👍👎 РЕАКЦИИ (ЛАЙКИ/ДИЗЛАЙКИ)
+# ============================================================================
+
+
+# 📤 Поставить реакцию (только авторизованным)
+@app.post("/lessons/{lesson_id}/reaction", status_code=status.HTTP_200_OK)
+async def set_lesson_reaction(
+    lesson_id: int,
+    data: ReactionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Определяем новое значение
+    # Если reaction_type == "none", значит удаляем голос, иначе ставим True/False
+    if data.reaction_type == "none":
+        new_is_like = None
+    else:
+        new_is_like = data.reaction_type == "like"
+
+    # 1. Ищем существующую запись
+    existing_stmt = select(LessonReaction).where(
+        LessonReaction.user_id == current_user.id, LessonReaction.lesson_id == lesson_id
+    )
+    res = await db.execute(existing_stmt)
+    existing_reaction = res.scalar_one_or_none()
+
+    if new_is_like is None:
+        # 🗑️ Удаление реакции
+        if existing_reaction:
+            await db.delete(existing_reaction)
+            await db.commit()
+        return {"message": "Reaction removed"}
+    else:
+        # ✅ Обновление или создание (UPSERT)
+        if existing_reaction:
+            existing_reaction.is_like = new_is_like
+        else:
+            db.add(
+                LessonReaction(
+                    user_id=current_user.id, lesson_id=lesson_id, is_like=new_is_like
+                )
+            )
+
+        await db.commit()
+        return {"message": f"Reaction set to {data.reaction_type}"}
+
+
+# 📊 Получить статистику урока (публичный + личная реакция юзера)
+@app.get("/lessons/{lesson_id}/stats", response_model=LessonStatsOut)
+async def get_lesson_stats(
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),  # 🔓 Может быть None (гость)
+):
+    # 1. Считаем лайки
+    likes_stmt = select(func.count(LessonReaction.id)).where(
+        LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == True
+    )
+    likes = await db.scalar(likes_stmt) or 0
+
+    # 2. Считаем дизлайки
+    dislikes_stmt = select(func.count(LessonReaction.id)).where(
+        LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == False
+    )
+    dislikes = await db.scalar(dislikes_stmt) or 0
+
+    # 3. Получаем реакцию текущего юзера (если вошел)
+    user_reaction = None
+    if current_user:
+        stmt = select(LessonReaction.is_like).where(
+            LessonReaction.user_id == current_user.id,
+            LessonReaction.lesson_id == lesson_id,
+        )
+        res = await db.execute(stmt)
+        val = res.scalar_one_or_none()
+        if val is True:
+            user_reaction = "like"
+        elif val is False:
+            user_reaction = "dislike"
+
+    return LessonStatsOut(likes=likes, dislikes=dislikes, user_reaction=user_reaction)
 
 
 # ============================================================================

@@ -114,8 +114,33 @@ class LessonView(Base):
         index=True,
     )
 
+
+class LessonReaction(Base):
+    __tablename__ = "lesson_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 🔗 Связи
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lesson_id = Column(
+        Integer,
+        ForeignKey("ege_lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # 👍 Реакция (True = Лайк, False = Дизлайк)
+    is_like = Column(Boolean, nullable=False)
+
+    created_at = Column(DateTime, server_default=func.now())
+
+    # ✅ Ограничение: одна реакция на пользователя на урок
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_reaction"),
+    )
     # 📅 Метаданные
-    viewed_at = Column(DateTime, server_default=func.now())
 
     # 🔗 Relationships
     user = relationship("User")

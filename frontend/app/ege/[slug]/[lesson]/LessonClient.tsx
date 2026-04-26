@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye, Trophy, Lock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
+import LessonReactions from "@/components/LessonReactions";
 type Lesson = {
+  id: number;
   title: string;
   description: string | null;
   content: string | null;
@@ -102,7 +103,7 @@ export default function LessonClient({
     recordView();
   }, [isAuthenticated, subjectSlug, lessonSlug]);
   return (
-    <main className="flex-1 flex flex-col lg:flex-row items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
+    <main className="flex-1 flex flex-col lg:flex-rowвсе работало до того как я добавила счетчик просмотров на VPS резко теперь больше не показываются уроки в математике и вот такая ошибка  items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
       {/* 📄 Основной контент урока */}
       <div className="flex-1 min-w-0">
         <Link
@@ -149,7 +150,7 @@ export default function LessonClient({
           <p className="text-gray-500 italic">Контент урока пока не добавлен</p>
         )}
       </div>
-
+      {lesson.id && <LessonReactions lessonId={lesson.id} />}
       {/* 📊 Сайдбар с результатом теста */}
       {testId && (
         <aside className="w-full lg:w-80 flex-shrink-0">

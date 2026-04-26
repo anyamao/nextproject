@@ -161,6 +161,16 @@ class LessonViewOut(BaseModel):
     viewed_at: datetime
 
 
+class ReactionCreate(BaseModel):
+    reaction_type: str  # "like" или "dislike" (или "none" чтобы убрать)
+
+
+class LessonStatsOut(BaseModel):
+    likes: int
+    dislikes: int
+    user_reaction: str | None = None  # "like", "dislike" или None
+
+
 # конец #######################################################
 
 
@@ -185,4 +195,6 @@ __all__ = [
     "TestSubmissionResult",
     "LessonViewCreate",
     "LessonViewOut",
+    "ReactionCreate",
+    "LessonStatsOut",
 ]
