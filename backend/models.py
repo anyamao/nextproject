@@ -239,6 +239,8 @@ class LanguageLesson(Base):
     view_count = Column(Integer, default=0, nullable=False)
     lesson_type = Column(String, default="language")  # "ege" или "language"
     # Отношения
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=True)
+
     language = relationship("Language", back_populates="language_lessons")
     level = relationship("Level", back_populates="language_lessons")
     category = relationship("Category", back_populates="language_lessons")
