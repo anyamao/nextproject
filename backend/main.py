@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from database import engine, Base, get_db
-from models import User, EgeSubject
+from models import User, EgeSubject, EgeLesson
 from schemas import (
     UserRegister,
     UserLogin,
@@ -15,6 +15,9 @@ from schemas import (
     UserOut,
     EgeSubjectCreate,
     EgeSubjectOut,
+    EgeLessonCreate,
+    EgeLessonOut,
+    EgeLessonList,
 )
 from auth import (
     get_password_hash,
@@ -127,42 +130,54 @@ async def read_me(current_user: User = Depends(get_current_user)):
 
 
 # 📚 ЕГЭ: Получить все предметы (публичный, без авторизации)
-@app.get("/ege/subjects", response_model=list[EgeSubjectOut])
-async def get_ege_subjects(db: AsyncSession = Depends(get_db)):
+@app.get("/ege", response_model=list[EgeSubjectOut])
+async def get_all_subjects(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(EgeSubject).order_by(EgeSubject.title))
     return result.scalars().all()
 
 
-# 📚 ЕГЭ: Получить один предмет по slug
-@app.get("/ege/subjects/{slug}", response_model=EgeSubjectOut)
-async def get_ege_subject(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
-    subject = result.scalar_one_or_none()
+@app.get("/ege/{slug}", response_model=list[EgeLessonOut])
+async def get_subject_lessons(slug: str, db: AsyncSession = Depends(get_db)):
+    # Проверяем, существует ли предмет с таким slug
+    subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    subject = subject_result.scalar_one_or_none()
+
     if not subject:
-        raise HTTPException(status_code=404, detail="Subject not found")
-    return subject
+        raise HTTPException(status_code=404, detail=f"Subject '{slug}' not found")
 
-
-@app.post(
-    "/ege/subjects", response_model=EgeSubjectOut, status_code=status.HTTP_201_CREATED
-)
-async def create_ege_subject(
-    subject_data: EgeSubjectCreate,  # ✅ ИСПРАВЛЕНО: было subject_ EgeSubjectCreate
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    # Проверка на дубликат slug
-    existing = await db.execute(
-        select(EgeSubject).where(EgeSubject.slug == subject_data.slug)
+    # Возвращаем все уроки этого предмета
+    result = await db.execute(
+        select(EgeLesson)
+        .where(EgeLesson.subject_id == subject.id)
+        .order_by(EgeLesson.created_at)
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Slug already exists")
+    return result.scalars().all()
 
-    new_subject = EgeSubject(**subject_data.model_dump())
-    db.add(new_subject)
-    await db.commit()
-    await db.refresh(new_subject)
-    return new_subject
+
+@app.get("/ege/{subject}/{lesson}", response_model=EgeLessonOut)
+async def get_single_lesson(
+    subject: str, lesson: str, db: AsyncSession = Depends(get_db)
+):
+    # Проверяем, что предмет существует
+    subject_result = await db.execute(
+        select(EgeSubject).where(EgeSubject.slug == subject)
+    )
+    subject_obj = subject_result.scalar_one_or_none()
+    if not subject_obj:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Ищем урок по slug (уникален глобально, но проверяем принадлежность к предмету)
+    result = await db.execute(
+        select(EgeLesson).where(
+            EgeLesson.slug == lesson, EgeLesson.subject_id == subject_obj.id
+        )
+    )
+    lesson_obj = result.scalar_one_or_none()
+
+    if not lesson_obj:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    return lesson_obj
 
 
 ##снизу конец!!!!!!!1###############

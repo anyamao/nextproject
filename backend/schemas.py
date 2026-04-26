@@ -64,8 +64,51 @@ class EgeSubjectList(BaseModel):
     total: int
 
 
+class EgeLessonCreate(BaseModel):
+    subject_id: int = Field(..., gt=0)  # gt=0 → больше нуля
+    title: str = Field(..., min_length=3, max_length=200)
+    slug: str = Field(
+        ..., pattern=r"^[a-z0-9-]+$", description="Только латиница, цифры, дефис"
+    )
+    description: str | None = Field(None, max_length=500)
+    content: str | None = None
+    time_minutes: int | None = Field(None, ge=1, le=300)  # 1-300 минут
+    test_id: int | None = None
+
+
+# 📤 Ответ: урок
+class EgeLessonOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    subject_id: int
+    title: str
+    slug: str
+    description: str | None
+    content: str | None
+    time_minutes: int | None
+    test_id: int | None
+    created_at: datetime
+    updated_at: datetime | None
+
+
+# 📦 Список уроков для предмета
+class EgeLessonList(BaseModel):
+    subject_slug: str
+    lessons: list[EgeLessonOut]
+
+
 # конец #######################################################
 
 
 # экспорт не трогать!!!
-__all__ = ["UserRegister", "UserLogin", "UserOut", "Token"]
+__all__ = [
+    "UserRegister",
+    "UserLogin",
+    "UserOut",
+    "Token",
+    "EgeSubjectCreate",
+    "EgeSubjectOut",
+    "EgeLessonCreate",
+    "EgeLessonOut",
+    "EgeLessonList",
+]
