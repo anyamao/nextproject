@@ -41,7 +41,7 @@ function Mainnav() {
             onClick={closeEverything}
             className="hover:text-blue-500 whitespace-nowrap hidden duration-300"
           >
-            Общаться
+            
           </Link>
           <Link
             href="/english"
@@ -75,7 +75,7 @@ function Mainnav() {
           <Link
             href="/tutor"
             onClick={closeEverything}
-            className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
+            className=" ml-[20px] hidden whitespace-nowrap  hover:text-blue-500 duration-300"
           >
             ИИ-учитель
           </Link>

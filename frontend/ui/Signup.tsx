@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
 import { apiFetch } from "@/lib/api";
@@ -72,6 +72,9 @@ export default function Signup() {
           username: formData.username,
         }),
       });
+        if (!data?.user) {
+    throw new Error("No user data in response");
+  }
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user); // обновляем store
@@ -105,7 +108,7 @@ export default function Signup() {
                 <p>
                   Успешно! Аккаунт создан для{" "}
                   <span className="font-semibold inline pl-[5px]">
-                    {formData.email}
+                    {formData.email || ""}
                   </span>
                 </p>
                 <div className="mt-[10px] ord-text bg-purple-100 rounded-xl p-[10px] flex items-center justify-center text-center">
@@ -123,7 +126,11 @@ export default function Signup() {
       </main>
     );
   }
-
+useEffect(() => {
+  // Этот код выполнится ТОЛЬКО в браузере
+  console.log("🔍 [CLIENT] API_URL:", process.env.NEXT_PUBLIC_API_URL);
+  console.log("🔍 [CLIENT] typeof:", typeof process.env.NEXT_PUBLIC_API_URL);
+}, []);
   // ✅ Основная форма
   return (
     <main>
