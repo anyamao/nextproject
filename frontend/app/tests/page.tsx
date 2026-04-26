@@ -162,7 +162,7 @@ function TestContent() {
 
       // 🔁 Отправляем запрос
       const response = await fetch(
-        `http://localhost:8000/api/tests/${test.id}/submit`,
+        `http://localhost:8010/api/tests/${test.id}/submit`,
         {
           method: "POST",
           headers,

@@ -21,7 +21,7 @@ export default async function CoursesPage() {
 
   try {
     // 🔁 Fetch к твоему FastAPI бэкенду
-    const res = await fetch("http://localhost:8000/api/courses", {
+    const res = await fetch("http://localhost:8010/api/courses", {
       cache: "no-store",
     });
 

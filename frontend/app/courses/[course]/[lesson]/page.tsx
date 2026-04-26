@@ -35,7 +35,7 @@ export default async function LessonPage({
   try {
     // 1️⃣ Fetch урока напрямую по slug (бэкенд сам найдёт курс)
     const lessonRes = await fetch(
-      `http://localhost:8000/api/courses/${courseSlug}/lessons/${lessonSlug}`,
+      `http://localhost:8010/api/courses/${courseSlug}/lessons/${lessonSlug}`,
       { cache: "no-store" },
     );
 

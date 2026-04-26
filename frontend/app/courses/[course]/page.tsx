@@ -37,7 +37,7 @@ export default async function CoursePage({
   try {
     // 1️⃣ Fetch курса
     const courseRes = await fetch(
-      `http://localhost:8000/api/courses/${courseSlug}`,
+      `http://localhost:8010/api/courses/${courseSlug}`,
       { cache: "no-store" },
     );
 
@@ -52,7 +52,7 @@ export default async function CoursePage({
     // 2️⃣ Fetch уроков (только если курс найден)
     if (currentCourse?.id) {
       const lessonsRes = await fetch(
-        `http://localhost:8000/api/courses/${courseSlug}/lessons`,
+        `http://localhost:8010/api/courses/${courseSlug}/lessons`,
         { cache: "no-store" },
       );
 

@@ -24,7 +24,7 @@ export default async function ArticlePage({
   const { slug } = await params;
 
   // 🔁 Fetch к твоему FastAPI бэкенду
-  const res = await fetch(`http://localhost:8000/api/articles/${slug}`, {
+  const res = await fetch(`http://localhost:8010/api/articles/${slug}`, {
     cache: "no-store", // Не кешируем, чтобы видеть изменения сразу
   });
 
