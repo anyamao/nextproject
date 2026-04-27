@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -18,6 +18,9 @@ from models import (
     TestResult,
     LessonView,
     LessonReaction,
+    Article,
+    ArticleView,
+    ArticleReaction,
 )
 from schemas import (
     UserRegister,
@@ -41,6 +44,10 @@ from schemas import (
     LessonViewCreate,
     ReactionCreate,
     LessonStatsOut,
+    ArticleCreate,
+    ArticleOut,
+    ArticleReactionCreate,
+    ArticleStatsOut,
 )
 from auth import (
     get_password_hash,
@@ -509,6 +516,172 @@ async def submit_test(
         passed=passed,
         total_questions=total,
         correct_count=correct,
+    )
+
+
+# ЗДЕСЬ ВСЕ ЭНДПОИНТЫ ДЛЯ СТАТЕЙ article_native
+
+ARTICLE_TOPICS_LIST = [
+    "забота о себе",
+    "продуктивность",
+    "технологии",
+    "лайфхаки",
+    "мотивация",
+]
+
+
+# 📚 Список статей (с фильтрацией по topic)
+@app.get("/articles", response_model=list[ArticleOut])
+async def get_articles(
+    topic: str | None = Query(None), db: AsyncSession = Depends(get_db)
+):
+    stmt = select(Article).order_by(Article.created_at.desc())
+    if topic and topic in ARTICLE_TOPICS_LIST:
+        stmt = stmt.where(Article.topic == topic)
+
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+# 📄 Одна статья по slug
+@app.get("/articles/{slug}", response_model=ArticleOut)
+async def get_article(slug: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Article).where(Article.slug == slug))
+    article = result.scalar_one_or_none()
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return article
+
+
+# ============================================================================
+# 👍👎 РЕАКЦИИ И ПРОСМОТРЫ СТАТЕЙ
+# ============================================================================
+
+
+# 👁️ Записать просмотр статьи (только авторизованные, идемпотентно)
+@app.post("/articles/{slug}/view", status_code=status.HTTP_201_CREATED)
+async def record_article_view(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Находим статью
+    article_result = await db.execute(select(Article).where(Article.slug == slug))
+    article = article_result.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # INSERT ... ON CONFLICT DO NOTHING
+    from sqlalchemy.dialects.postgresql import insert
+
+    stmt = insert(ArticleView).values(user_id=current_user.id, article_id=article.id)
+    stmt = stmt.on_conflict_do_nothing(index_elements=["user_id", "article_id"])
+
+    await db.execute(stmt)
+    await db.commit()
+
+    return {"message": "View recorded"}
+
+
+# 👍 Поставить реакцию на статью (только авторизованные)
+@app.post("/articles/{slug}/reaction", status_code=status.HTTP_200_OK)
+async def set_article_reaction(
+    slug: str,
+    data: ArticleReactionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Находим статью
+    article_result = await db.execute(select(Article).where(Article.slug == slug))
+    article = article_result.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Определяем новое значение
+    if data.reaction_type == "none":
+        new_is_like = None
+    else:
+        new_is_like = data.reaction_type == "like"
+
+    # Ищем существующую реакцию
+    existing_stmt = select(ArticleReaction).where(
+        ArticleReaction.user_id == current_user.id,
+        ArticleReaction.article_id == article.id,
+    )
+    res = await db.execute(existing_stmt)
+    existing_reaction = res.scalar_one_or_none()
+
+    if new_is_like is None:
+        # Удаление реакции
+        if existing_reaction:
+            await db.delete(existing_reaction)
+            await db.commit()
+        return {"message": "Reaction removed"}
+    else:
+        # Обновление или создание
+        if existing_reaction:
+            existing_reaction.is_like = new_is_like
+        else:
+            db.add(
+                ArticleReaction(
+                    user_id=current_user.id, article_id=article.id, is_like=new_is_like
+                )
+            )
+
+        await db.commit()
+        return {"message": f"Reaction set to {data.reaction_type}"}
+
+
+# 📊 Получить статистику статьи (публичный + личная реакция)
+@app.get("/articles/{slug}/stats", response_model=ArticleStatsOut)
+async def get_article_stats(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
+):
+    # Находим статью
+    article_result = await db.execute(select(Article).where(Article.slug == slug))
+    article = article_result.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Считаем лайки
+    likes_stmt = select(func.count(ArticleReaction.id)).where(
+        ArticleReaction.article_id == article.id, ArticleReaction.is_like == True
+    )
+    likes = await db.scalar(likes_stmt) or 0
+
+    # Считаем дизлайки
+    dislikes_stmt = select(func.count(ArticleReaction.id)).where(
+        ArticleReaction.article_id == article.id, ArticleReaction.is_like == False
+    )
+    dislikes = await db.scalar(dislikes_stmt) or 0
+
+    # Считаем просмотры
+    views_stmt = select(func.count(ArticleView.id)).where(
+        ArticleView.article_id == article.id
+    )
+    views = await db.scalar(views_stmt) or 0
+
+    # Реакция текущего пользователя
+    user_reaction = None
+    if current_user:
+        stmt = select(ArticleReaction.is_like).where(
+            ArticleReaction.user_id == current_user.id,
+            ArticleReaction.article_id == article.id,
+        )
+        res = await db.execute(stmt)
+        val = res.scalar_one_or_none()
+        if val is True:
+            user_reaction = "like"
+        elif val is False:
+            user_reaction = "dislike"
+
+    return ArticleStatsOut(
+        likes=likes, dislikes=dislikes, views=views, user_reaction=user_reaction
     )
 
 

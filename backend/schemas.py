@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 
+from typing import Literal
+
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -171,8 +173,51 @@ class LessonStatsOut(BaseModel):
     user_reaction: str | None = None  # "like", "dislike" или None
 
 
+##########Все для статей
+
+
+ARTICLE_TOPICS = Literal[
+    "забота о себе", "продуктивность", "технологии", "лайфхаки", "мотивация"
+]
+
+
+class ArticleCreate(BaseModel):
+    title: str
+    slug: str
+    topic: ARTICLE_TOPICS
+    content: str | None = None
+    time_minutes: int | None = None
+    image: str | None = None
+
+
+class ArticleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    slug: str
+    topic: str
+    content: str | None
+    time_minutes: int | None
+    image: str | None
+    created_at: datetime
+
+
+class ArticleReactionCreate(BaseModel):
+    reaction_type: str  # "like", "dislike", или "none"
+
+
+class ArticleStatsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    likes: int
+    dislikes: int
+    views: int
+    user_reaction: str | None = None  # "like", "dislike", или None
+
+
 # конец #######################################################
 
+
+#########################
 
 # экспорт не трогать!!!
 __all__ = [
@@ -197,4 +242,8 @@ __all__ = [
     "LessonViewOut",
     "ReactionCreate",
     "LessonStatsOut",
+    "ArticleCreate",
+    "ArticleOut",
+    "ArticleReactionCreate",
+    "ArticleStatsOut",
 ]

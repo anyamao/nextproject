@@ -152,6 +152,66 @@ class LessonReaction(Base):
     )
 
 
+class Article(Base):
+    __tablename__ = "articles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    slug = Column(String(200), unique=True, nullable=False, index=True)
+    topic = Column(String(50), nullable=False, index=True)  # ✅ Фиксированная тема
+    content = Column(Text, nullable=True)
+    time_minutes = Column(Integer, nullable=True)
+    image = Column(String(500), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class ArticleView(Base):
+    __tablename__ = "article_views"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    article_id = Column(
+        Integer,
+        ForeignKey("articles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    viewed_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User")
+    article = relationship("Article")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "article_id", name="uq_user_article_view"),
+    )
+
+
+class ArticleReaction(Base):
+    __tablename__ = "article_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    article_id = Column(
+        Integer,
+        ForeignKey("articles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    is_like = Column(Boolean, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User")
+    article = relationship("Article")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "article_id", name="uq_user_article_reaction"),
+    )
+
+
 class TestResult(Base):
     __tablename__ = "test_results"
 
