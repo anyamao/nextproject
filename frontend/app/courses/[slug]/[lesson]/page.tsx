@@ -13,8 +13,8 @@ type Lesson = {
   test_id: number | null;
 };
 
-export const dynamic = "force-dynamic";
-
+// ✅ Обязательно: отключаем кэширование для динамических маршрутов
+//
 export default async function CourseLessonPage({
   params,
 }: {
@@ -22,12 +22,18 @@ export default async function CourseLessonPage({
 }) {
   const { slug: subjectSlug, lesson: lessonSlug } = await params;
 
-  try {
-    // 🔁 Запрос к эндпоинту урока курса
-    const lesson: Lesson = await apiFetch(
-      `/courses/${subjectSlug}/${lessonSlug}`,
+  // ⚠️ Next.js 15 prefetch использует '...' как плейсхолдер.
+  // Не возвращай null! Просто рендерим лоадер или пустой скелетон.
+  if (lessonSlug === "..." || subjectSlug === "...") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600" />
+      </div>
     );
+  }
 
+  try {
+    const lesson = await apiFetch(`/courses/${subjectSlug}/${lessonSlug}`);
     return (
       <LessonClient
         lesson={lesson}
@@ -36,8 +42,7 @@ export default async function CourseLessonPage({
         testId={lesson.test_id ?? null}
       />
     );
-  } catch (error) {
-    console.error("❌ Error fetching lesson:", error);
+  } catch {
     notFound();
   }
 }

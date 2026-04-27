@@ -94,6 +94,7 @@ export default function CourseLessonsPage() {
             <Link
               key={lesson.id}
               href={`/courses/${slug}/${lesson.slug}`}
+              prefetch={false} // ✅ ОТКЛЮЧАЕТ ПРЕДВАРИТЕЛЬНУЮ ЗАГРУЗКУ
               className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between gap-4">

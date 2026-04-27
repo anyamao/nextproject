@@ -76,32 +76,23 @@ export default function LessonClient({
     if (!isAuthenticated || !testId) return; // testId здесь — просто маркер, что урок загружен
 
     const recordView = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || !lesson.id) return;
+
       try {
-        // Проверяем, не записывали ли уже в этой сессии (оптимизация)
-        const sessionKey = `viewed_lesson_${subjectSlug}_${lessonSlug}`;
-        if (sessionStorage.getItem(sessionKey)) {
-          return;
-        }
-
-        await apiFetch(`/ege/${subjectSlug}/${lessonSlug}/view`, {
+        // ✅ Просто отправляем запрос. Бэкенд сам разберется (ON CONFLICT DO NOTHING)
+        await apiFetch(`/lessons/${lesson.id}/view`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Помечаем, что уже записали (чтобы не дублировать при ре-рендере)
-        sessionStorage.setItem(sessionKey, "true");
-
-        console.log("✅ View recorded");
+        console.log("✅ View request sent");
       } catch (err) {
-        // Игнорируем ошибки: если не записалось — не страшно
-        console.log("ℹ️ View not recorded (might be duplicate or offline)");
+        console.log("ℹ️ View not recorded (maybe already viewed or error)");
       }
     };
-
     recordView();
-  }, [isAuthenticated, subjectSlug, lessonSlug]);
+  }, [lesson.id]);
+
   return (
     <main className="flex-1 flex flex-col lg:flex-rowвсе работало до того как я добавила счетчик просмотров на VPS резко теперь больше не показываются уроки в математике и вот такая ошибка  items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
       {/* 📄 Основной контент урока */}

@@ -39,6 +39,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ):
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -57,3 +64,25 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_current_user_optional(
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+) -> User | None:
+    """
+    Возвращает пользователя, если токен валиден, или None, если токена нет/невалиден.
+    Не выбрасывает ошибку — для публичных эндпоинтов типа /stats, /views.
+    """
+    if token is None:
+        return None  # ✅ Просто возвращаем None, не 401
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+    except JWTError:
+        return None  # ✅ Любая ошибка → None, не 401
+
+    result = await db.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()

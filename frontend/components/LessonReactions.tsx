@@ -10,22 +10,48 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
   const [dislikes, setDislikes] = useState(0);
   const [myReaction, setMyReaction] = useState<"like" | "dislike" | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [views, setViews] = useState(0);
   // 📥 Загрузка статистики при открытии
+  // frontend/components/LessonReactions.tsx (или где он у тебя лежит)
+
   useEffect(() => {
+    if (!lessonId) {
+      console.warn("⚠️ lessonId is missing, skipping stats fetch");
+      return;
+    }
+
+    console.log("🔄 [LessonReactions] Mounting for lessonId:", lessonId);
+
     const fetchStats = async () => {
+      setLoading(true);
       try {
-        const data = await apiFetch(`/lessons/${lessonId}/stats`);
-        setLikes(data.likes);
-        setDislikes(data.dislikes);
-        setMyReaction(data.user_reaction);
+        // ✅ Добавляем timestamp чтобы браузер/Next.js не отдавали кэш
+        const res = await apiFetch(
+          `/lessons/${lessonId}/stats?t=${Date.now()}`,
+          {
+            cache: "no-store", // ✅ Явно запрещаем кэширование
+          },
+        );
+
+        console.log("✅ Stats received:", res);
+        setLikes(res.likes);
+        setDislikes(res.dislikes);
+        setMyReaction(res.user_reaction);
+
+        // Если views в отдельном эндпоинте:
+        const viewsRes = await apiFetch(
+          `/lessons/${lessonId}/views?t=${Date.now()}`,
+        );
+        setViews(viewsRes.view_count);
       } catch (err) {
-        console.error("Failed to fetch stats");
+        console.error("❌ Failed to fetch stats:", err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchStats();
-  }, [lessonId]);
 
+    fetchStats();
+  }, [lessonId]); // ✅ Зависимость только от lessonId
   // 👍👎 Обработчик клика
   const handleReaction = async (type: "like" | "dislike") => {
     const token = localStorage.getItem("token");

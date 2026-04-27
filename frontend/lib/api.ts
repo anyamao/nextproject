@@ -17,7 +17,7 @@ const getBaseUrl = () => {
 
 // lib/api.ts
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8010";
 
   // Получаем токен из localStorage (только на клиенте)
   const token =
@@ -30,6 +30,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
+    cache: options.cache || "no-store",
   });
 
   // Обработка 401 — токен истёк

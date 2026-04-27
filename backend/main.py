@@ -54,6 +54,7 @@ from auth import (
     verify_password,
     create_access_token,
     get_current_user,
+    get_current_user_optional,
 )
 
 
@@ -208,39 +209,6 @@ async def set_lesson_reaction(
 
 
 # 📊 Получить статистику урока (публичный + личная реакция юзера)
-@app.get("/lessons/{lesson_id}/stats", response_model=LessonStatsOut)
-async def get_lesson_stats(
-    lesson_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),  # 🔓 Может быть None (гость)
-):
-    # 1. Считаем лайки
-    likes_stmt = select(func.count(LessonReaction.id)).where(
-        LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == True
-    )
-    likes = await db.scalar(likes_stmt) or 0
-
-    # 2. Считаем дизлайки
-    dislikes_stmt = select(func.count(LessonReaction.id)).where(
-        LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == False
-    )
-    dislikes = await db.scalar(dislikes_stmt) or 0
-
-    # 3. Получаем реакцию текущего юзера (если вошел)
-    user_reaction = None
-    if current_user:
-        stmt = select(LessonReaction.is_like).where(
-            LessonReaction.user_id == current_user.id,
-            LessonReaction.lesson_id == lesson_id,
-        )
-        res = await db.execute(stmt)
-        val = res.scalar_one_or_none()
-        if val is True:
-            user_reaction = "like"
-        elif val is False:
-            user_reaction = "dislike"
-
-    return LessonStatsOut(likes=likes, dislikes=dislikes, user_reaction=user_reaction)
 
 
 # ============================================================================
@@ -719,6 +687,155 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
         .order_by(EgeLesson.created_at)
     )
     return result.scalars().all()
+
+
+# ============================================================================
+# 🔁 УНИВЕРСАЛЬНЫЕ ЭНДПОИНТЫ ДЛЯ УРОКОВ (по ID)
+# Работают для /ege/ и /courses/
+# ============================================================================
+
+
+# 👁️ Записать просмотр урока (по ID, только авторизованные)
+# ============================================================================
+# 🔁 УНИВЕРСАЛЬНЫЕ ЭНДПОИНТЫ ДЛЯ УРОКОВ (по ID)
+# Работают для /ege/ и /courses/
+# ============================================================================
+
+
+# 👁️ Записать просмотр урока (по ID, только авторизованные)
+@app.post("/lessons/{lesson_id}/view", status_code=status.HTTP_201_CREATED)
+async def record_lesson_view_by_id(
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Проверяем, что урок существует
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    from sqlalchemy.dialects.postgresql import insert
+
+    stmt = insert(LessonView).values(user_id=current_user.id, lesson_id=lesson_id)
+    stmt = stmt.on_conflict_do_nothing(index_elements=["user_id", "lesson_id"])
+
+    await db.execute(stmt)
+    await db.commit()
+    return {"message": "View recorded"}
+
+
+# 📊 Получить количество просмотров урока (по ID, публичный)
+@app.get("/lessons/{lesson_id}/views")
+async def get_lesson_views_by_id(lesson_id: int, db: AsyncSession = Depends(get_db)):
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    count = await db.scalar(
+        select(func.count(LessonView.id)).where(LessonView.lesson_id == lesson_id)
+    )
+    return {"view_count": count or 0}
+
+
+# 👍👎 Поставить реакцию на урок (по ID, только авторизованные)
+@app.post("/lessons/{lesson_id}/reaction", status_code=status.HTTP_200_OK)
+async def set_lesson_reaction_by_id(
+    lesson_id: int,
+    data: ReactionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    if data.reaction_type == "none":
+        new_is_like = None
+    else:
+        new_is_like = data.reaction_type == "like"
+
+    existing_stmt = select(LessonReaction).where(
+        LessonReaction.user_id == current_user.id, LessonReaction.lesson_id == lesson_id
+    )
+    res = await db.execute(existing_stmt)
+    existing_reaction = res.scalar_one_or_none()
+
+    if new_is_like is None:
+        if existing_reaction:
+            await db.delete(existing_reaction)
+            await db.commit()
+        return {"message": "Reaction removed"}
+    else:
+        if existing_reaction:
+            existing_reaction.is_like = new_is_like
+        else:
+            db.add(
+                LessonReaction(
+                    user_id=current_user.id, lesson_id=lesson_id, is_like=new_is_like
+                )
+            )
+        await db.commit()
+        return {"message": f"Reaction set to {data.reaction_type}"}
+
+
+# 📈 Получить статистику урока (по ID, публичный + личная реакция)
+@app.get("/lessons/{lesson_id}/stats", response_model=LessonStatsOut)
+async def get_lesson_stats_by_id(
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    likes = (
+        await db.scalar(
+            select(func.count(LessonReaction.id)).where(
+                LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == True
+            )
+        )
+        or 0
+    )
+
+    dislikes = (
+        await db.scalar(
+            select(func.count(LessonReaction.id)).where(
+                LessonReaction.lesson_id == lesson_id, LessonReaction.is_like == False
+            )
+        )
+        or 0
+    )
+
+    views = (
+        await db.scalar(
+            select(func.count(LessonView.id)).where(LessonView.lesson_id == lesson_id)
+        )
+        or 0
+    )
+
+    user_reaction = None
+    if current_user:
+        stmt = select(LessonReaction.is_like).where(
+            LessonReaction.user_id == current_user.id,
+            LessonReaction.lesson_id == lesson_id,
+        )
+        res = await db.execute(stmt)
+        val = res.scalar_one_or_none()
+        if val is True:
+            user_reaction = "like"
+        elif val is False:
+            user_reaction = "dislike"
+
+    return LessonStatsOut(
+        likes=likes, dislikes=dislikes, views=views, user_reaction=user_reaction
+    )
+
+
+# 📊 Получить количество просмотров урока (по ID, публичный)
+
+
+# 👍👎 Поставить реакцию на урок (по ID, только авторизованные)
 
 
 @app.get("/courses/{subject}/{lesson}", response_model=EgeLessonOut)
