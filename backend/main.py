@@ -239,6 +239,7 @@ async def get_lesson_stats(
 # ============================================================================
 # 👁️ ПРОСМОТРЫ УРОКОВ
 # ============================================================================
+EGE_SLUGS = ["math-profile", "physics-ege", "russian-ege", "informatics-ege"]
 
 
 # 📤 Записать просмотр урока (только авторизованные, идемпотентно)
@@ -351,10 +352,15 @@ async def get_user_test_result(
     return result.scalar_one_or_none()
 
 
+# ПОЛУЧАЕМ ВСЕ ПРЕДМЕТЫ ЕГЭ ТУТ
 # 📚 ЕГЭ: Получить все предметы (публичный, без авторизации)
 @app.get("/ege", response_model=list[EgeSubjectOut])
 async def get_all_subjects(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(EgeSubject).order_by(EgeSubject.title))
+    result = await db.execute(
+        select(EgeSubject)
+        .where(EgeSubject.slug.in_(EGE_SLUGS))
+        .order_by(EgeSubject.title)
+    )
     return result.scalars().all()
 
 
@@ -504,6 +510,75 @@ async def submit_test(
         total_questions=total,
         correct_count=correct,
     )
+
+
+# ЗДЕСЬ ВСЕ ЭНДПОИНТЫ ДЛЯ КУРСОВ course_native
+
+
+@app.get("/courses/subjects", response_model=list[EgeSubjectOut])
+async def get_course_subjects(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(EgeSubject)
+        .where(~EgeSubject.slug.in_(EGE_SLUGS))  # ✅ Исключаем ЕГЭ-предметы
+        .order_by(EgeSubject.title)
+    )
+    return result.scalars().all()
+
+
+@app.get("/courses/{slug}", response_model=list[EgeLessonOut])
+async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
+    # Проверяем, что предмет существует И не является ЕГЭ
+    if slug in EGE_SLUGS:
+        raise HTTPException(
+            status_code=404, detail="This subject belongs to /ege/ section"
+        )
+
+    subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    subject = subject_result.scalar_one_or_none()
+
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Получаем уроки
+    result = await db.execute(
+        select(EgeLesson)
+        .where(EgeLesson.subject_id == subject.id)
+        .order_by(EgeLesson.created_at)
+    )
+    return result.scalars().all()
+
+
+@app.get("/courses/{subject}/{lesson}", response_model=EgeLessonOut)
+async def get_course_lesson(
+    subject: str, lesson: str, db: AsyncSession = Depends(get_db)
+):
+    # Проверка категории
+    if subject in EGE_SLUGS:
+        raise HTTPException(
+            status_code=404, detail="This lesson belongs to /ege/ section"
+        )
+
+    # Находим предмет
+    subject_result = await db.execute(
+        select(EgeSubject).where(EgeSubject.slug == subject)
+    )
+    subject_obj = subject_result.scalar_one_or_none()
+
+    if not subject_obj:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Находим урок
+    lesson_result = await db.execute(
+        select(EgeLesson).where(
+            EgeLesson.slug == lesson, EgeLesson.subject_id == subject_obj.id
+        )
+    )
+    lesson_obj = lesson_result.scalar_one_or_none()
+
+    if not lesson_obj:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    return lesson_obj
 
 
 ##снизу конец!!!!!!!1###############
