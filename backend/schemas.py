@@ -215,6 +215,27 @@ class ArticleStatsOut(BaseModel):
 
 
 #########ВСЯ СВЯЗАННОЕ С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
+class CommentReactionCreate(BaseModel):
+    reaction_type: str  # "like", "dislike", или "none"
+
+
+class CommentWithStatsOut(BaseModel):
+    """Комментарий + статистика реакций"""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    username: str
+    content: str
+    parent_id: int | None
+    created_at: datetime
+    updated_at: datetime | None
+    # Статистика
+    likes: int = 0
+    dislikes: int = 0
+    user_reaction: str | None = None  # "like", "dislike", или None
+    # Вложенные ответы (рекурсивно)
+    replies: list["CommentWithStatsOut"] = []
 
 
 class CommentCreate(BaseModel):
@@ -275,4 +296,6 @@ __all__ = [
     "ArticleStatsOut",
     "CommentCreate",
     "CommentOut",
+    "CommentReactionCreate",
+    "CommentWithStatsOut",
 ]

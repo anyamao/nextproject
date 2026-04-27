@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Eye } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LessonReactions from "@/components/LessonReactions"; // или создай локально
-
+import CommentsSection from "@/components/CommentsSection";
 type Lesson = {
   id: number;
   title: string;
@@ -211,6 +211,11 @@ export default function LessonClient({
         <div>
           {" "}
           <LessonReactions key={`stats-${lesson.id}`} lessonId={lesson.id} />
+        </div>
+      )}
+      {lesson.id && (
+        <div className="mt-8">
+          <CommentsSection lessonId={lesson.id} />
         </div>
       )}
     </main>

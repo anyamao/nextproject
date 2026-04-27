@@ -12,6 +12,10 @@ type Comment = {
   content: string;
   parent_id: number | null;
   created_at: string;
+  updated_at: string | null;
+  likes: number;
+  dislikes: number;
+  user_reaction: "like" | "dislike" | null;
   replies: Comment[];
 };
 
@@ -114,7 +118,38 @@ export default function CommentsSection({
       console.error("Failed to delete comment", err);
     }
   };
+  const handleReaction = async (
+    commentId: number,
+    type: "like" | "dislike",
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Войдите, чтобы оценивать комментарии!");
+      return;
+    }
 
+    // Если кликнул на уже выбранное — снимаем реакцию
+    const comment = comments.find((c) => c.id === commentId);
+    const currentReaction = comment?.user_reaction;
+    const newReaction = currentReaction === type ? "none" : type;
+
+    try {
+      await apiFetch(`/comments/${commentId}/reaction`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reaction_type: newReaction }),
+      });
+
+      // Перезагружаем комментарии для обновления статистики
+      const data = await apiFetch(`/${entityType}/${entityId}/comments`);
+      setComments(data);
+    } catch (err) {
+      console.error("Failed to react to comment", err);
+    }
+  };
   // Редактирование
   const handleEdit = async (commentId: number) => {
     if (!editContent.trim()) return;
@@ -137,7 +172,6 @@ export default function CommentsSection({
   };
 
   if (!entityId) return null;
-
   return (
     <div className="mt-12 pt-8 border-t border-gray-200">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">💬 Комментарии</h2>
@@ -165,6 +199,7 @@ export default function CommentsSection({
       <div className="space-y-6">
         {comments.map((comment) => (
           <div key={comment.id} className="bg-gray-50 p-4 rounded-xl">
+            {/* Шапка комментария */}
             <div className="flex items-start justify-between">
               <div>
                 <span className="font-semibold text-gray-900">
@@ -195,6 +230,7 @@ export default function CommentsSection({
               )}
             </div>
 
+            {/* Контент или режим редактирования */}
             {editingId === comment.id ? (
               <div className="mt-3">
                 <textarea
@@ -224,17 +260,50 @@ export default function CommentsSection({
               </p>
             )}
 
-            {/* Кнопка ответа */}
-            {!comment.parent_id && (
-              <button
-                onClick={() => setReplyingTo(comment.id)}
-                className="mt-3 text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
-              >
-                <Reply className="w-3 h-3" /> Ответить
-              </button>
-            )}
+            {/* Футер: реакции + ответ + время */}
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200">
+              {/* 👍👎 Реакции */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleReaction(comment.id, "like")}
+                  className={`flex items-center gap-1 text-sm transition ${
+                    comment.user_reaction === "like"
+                      ? "text-green-600 font-semibold"
+                      : "text-gray-500 hover:text-green-600"
+                  }`}
+                >
+                  👍 {comment.likes || 0}
+                </button>
+                <button
+                  onClick={() => handleReaction(comment.id, "dislike")}
+                  className={`flex items-center gap-1 text-sm transition ${
+                    comment.user_reaction === "dislike"
+                      ? "text-red-600 font-semibold"
+                      : "text-gray-500 hover:text-red-600"
+                  }`}
+                >
+                  👎 {comment.dislikes || 0}
+                </button>
+              </div>
 
-            {/* Форма ответа */}
+              {/* 💬 Ответить (для всех, не только корневых) */}
+              <button
+                onClick={() => {
+                  setReplyingTo(comment.id);
+                  setReplyContent(`@${comment.username} `);
+                }}
+                className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+              >
+                💬 Ответить
+              </button>
+
+              {/* Время */}
+              <span className="text-xs text-gray-400 ml-auto">
+                {new Date(comment.created_at).toLocaleDateString("ru-RU")}
+              </span>
+            </div>
+
+            {/* Форма ответа (универсальная: и для корневых, и для вложенных) */}
             {replyingTo === comment.id && (
               <form
                 onSubmit={(e) => handleSubmit(e, comment.id)}
@@ -243,7 +312,7 @@ export default function CommentsSection({
                 <textarea
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder="Напишите ответ..."
+                  placeholder={`Ответить @${comment.username}...`}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
                   rows={2}
                 />
@@ -266,11 +335,12 @@ export default function CommentsSection({
               </form>
             )}
 
-            {/* Ответы на комментарий */}
+            {/* Ответы на комментарий (рекурсивный рендеринг) */}
             {comment.replies?.length > 0 && (
               <div className="mt-4 ml-6 space-y-3 border-l-2 border-gray-200 pl-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="bg-white p-3 rounded-lg">
+                    {/* Шапка ответа */}
                     <div className="flex items-start justify-between">
                       <div>
                         <span className="font-semibold text-gray-900 text-sm">
@@ -283,17 +353,197 @@ export default function CommentsSection({
                         </span>
                       </div>
                       {currentUserId === reply.user_id && (
-                        <button
-                          onClick={() => handleDelete(reply.id)}
-                          className="text-gray-400 hover:text-red-600 transition"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
+                        <div className="flex gap-1">
+                          {/* ✏️ Редактировать ответ */}
+                          <button
+                            onClick={() => {
+                              setEditingId(reply.id);
+                              setEditContent(reply.content);
+                            }}
+                            className="text-gray-400 hover:text-purple-600 transition"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          {/* 🗑️ Удалить ответ */}
+                          <button
+                            onClick={() => handleDelete(reply.id)}
+                            className="text-gray-400 hover:text-red-600 transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <p className="text-gray-700 mt-1 text-sm whitespace-pre-wrap">
-                      {reply.content}
-                    </p>
+
+                    {/* Контент ответа или режим редактирования */}
+                    {editingId === reply.id ? (
+                      <div className="mt-2">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                          rows={2}
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => handleEdit(reply.id)}
+                            className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-700 mt-1 text-sm whitespace-pre-wrap">
+                        {reply.content}
+                      </p>
+                    )}
+
+                    {/* 👍👎 Реакции + Ответить + Время */}
+                    <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => handleReaction(reply.id, "like")}
+                        className={`text-xs transition ${
+                          reply.user_reaction === "like"
+                            ? "text-green-600 font-semibold"
+                            : "text-gray-400 hover:text-green-600"
+                        }`}
+                      >
+                        👍 {reply.likes || 0}
+                      </button>
+                      <button
+                        onClick={() => handleReaction(reply.id, "dislike")}
+                        className={`text-xs transition ${
+                          reply.user_reaction === "dislike"
+                            ? "text-red-600 font-semibold"
+                            : "text-gray-400 hover:text-red-600"
+                        }`}
+                      >
+                        👎 {reply.dislikes || 0}
+                      </button>
+
+                      {/* 💬 Ответить на ответ (вложенный) */}
+                      <button
+                        onClick={() => {
+                          setReplyingTo(reply.id);
+                          setReplyContent(`@${reply.username} `);
+                        }}
+                        className="text-xs text-purple-600 hover:text-purple-700"
+                      >
+                        💬 Ответить
+                      </button>
+
+                      <span className="text-xs text-gray-400 ml-auto">
+                        {new Date(reply.created_at).toLocaleDateString("ru-RU")}
+                      </span>
+                    </div>
+
+                    {/* Форма ответа на ответ */}
+                    {replyingTo === reply.id && (
+                      <form
+                        onSubmit={(e) => handleSubmit(e, reply.id)}
+                        className="mt-3 ml-4 border-l-2 border-purple-200 pl-3"
+                      >
+                        <textarea
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          placeholder={`Ответить @${reply.username}...`}
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm resize-none"
+                          rows={2}
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            type="submit"
+                            disabled={loading || !replyContent.trim()}
+                            className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition disabled:opacity-50"
+                          >
+                            Отправить
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReplyingTo(null)}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* Вложенные ответы 3-го уровня и глубже (рекурсия) */}
+                    {reply.replies?.length > 0 && (
+                      <div className="mt-3 ml-4 space-y-2 border-l-2 border-gray-100 pl-3">
+                        {reply.replies.map((nestedReply) => (
+                          <div
+                            key={nestedReply.id}
+                            className="bg-gray-50 p-2 rounded"
+                          >
+                            <div className="flex items-start justify-between">
+                              <span className="font-semibold text-gray-900 text-xs">
+                                {nestedReply.username}
+                              </span>
+                              {currentUserId === nestedReply.user_id && (
+                                <button
+                                  onClick={() => handleDelete(nestedReply.id)}
+                                  className="text-gray-400 hover:text-red-600 transition"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-gray-700 mt-1 text-xs whitespace-pre-wrap">
+                              {nestedReply.content}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <button
+                                onClick={() =>
+                                  handleReaction(nestedReply.id, "like")
+                                }
+                                className={`text-[10px] transition ${
+                                  nestedReply.user_reaction === "like"
+                                    ? "text-green-600"
+                                    : "text-gray-400 hover:text-green-600"
+                                }`}
+                              >
+                                👍 {nestedReply.likes || 0}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleReaction(nestedReply.id, "dislike")
+                                }
+                                className={`text-[10px] transition ${
+                                  nestedReply.user_reaction === "dislike"
+                                    ? "text-red-600"
+                                    : "text-gray-400 hover:text-red-600"
+                                }`}
+                              >
+                                👎 {nestedReply.dislikes || 0}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setReplyingTo(nestedReply.id);
+                                  setReplyContent(`@${nestedReply.username} `);
+                                }}
+                                className="text-[10px] text-purple-600 hover:text-purple-700"
+                              >
+                                💬 Ответить
+                              </button>
+                              <span className="text-[10px] text-gray-400 ml-auto">
+                                {new Date(
+                                  nestedReply.created_at,
+                                ).toLocaleDateString("ru-RU")}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

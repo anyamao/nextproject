@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from database import engine, Base, get_db
+from typing import Any, Dict, Literal, Optional
 from models import (
     User,
     EgeSubject,
@@ -22,6 +23,7 @@ from models import (
     ArticleView,
     ArticleReaction,
     Comment,
+    CommentReaction,
 )
 from schemas import (
     UserRegister,
@@ -51,6 +53,7 @@ from schemas import (
     ArticleStatsOut,
     CommentCreate,
     CommentOut,
+    CommentReactionCreate,
 )
 from auth import (
     get_password_hash,
@@ -795,55 +798,193 @@ async def delete_comment(
     return {"message": "Comment deleted", "id": comment_id}
 
 
-@app.get("/lessons/{lesson_id}/comments", response_model=list[CommentOut])
-async def get_lesson_comments(lesson_id: int, db: AsyncSession = Depends(get_db)):
-    # Проверяем, что урок существует
+@app.post("/comments/{comment_id}/reaction", status_code=status.HTTP_200_OK)
+async def set_comment_reaction(
+    comment_id: int,
+    data: CommentReactionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Проверяем, что комментарий существует
+    comment = await db.get(Comment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Определяем новое значение
+    if data.reaction_type == "none":
+        new_is_like = None
+    else:
+        new_is_like = data.reaction_type == "like"
+
+    # Ищем существующую реакцию
+    existing_stmt = select(CommentReaction).where(
+        CommentReaction.user_id == current_user.id,
+        CommentReaction.comment_id == comment_id,
+    )
+    res = await db.execute(existing_stmt)
+    existing_reaction = res.scalar_one_or_none()
+
+    if new_is_like is None:
+        # Удаление реакции
+        if existing_reaction:
+            await db.delete(existing_reaction)
+            await db.commit()
+        return {"message": "Reaction removed"}
+    else:
+        # Обновление или создание
+        if existing_reaction:
+            existing_reaction.is_like = new_is_like
+        else:
+            db.add(
+                CommentReaction(
+                    user_id=current_user.id, comment_id=comment_id, is_like=new_is_like
+                )
+            )
+        await db.commit()
+        return {"message": f"Reaction set to {data.reaction_type}"}
+
+
+@app.get("/comments/{comment_id}/stats")
+async def get_comment_stats(
+    comment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    comment = await db.get(Comment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Считаем лайки
+    likes = (
+        await db.scalar(
+            select(func.count(CommentReaction.id)).where(
+                CommentReaction.comment_id == comment_id,
+                CommentReaction.is_like == True,
+            )
+        )
+        or 0
+    )
+
+    # Считаем дизлайки
+    dislikes = (
+        await db.scalar(
+            select(func.count(CommentReaction.id)).where(
+                CommentReaction.comment_id == comment_id,
+                CommentReaction.is_like == False,
+            )
+        )
+        or 0
+    )
+
+    # Реакция текущего пользователя
+    user_reaction = None
+    if current_user:
+        stmt = select(CommentReaction.is_like).where(
+            CommentReaction.user_id == current_user.id,
+            CommentReaction.comment_id == comment_id,
+        )
+        res = await db.execute(stmt)
+        val = res.scalar_one_or_none()
+        if val is True:
+            user_reaction = "like"
+        elif val is False:
+            user_reaction = "dislike"
+
+    return {"likes": likes, "dislikes": dislikes, "user_reaction": user_reaction}
+
+
+async def format_comment_with_stats(
+    comment: Comment, db: AsyncSession, current_user: User | None
+) -> Dict[str, Any]:
+    # Считаем реакции
+    likes = (
+        await db.scalar(
+            select(func.count(CommentReaction.id)).where(
+                CommentReaction.comment_id == comment.id,
+                CommentReaction.is_like == True,
+            )
+        )
+        or 0
+    )
+    dislikes = (
+        await db.scalar(
+            select(func.count(CommentReaction.id)).where(
+                CommentReaction.comment_id == comment.id,
+                CommentReaction.is_like == False,
+            )
+        )
+        or 0
+    )
+
+    user_reaction = None
+    if current_user:
+        stmt = select(CommentReaction.is_like).where(
+            CommentReaction.user_id == current_user.id,
+            CommentReaction.comment_id == comment.id,
+        )
+        res = await db.execute(stmt)
+        val = res.scalar_one_or_none()
+        if val is True:
+            user_reaction = "like"
+        elif val is False:
+            user_reaction = "dislike"
+
+    return {
+        "id": comment.id,
+        "user_id": comment.user_id,
+        "username": comment.user.username if comment.user else "Unknown",
+        "content": comment.content,
+        "parent_id": comment.parent_id,
+        "created_at": comment.created_at,
+        "updated_at": comment.updated_at,
+        "likes": likes,
+        "dislikes": dislikes,
+        "user_reaction": user_reaction,
+        "replies": [],  # Заполним ниже если нужно
+    }
+
+
+@app.get("/lessons/{lesson_id}/comments")
+async def get_lesson_comments(
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
     lesson = await db.get(EgeLesson, lesson_id)
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # ✅ Явно загружаем комментарии + пользователя + ответы + пользователя ответов
+    # Загружаем корневые комментарии + пользователи + ответы + пользователи ответов
     result = await db.execute(
         select(Comment)
         .where(Comment.lesson_id == lesson_id, Comment.parent_id.is_(None))
         .options(
-            selectinload(Comment.user),  # ✅ Загружаем автора
-            selectinload(Comment.replies).selectinload(
-                Comment.user
-            ),  # ✅ Загружаем ответы + их авторов
+            selectinload(Comment.user),
+            selectinload(Comment.replies).selectinload(Comment.user),
         )
         .order_by(Comment.created_at.asc())
     )
     comments = result.scalars().all()
 
-    # Форматируем ответ (теперь отношения уже загружены, никакого async-доступа)
-    return [
-        CommentOut(
-            id=c.id,
-            user_id=c.user_id,
-            username=c.user.username,  # ✅ user уже загружен
-            content=c.content,
-            parent_id=c.parent_id,
-            created_at=c.created_at,
-            replies=[
-                CommentOut(
-                    id=r.id,
-                    user_id=r.user_id,
-                    username=r.user.username,  # ✅ r.user уже загружен
-                    content=r.content,
-                    parent_id=r.parent_id,
-                    created_at=r.created_at,
-                    replies=[],  # Не загружаем вложенные ответы глубже
-                )
-                for r in c.replies
-            ],
-        )
-        for c in comments
-    ]
+    # Форматируем с реакциями
+    formatted = []
+    for c in comments:
+        c_data = await format_comment_with_stats(c, db, current_user)
+        # Обрабатываем ответы
+        for r in c.replies:
+            r_data = await format_comment_with_stats(r, db, current_user)
+            c_data["replies"].append(r_data)
+        formatted.append(c_data)
+
+    return formatted
 
 
-@app.get("/articles/{article_id}/comments", response_model=list[CommentOut])
-async def get_article_comments(article_id: int, db: AsyncSession = Depends(get_db)):
+@app.get("/articles/{article_id}/comments")
+async def get_article_comments(
+    article_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
     article = await db.get(Article, article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -859,29 +1000,15 @@ async def get_article_comments(article_id: int, db: AsyncSession = Depends(get_d
     )
     comments = result.scalars().all()
 
-    return [
-        CommentOut(
-            id=c.id,
-            user_id=c.user_id,
-            username=c.user.username,
-            content=c.content,
-            parent_id=c.parent_id,
-            created_at=c.created_at,
-            replies=[
-                CommentOut(
-                    id=r.id,
-                    user_id=r.user_id,
-                    username=r.user.username,
-                    content=r.content,
-                    parent_id=r.parent_id,
-                    created_at=r.created_at,
-                    replies=[],
-                )
-                for r in c.replies
-            ],
-        )
-        for c in comments
-    ]
+    formatted = []
+    for c in comments:
+        c_data = await format_comment_with_stats(c, db, current_user)
+        for r in c.replies:
+            r_data = await format_comment_with_stats(r, db, current_user)
+            c_data["replies"].append(r_data)
+        formatted.append(c_data)
+
+    return formatted
 
 
 # 📤 Добавить комментарий (исправленная версия)

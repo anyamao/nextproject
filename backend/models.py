@@ -246,6 +246,28 @@ class TestResult(Base):
 
 
 #######ВСЕ ЧТО СВЯЗАНО С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
+class CommentReaction(Base):
+    __tablename__ = "comment_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    comment_id = Column(
+        Integer,
+        ForeignKey("comments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    is_like = Column(Boolean, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User")
+    comment = relationship("Comment")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "comment_id", name="uq_user_comment_reaction"),
+    )
 
 
 class Comment(Base):
