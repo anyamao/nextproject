@@ -26,16 +26,11 @@ export default function CourseLessonsPage() {
   useEffect(() => {
     async function fetchLessons() {
       try {
-        // 🔁 Запрос к эндпоинту уроков курса
         const data = await apiFetch(`/courses/${slug}`);
         setLessons(data);
       } catch (err: any) {
         console.error("Failed to fetch lessons:", err);
-        if (err?.message?.includes("404")) {
-          setError("Курс не найден");
-        } else {
-          setError("Не удалось загрузить уроки");
-        }
+        setError(err?.message || "Не удалось загрузить уроки");
       } finally {
         setLoading(false);
       }
@@ -55,11 +50,8 @@ export default function CourseLessonsPage() {
     return (
       <main className="flex-1 flex flex-col items-center justify-center py-20 px-4">
         <p className="text-red-600 text-lg mb-4">{error}</p>
-        <Link
-          href="/courses"
-          className="text-purple-600 hover:underline flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Вернуться к курсам
+        <Link href="/courses" className="text-purple-600 hover:underline">
+          ← Вернуться к курсам
         </Link>
       </main>
     );
@@ -94,7 +86,7 @@ export default function CourseLessonsPage() {
             <Link
               key={lesson.id}
               href={`/courses/${slug}/${lesson.slug}`}
-              prefetch={false} // ✅ ОТКЛЮЧАЕТ ПРЕДВАРИТЕЛЬНУЮ ЗАГРУЗКУ
+              prefetch={false}
               className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between gap-4">

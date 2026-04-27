@@ -18,31 +18,19 @@ export default function ArticleClient({ article }: { article: Article }) {
   useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
-      if (!token) return; // Не записываем для гостей
+      if (!token || !article.slug) return;
 
       try {
-        // Проверяем, не записывали ли уже в этой сессии (оптимизация)
-        const sessionKey = `viewed_article_${article.slug}`;
-        if (sessionStorage.getItem(sessionKey)) {
-          return;
-        }
-
+        // ✅ Просто отправляем запрос. Бэкенд сам разберется (ON CONFLICT DO NOTHING)
         await apiFetch(`/articles/${article.slug}/view`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Помечаем, что уже записали
-        sessionStorage.setItem(sessionKey, "true");
-
-        console.log("✅ Article view recorded");
+        console.log("✅ View request sent");
       } catch (err) {
-        console.log("ℹ️ View not recorded:", err);
+        console.log("ℹ️ View not recorded (maybe already viewed or error)");
       }
     };
-
     recordView();
   }, [article.slug]);
 

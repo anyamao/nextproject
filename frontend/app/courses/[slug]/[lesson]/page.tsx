@@ -1,48 +1,40 @@
 // frontend/app/courses/[slug]/[lesson]/page.tsx
+"use client"; // ✅ Превращает в клиентский компонент
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import LessonClient from "./LessonClient";
-import { notFound } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
-type Lesson = {
-  id: number;
-  title: string;
-  slug: string;
-  description: string | null;
-  content: string | null;
-  time_minutes: number | null;
-  test_id: number | null;
-};
+export default function CourseLessonPage() {
+  const params = useParams();
+  const [lesson, setLesson] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-// ✅ Обязательно: отключаем кэширование для динамических маршрутов
-//
-export default async function CourseLessonPage({
-  params,
-}: {
-  params: Promise<{ slug: string; lesson: string }>;
-}) {
-  const { slug: subjectSlug, lesson: lessonSlug } = await params;
+  useEffect(() => {
+    async function fetchLesson() {
+      try {
+        const data = await apiFetch(`/courses/${params.slug}/${params.lesson}`);
+        setLesson(data);
+      } catch (err) {
+        console.error("Failed to fetch lesson", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLesson();
+  }, [params.slug, params.lesson]);
 
-  // ⚠️ Next.js 15 prefetch использует '...' как плейсхолдер.
-  // Не возвращай null! Просто рендерим лоадер или пустой скелетон.
-  if (lessonSlug === "..." || subjectSlug === "...") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600" />
-      </div>
-    );
+  if (loading || !lesson) {
+    return <div className="p-10">Загрузка...</div>;
   }
 
-  try {
-    const lesson = await apiFetch(`/courses/${subjectSlug}/${lessonSlug}`);
-    return (
-      <LessonClient
-        lesson={lesson}
-        subjectSlug={subjectSlug}
-        lessonSlug={lessonSlug}
-        testId={lesson.test_id ?? null}
-      />
-    );
-  } catch {
-    notFound();
-  }
+  return (
+    <LessonClient
+      lesson={lesson}
+      subjectSlug={params.slug as string}
+      lessonSlug={params.lesson as string}
+      testId={lesson.test_id ?? null}
+    />
+  );
 }

@@ -95,7 +95,6 @@ export default function LessonClient({
 
   return (
     <main className="flex-1 flex flex-col lg:flex-rowвсе работало до того как я добавила счетчик просмотров на VPS резко теперь больше не показываются уроки в математике и вот такая ошибка  items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
-      {/* 📄 Основной контент урока */}
       <div className="flex-1 min-w-0">
         <Link
           href={`/ege/${subjectSlug}`}
@@ -108,17 +107,11 @@ export default function LessonClient({
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           {lesson.title}
         </h1>
-        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <Eye className="w-4 h-4 text-blue-500" />
-            Просмотры
-          </h3>
-          <p className="text-2xl font-bold text-gray-900 text-center">
+        <div className="flex flex-row items-center  ">
+          <p className="smaller-text font-bold text-gray-800 ml-[10px]">
             {viewCount?.toLocaleString("ru-RU") || "—"}
           </p>
-          <p className="text-xs text-gray-500 text-center mt-1">
-            уникальных пользователей
-          </p>
+          <Eye className="w-4 h-4 text-blue-500" />
         </div>
         {lesson.time_minutes && (
           <p className="text-gray-500 text-sm mb-6">
