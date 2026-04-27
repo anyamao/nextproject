@@ -214,6 +214,33 @@ class ArticleStatsOut(BaseModel):
     user_reaction: str | None = None  # "like", "dislike", или None
 
 
+#########ВСЯ СВЯЗАННОЕ С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
+
+
+class CommentCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
+    parent_id: int | None = None  # для ответов на комментарии
+    lesson_id: int | None = None  # ✅ Добавь это
+    article_id: int | None = None  # ✅ И это
+
+
+class CommentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    username: str  # добавим для удобства
+    content: str
+    parent_id: int | None
+    created_at: datetime
+    replies: list["CommentOut"] = []  # для вложенных ответов
+
+
+# Для обновления списка на фронте
+class CommentsListOut(BaseModel):
+    comments: list[CommentOut]
+    total: int
+
+
 # конец #######################################################
 
 
@@ -246,4 +273,6 @@ __all__ = [
     "ArticleOut",
     "ArticleReactionCreate",
     "ArticleStatsOut",
+    "CommentCreate",
+    "CommentOut",
 ]

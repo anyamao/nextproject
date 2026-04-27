@@ -21,6 +21,7 @@ from models import (
     Article,
     ArticleView,
     ArticleReaction,
+    Comment,
 )
 from schemas import (
     UserRegister,
@@ -48,6 +49,8 @@ from schemas import (
     ArticleOut,
     ArticleReactionCreate,
     ArticleStatsOut,
+    CommentCreate,
+    CommentOut,
 )
 from auth import (
     get_password_hash,
@@ -766,14 +769,220 @@ async def set_lesson_reaction(
         return {"message": f"Reaction set to {data.reaction_type}"}
 
 
-# 📊 Получить статистику урока (публичный + личная реакция юзера)
-# (Этот эндпоинт дублируется выше, но оставлен для совместимости)
-# @app.get("/lessons/{lesson_id}/stats", response_model=LessonStatsOut)
-# async def get_lesson_stats(lesson_id: int, db: AsyncSession = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)):
-#     ...
+##########ВСЕ ЧТО СВЯЗАННО С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
+@app.delete("/comments/{comment_id}", status_code=status.HTTP_200_OK)
+async def delete_comment(
+    comment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Находим комментарий
+    comment = await db.get(Comment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Проверяем права: только автор может удалить
+    if comment.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not allowed to delete this comment"
+        )
+
+    # Удаляем
+    await db.delete(comment)
+    await db.commit()
+
+    # ✅ 204 No Content — тело ответа не нужно
+    return {"message": "Comment deleted", "id": comment_id}
 
 
-# ============================================================================
+@app.get("/lessons/{lesson_id}/comments", response_model=list[CommentOut])
+async def get_lesson_comments(lesson_id: int, db: AsyncSession = Depends(get_db)):
+    # Проверяем, что урок существует
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # ✅ Явно загружаем комментарии + пользователя + ответы + пользователя ответов
+    result = await db.execute(
+        select(Comment)
+        .where(Comment.lesson_id == lesson_id, Comment.parent_id.is_(None))
+        .options(
+            selectinload(Comment.user),  # ✅ Загружаем автора
+            selectinload(Comment.replies).selectinload(
+                Comment.user
+            ),  # ✅ Загружаем ответы + их авторов
+        )
+        .order_by(Comment.created_at.asc())
+    )
+    comments = result.scalars().all()
+
+    # Форматируем ответ (теперь отношения уже загружены, никакого async-доступа)
+    return [
+        CommentOut(
+            id=c.id,
+            user_id=c.user_id,
+            username=c.user.username,  # ✅ user уже загружен
+            content=c.content,
+            parent_id=c.parent_id,
+            created_at=c.created_at,
+            replies=[
+                CommentOut(
+                    id=r.id,
+                    user_id=r.user_id,
+                    username=r.user.username,  # ✅ r.user уже загружен
+                    content=r.content,
+                    parent_id=r.parent_id,
+                    created_at=r.created_at,
+                    replies=[],  # Не загружаем вложенные ответы глубже
+                )
+                for r in c.replies
+            ],
+        )
+        for c in comments
+    ]
+
+
+@app.get("/articles/{article_id}/comments", response_model=list[CommentOut])
+async def get_article_comments(article_id: int, db: AsyncSession = Depends(get_db)):
+    article = await db.get(Article, article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    result = await db.execute(
+        select(Comment)
+        .where(Comment.article_id == article_id, Comment.parent_id.is_(None))
+        .options(
+            selectinload(Comment.user),
+            selectinload(Comment.replies).selectinload(Comment.user),
+        )
+        .order_by(Comment.created_at.asc())
+    )
+    comments = result.scalars().all()
+
+    return [
+        CommentOut(
+            id=c.id,
+            user_id=c.user_id,
+            username=c.user.username,
+            content=c.content,
+            parent_id=c.parent_id,
+            created_at=c.created_at,
+            replies=[
+                CommentOut(
+                    id=r.id,
+                    user_id=r.user_id,
+                    username=r.user.username,
+                    content=r.content,
+                    parent_id=r.parent_id,
+                    created_at=r.created_at,
+                    replies=[],
+                )
+                for r in c.replies
+            ],
+        )
+        for c in comments
+    ]
+
+
+# 📤 Добавить комментарий (исправленная версия)
+@app.post("/comments", response_model=CommentOut, status_code=status.HTTP_201_CREATED)
+async def create_comment(
+    data: CommentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Получаем lesson_id или article_id из тела запроса
+    lesson_id = data.lesson_id if hasattr(data, "lesson_id") else None
+    article_id = data.article_id if hasattr(data, "article_id") else None
+
+    if (lesson_id is None) == (article_id is None):
+        raise HTTPException(
+            status_code=400, detail="Specify either lesson_id or article_id"
+        )
+
+    # Проверяем существование объекта
+    if lesson_id:
+        obj = await db.get(EgeLesson, lesson_id)
+        if not obj:
+            raise HTTPException(status_code=404, detail="Lesson not found")
+    else:
+        obj = await db.get(Article, article_id)
+        if not obj:
+            raise HTTPException(status_code=404, detail="Article not found")
+
+    # Если это ответ — проверяем родительский комментарий
+    if data.parent_id:
+        parent = await db.get(Comment, data.parent_id)
+        if not parent or (
+            parent.lesson_id != lesson_id and parent.article_id != article_id
+        ):
+            raise HTTPException(status_code=400, detail="Invalid parent comment")
+
+    # Создаём комментарий
+    comment = Comment(
+        user_id=current_user.id,
+        lesson_id=lesson_id,
+        article_id=article_id,
+        content=data.content,
+        parent_id=data.parent_id,
+    )
+    db.add(comment)
+    await db.commit()
+    await db.refresh(comment)  # ✅ refresh подгружает id и created_at
+
+    # ✅ Возвращаем без nested replies (они пустые при создании)
+    return CommentOut(
+        id=comment.id,
+        user_id=comment.user_id,
+        username=current_user.username,  # ✅ Берём из current_user, не из comment.user
+        content=comment.content,
+        parent_id=comment.parent_id,
+        created_at=comment.created_at,
+        replies=[],  # ✅ Пустой список, чтобы не триггерить lazy load
+    )
+
+
+# ✏️ Обновить комментарий
+
+
+# ✏️ Обновить комментарий (только автор)
+@app.patch("/comments/{comment_id}", response_model=CommentOut)
+async def update_comment(
+    comment_id: int,
+    data: CommentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # ✅ Загружаем комментарий с пользователем
+    result = await db.execute(
+        select(Comment)
+        .where(Comment.id == comment_id)
+        .options(selectinload(Comment.user))  # ✅ Явно загружаем user
+    )
+    comment = result.scalar_one_or_none()
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    comment.content = data.content
+    comment.updated_at = datetime.now()
+    await db.commit()
+    await db.refresh(comment)
+
+    # ✅ Берём username из загруженного user или из current_user
+    return CommentOut(
+        id=comment.id,
+        user_id=comment.user_id,
+        username=comment.user.username if comment.user else current_user.username,
+        content=comment.content,
+        parent_id=comment.parent_id,
+        created_at=comment.created_at,
+        replies=[],
+    )
+
+
 # 🏥 HEALTH CHECK
 # ============================================================================
 

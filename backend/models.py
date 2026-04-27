@@ -8,6 +8,7 @@ from sqlalchemy import (
     func,
     Text,
     UniqueConstraint,
+    CheckConstraint,
 )
 from database import Base
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -241,4 +242,54 @@ class TestResult(Base):
     __table_args__ = (
         # Если пользователь проходит тест повторно — обновляем старую запись (UPSERT)
         # Это реализуется на уровне запроса, не через unique constraint
+    )
+
+
+#######ВСЕ ЧТО СВЯЗАНО С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 🔗 Автор
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+
+    # 🔗 Что комментируем (только одно из двух!)
+    lesson_id = Column(
+        Integer,
+        ForeignKey("ege_lessons.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    article_id = Column(
+        Integer,
+        ForeignKey("articles.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+
+    # 📝 Контент
+    content = Column(Text, nullable=False)
+    parent_id = Column(
+        Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True
+    )  # для ответов
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    # 🔗 Relationships
+    user = relationship("User")
+    lesson = relationship("EgeLesson")
+    article = relationship("Article")
+    parent = relationship("Comment", remote_side=[id], backref="replies")
+
+    # ✅ Гарантия: только один тип объекта
+    __table_args__ = (
+        CheckConstraint(
+            "(lesson_id IS NOT NULL AND article_id IS NULL) OR (lesson_id IS NULL AND article_id IS NOT NULL)",
+            name="check_commentable_type",
+        ),
     )

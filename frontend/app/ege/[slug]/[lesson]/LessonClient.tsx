@@ -1,6 +1,6 @@
 // frontend/app/ege/[slug]/[lesson]/LessonClient.tsx
 "use client";
-
+import CommentsSection from "@/components/CommentsSection";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye, Trophy, Lock } from "lucide-react";
@@ -198,6 +198,7 @@ export default function LessonClient({
                 </p>
               </div>
             )}
+            {lesson.id && <CommentsSection lessonId={lesson.id} />}
           </div>
         </aside>
       )}
