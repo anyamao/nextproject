@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Eye, Trophy, Lock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LessonReactions from "@/components/LessonReactions";
+import CopyLinkButton from "@/components/LinkButton";
 type Lesson = {
   id: number;
   title: string;
@@ -80,7 +81,7 @@ export default function LessonClient({
       if (!token || !lesson.id) return;
 
       try {
-        // ✅ Просто отправляем запрос. Бэкенд сам разберется (ON CONFLICT DO NOTHING)
+        // ✅ Просто отправляем запрос. Бэкенд сам разбеdevtestрется (ON CONFLICT DO NOTHING)
         await apiFetch(`/lessons/${lesson.id}/view`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -94,88 +95,65 @@ export default function LessonClient({
   }, [lesson.id]);
 
   return (
-    <main className="flex-1 flex flex-col lg:flex-rowвсе работало до того как я добавила счетчик просмотров на VPS резко теперь больше не показываются уроки в математике и вот такая ошибка  items-start px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto gap-6">
-      <div className="flex-1 min-w-0">
-        <Link
-          href={`/ege/${subjectSlug}`}
-          className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2 mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Все уроки</span>
-        </Link>
+    <main className="flex-1 flex flex-col  items-center  sm:px-6 py-8 w-full max-w-[1100px] mx-auto gap-6">
+      <div className="flex-1 w-full">
+        <div className="w-full flex flex-row items-center  justify-between">
+          <Link
+            href={`/ege/${subjectSlug}`}
+            className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2 "
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Все уроки</span>
+          </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          {lesson.title}
-        </h1>
-        <div className="flex flex-row items-center  ">
-          <p className="smaller-text font-bold text-gray-800 ml-[10px]">
-            {viewCount?.toLocaleString("ru-RU") || "—"}
-          </p>
-          <Eye className="w-4 h-4 text-blue-500" />
+          <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center mt-[5px] mr-[15px] ">
+              <p className="smaller-text  text-gray-800 mr-[5px]">
+                {viewCount?.toLocaleString("ru-RU") || "—"}
+              </p>
+              <Eye className="w-4 h-4 text-gray-500" />
+            </div>
+            <h1 className="bigger-text font-bold text-gray-900">
+              {lesson.title}
+            </h1>
+          </div>
         </div>
-        {lesson.time_minutes && (
-          <p className="text-gray-500 text-sm mb-6">
-            ~{lesson.time_minutes} минут
-          </p>
-        )}
 
-        {lesson.description && (
-          <p className="text-gray-700 text-lg mb-8 leading-relaxed">
-            {lesson.description}
-          </p>
-        )}
-
-        {lesson.content ? (
-          <article
-            className="prose prose-purple max-w-none w-full text-gray-800"
-            dangerouslySetInnerHTML={{ __html: lesson.content }}
-          />
-        ) : (
-          <p className="text-gray-500 italic">Контент урока пока не добавлен</p>
-        )}
-      </div>
-      {lesson.id && <LessonReactions lessonId={lesson.id} />}
-      {/* 📊 Сайдбар с результатом теста */}
-      {testId && (
-        <aside className="w-full lg:w-80 flex-shrink-0">
-          <div className="sticky top-6 space-y-4">
-            {/* Кнопка пройти тест */}
-            <Link
-              href={`/tests/${testId}`}
-              className="block w-full p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-md text-center"
-            >
-              📝 Пройти тест
-            </Link>
-
-            {/* Результат (только для авторизованных) */}
-            {isAuthenticated ? (
-              <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-yellow-500" />
-                  Ваш результат
-                </h3>
-
-                {loadingResult ? (
-                  <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
-                  </div>
-                ) : testResult ? (
+        <div className="flex flex-row items-center w-full mt-[10px] justify-between">
+          <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center bg-white rounded-xl shadow-md px-[7px] py-[3px] min-w-[90px]">
+              <p className="smaller-text text-gray-500">Поделиться</p>
+              <CopyLinkButton variant="icon" />
+            </div>
+            {lesson.time_minutes && (
+              <p className="text-gray-500 ml-[10px] text-sm ">
+                ~{lesson.time_minutes} минут
+              </p>
+            )}
+          </div>
+          {isAuthenticated ? (
+            <div className="p-[10px] bg-white rounded-xl flex flex-row items-center  border border-gray-200 shadow-sm">
+              {loadingResult ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
+                </div>
+              ) : testResult ? (
+                <div className={` rounded-lg flex flex-row items-center `}>
                   <div
-                    className={`p-3 rounded-lg ${testResult.passed ? "bg-green-50" : "bg-red-50"}`}
+                    className={`bigger-text rounded-full r ${testResult.passed ? "bg-green-50 border-green-400" : "bg-red-50 border-red-400"} border-[1px] p-[7px] font-bold mb-1 text-center`}
                   >
-                    <div className="text-3xl font-bold mb-1 text-center">
-                      <span
-                        className={
-                          testResult.passed ? "text-green-600" : "text-red-600"
-                        }
-                      >
-                        {testResult.score}%
-                      </span>
-                    </div>
-                    <p className="text-sm text-center text-gray-600 mb-2">
-                      {testResult.passed
-                        ? "✅ Тест пройден!"
-                        : "❌ Не пройдено"}
+                    <span
+                      className={
+                        testResult.passed ? "text-green-400" : "text-red-400"
+                      }
+                    >
+                      {testResult.score}%
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col ml-[10px]">
+                    <p className="text-sm text-center text-gray-600 ">
+                      {testResult.passed ? "Тест пройден!" : "Не пройдено"}
                     </p>
                     <p className="text-xs text-gray-400 text-center">
                       {new Date(testResult.completed_at).toLocaleDateString(
@@ -183,25 +161,57 @@ export default function LessonClient({
                       )}
                     </p>
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-2">
-                    Тест ещё не пройден
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-                <Lock className="w-5 h-5 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Войдите</span>, чтобы сохранять
-                  результаты
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-2">
+                  Тест ещё не пройден
                 </p>
-              </div>
-            )}
-            {lesson.id && <CommentsSection lessonId={lesson.id} />}
+              )}
+            </div>
+          ) : (
+            <div className="p-4 bg-gray-50 rounded-xl  flex flex-row border border-gray-200 items-center  text-center">
+              <p className="text-sm text-gray-600 smaller-text">
+                <span className="font-medium smaller-text">Войдите</span>, чтобы
+                сохранять результаты
+              </p>
+            </div>
+          )}
+        </div>
+
+        {lesson.description && (
+          <p className="text-gray-700 mt-[25px] ord-text font-semibold w-full text-center mb-8 leading-relaxed">
+            {lesson.description}
+          </p>
+        )}
+
+        {lesson.content ? (
+          <article
+            className="prose prose-purple  w-full text-gray-800"
+            dangerouslySetInnerHTML={{ __html: lesson.content }}
+          />
+        ) : (
+          <p className="text-gray-500 italic">Контент урока пока не добавлен</p>
+        )}
+      </div>
+      <div className="text-wrap flex flex-row items-center jsutify-around">
+        {lesson.id && <LessonReactions lessonId={lesson.id} />}
+
+        {testId && (
+          <div className="flex w-full justify-center items-center">
+            <Link
+              href={`/tests/${testId}`}
+              className="block w-[90%] max-w-[400px] p-4 bg-purple-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-md text-center"
+            >
+              Пройти тест
+            </Link>
           </div>
-        </aside>
-      )}
+        )}
+        <div className="flex flex-row items-center min-w-[90px]">
+          <p className="smaller-text text-gray-500">Поделиться</p>
+          <CopyLinkButton variant="icon" />
+        </div>
+      </div>
+      {lesson.id && <CommentsSection lessonId={lesson.id} />}
     </main>
   );
 }

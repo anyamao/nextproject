@@ -54,6 +54,8 @@ from schemas import (
     CommentCreate,
     CommentOut,
     CommentReactionCreate,
+    UserOut,
+    UserUpdate,
 )
 from auth import (
     get_password_hash,
@@ -148,6 +150,66 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
 async def read_me(current_user: User = Depends(get_current_user)):
     return UserOut(
         id=current_user.id, email=current_user.email, username=current_user.username
+    )
+
+
+@app.get("/profile", response_model=UserOut)
+async def get_my_profile(current_user: User = Depends(get_current_user)):
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        username=current_user.username,
+        avatar_url=current_user.avatar_url or "gray_cat.jpg",
+        status=current_user.status,
+        created_at=current_user.created_at,
+    )
+
+
+@app.patch("/profile/settings", response_model=UserOut)
+async def update_profile_settings(
+    data: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Проверка юзернейма
+    if data.username and data.username != current_user.username:
+        existing = await db.execute(
+            select(User).where(User.username == data.username.lower())
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = data.username.lower()
+
+    # ✅ Обновление аватара (только из разрешённого списка)
+    ALLOWED_AVATARS = {
+        "default_cat.jpg",
+        "orange_cat.jpg",
+        "black_cat.jpg",
+        "gray_cat.jpg",
+        "brown_cat.jpg",
+        "light_gray_cat.jpg",
+        "white_cat.jpg",
+    }
+
+    if data.avatar_url is not None:
+        if data.avatar_url not in ALLOWED_AVATARS:
+            raise HTTPException(status_code=400, detail="Invalid avatar")
+        current_user.avatar_url = data.avatar_url
+
+    if data.status is not None:
+        current_user.status = data.status
+
+    current_user.updated_at = datetime.now()
+    await db.commit()
+    await db.refresh(current_user)
+
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        username=current_user.username,
+        avatar_url=current_user.avatar_url,
+        status=current_user.status,
+        created_at=current_user.created_at,
     )
 
 

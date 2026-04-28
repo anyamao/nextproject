@@ -87,10 +87,7 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
   };
 
   return (
-    <div className="flex items-center gap-4 py-4 border-t border-gray-200 mt-8">
-      <p className="text-sm font-medium text-gray-500 mr-2">Вам помог урок?</p>
-
-      {/* 👍 Лайк */}
+    <div className="flex flex-row items-center ">
       <button
         onClick={() => handleReaction("like")}
         disabled={loading}
@@ -100,22 +97,22 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
             : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
         }`}
       >
-        <ThumbsUp className="w-4 h-4" />
-        <span className="font-bold">{likes}</span>
+        <ThumbsUp className="w-[15px] h-[15px]" />
+        <span className="font-bold smaller-text">{likes}</span>
       </button>
 
       {/* 👎 Дизлайк */}
       <button
         onClick={() => handleReaction("dislike")}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+        className={`flex items-center gap-2 px-4 py-2 ml-[10px] rounded-full border transition-all ${
           myReaction === "dislike"
             ? "bg-red-100 border-red-300 text-red-700 shadow-sm"
             : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
         }`}
       >
-        <ThumbsDown className="w-4 h-4" />
-        <span className="font-bold">{dislikes}</span>
+        <ThumbsDown className="w-[15px] h-[15px]" />
+        <span className="font-bold smaller-text">{dislikes}</span>
       </button>
     </div>
   );

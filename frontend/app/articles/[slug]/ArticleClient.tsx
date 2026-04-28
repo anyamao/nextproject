@@ -1,11 +1,15 @@
 // frontend/app/articles/[slug]/ArticleClient.tsx
 "use client";
+
+import { useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
-import ArticleStats from "./ArticleStats"; // ✅ Импортируй компонент
-import { useEffect } from "react";
+import ArticleStats from "./ArticleStats";
+import CommentsSection from "@/components/CommentsSection"; // ✅ Импортируй
+
 type Article = {
+  id: number; // ✅ ОБЯЗАТЕЛЬНО: нужен id для комментариев!
   title: string;
   topic: string;
   slug: string;
@@ -19,16 +23,14 @@ export default function ArticleClient({ article }: { article: Article }) {
     const recordView = async () => {
       const token = localStorage.getItem("token");
       if (!token || !article.slug) return;
-
       try {
-        // ✅ Просто отправляем запрос. Бэкенд сам разберется (ON CONFLICT DO NOTHING)
         await apiFetch(`/articles/${article.slug}/view`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("✅ View request sent");
       } catch (err) {
-        console.log("ℹ️ View not recorded (maybe already viewed or error)");
+        console.log("ℹ️ View not recorded");
       }
     };
     recordView();
@@ -69,6 +71,13 @@ export default function ArticleClient({ article }: { article: Article }) {
 
       {/* 👍👎👁️ Статистика и реакции */}
       <ArticleStats slug={article.slug} />
+
+      {/* 💬 Комментарии (НОВОЕ!) */}
+      {article.id && (
+        <div className="mt-8">
+          <CommentsSection articleId={article.id} />
+        </div>
+      )}
     </main>
   );
 }

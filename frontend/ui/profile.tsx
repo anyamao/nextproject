@@ -31,12 +31,15 @@ function ProfilePanel() {
           <div className="flex flex-row items-center py-[10px] px-[10px] border-b-[1px] h-[60px] w-full border-gray-300 ">
             <LogoutButton></LogoutButton>
           </div>
-          <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
-            <a className="flex items-center ">
+          <Link
+            href="/profile-settings"
+            className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 "
+          >
+            <div className="flex items-center ">
               <UserRoundPen className="w-[17px] h-[17px] text-gray-500" />
               <span className="ml-[10px] smaller-text">Настройки</span>
-            </a>
-          </div>
+            </div>
+          </Link>
           <div className="flex flex-row items-center py-[5px] px-[10px] border-b-[1px] h-[50px] w-full border-gray-300 ">
             <a className="flex items-center ">
               <MoonStar className="w-[17px] h-[17px] text-gray-500" />

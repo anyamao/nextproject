@@ -10,8 +10,11 @@ export type JWTPayload = {
 
 // Тип для пользователя приложения
 export type AppUser = {
+  id: number;
   email: string;
   username: string;
+  avatar_url?: string; // ✅ Добавь это поле (опциональное)
+  status?: string;
 };
 
 // Простая функция для декодирования JWT (без проверки подписи)
@@ -45,10 +48,12 @@ export function isTokenExpired(token: string): boolean {
 export function getUserFromToken(token: string): AppUser | null {
   const payload = decodeJWT(token);
   if (!payload || !payload.sub) return null;
-
   return {
+    id: 0, // ⚠️ JWT обычно не содержит id, лучше получать из /profile
     email: payload.sub,
     username: payload.username || "",
+    avatar_url: undefined, // ⚠️ JWT не содержит avatar_url
+    status: undefined,
   };
 }
 

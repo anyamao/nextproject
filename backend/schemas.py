@@ -31,12 +31,21 @@ class UserOut(BaseModel):
     id: int
     email: str
     username: str
+    avatar_url: str | None = "default_cat.jpg"  # ✅ Дефолтное значение
+    status: str | None = None
+    created_at: datetime | None = None
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class UserUpdate(BaseModel):
+    username: str | None = Field(None, min_length=3, max_length=30)
+    avatar_url: str | None = None  # ✅ Может быть null или имя файла
+    status: str | None = Field(None, max_length=200)
 
 
 # ЕГЭ СХЕМЫ СНИЗУ ege_native ###############"""
@@ -298,4 +307,6 @@ __all__ = [
     "CommentOut",
     "CommentReactionCreate",
     "CommentWithStatsOut",
+    "UserUpdate",
+    "UserOut",
 ]

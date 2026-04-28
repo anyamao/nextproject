@@ -1,6 +1,6 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
 import { apiFetch } from "@/lib/api";
@@ -72,16 +72,20 @@ export default function Signup() {
           username: formData.username,
         }),
       });
-        if (!data?.user) {
-    throw new Error("No user data in response");
-  }
+      if (!data?.user) {
+        throw new Error("No user data in response");
+      }
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user); // обновляем store
-
+      setUser({
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        avatar_url: data.user.avatar_url || "default_cat.jpg", // ✅ Обязательно!
+        status: data.user.status,
+      });
       setSuccess(true);
       toggleRegister();
-      setUser({ email: formData.email, username: formData.username });
     } catch (err: unknown) {
       const rawMessage =
         err instanceof Error ? err.message : "Failed to sign up";
@@ -126,12 +130,6 @@ export default function Signup() {
       </main>
     );
   }
-useEffect(() => {
-  // Этот код выполнится ТОЛЬКО в браузере
-  console.log("🔍 [CLIENT] API_URL:", process.env.NEXT_PUBLIC_API_URL);
-  console.log("🔍 [CLIENT] typeof:", typeof process.env.NEXT_PUBLIC_API_URL);
-}, []);
-  // ✅ Основная форма
   return (
     <main>
       {registerState && (

@@ -73,17 +73,14 @@ function ResultsContent({ testId }: { testId: number }) {
               : "bg-red-100 text-red-800 border border-red-200"
           }`}
         >
-          <Trophy
-            className={`w-5 h-5 ${result.passed ? "text-yellow-500" : ""}`}
-          />
           <span className="font-semibold">
-            {result.passed ? "🎉 Тест пройден!" : "💪 Попробуйте ещё раз"}
+            {result.passed ? "Тест пройден!" : "Попробуйте ещё раз"}
           </span>
         </div>
 
         {/* 📊 Результат */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 mb-8">
-          <div className="text-7xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <div className="text-7xl font-bold mb-2 bg-purple-500 to-blue-600 bg-clip-text text-transparent">
             {result.score}%
           </div>
           <p className="text-gray-600 text-lg mb-6">
@@ -133,7 +130,7 @@ function ResultsContent({ testId }: { testId: number }) {
             </Link>
             <Link
               href={`/tests/${testId}`}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-500 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md"
             >
               <RotateCcw className="w-4 h-4" /> Пройти ещё раз
             </Link>

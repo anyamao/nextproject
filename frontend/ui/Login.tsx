@@ -78,10 +78,13 @@ export default function Login() {
       // ✅ Сохраняем токен и пользователя
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user); // обновляем store
-      // ✅ Обновляем глобальный store
-      setUser(data.user);
-
+      setUser({
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        avatar_url: data.user.avatar_url || "default_cat.jpg", // ✅ Обязательно!
+        status: data.user.status,
+      });
       // ✅ Закрываем модалку и обновляем роутер
       toggleLogin();
       router.refresh();

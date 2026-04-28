@@ -147,7 +147,7 @@ export default function TestClient({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-8 px-4">
+    <div className=" w-full max-w-[1100px] py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* 🔙 Назад + Прогресс */}
         <div className="mb-8">
@@ -161,14 +161,14 @@ export default function TestClient({
 
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
-            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border">
+            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
               {currentIndex + 1} / {questions.length}
             </span>
           </div>
 
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+              className="h-full bg-purple-500 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -291,7 +291,7 @@ export default function TestClient({
               <button
                 onClick={handleAnswerSubmit}
                 disabled={!currentAnswer.trim() || isChecking}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-purple-500 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isChecking ? "Проверяем..." : "Проверить ответ"}
               </button>

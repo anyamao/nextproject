@@ -2,8 +2,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Reply, Trash2, Pencil } from "lucide-react";
+import {
+  Send,
+  Reply,
+  Trash2,
+  Pencil,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
+
+import useContactStore from "@/store/states";
 
 type Comment = {
   id: number;
@@ -15,6 +24,7 @@ type Comment = {
   updated_at: string | null;
   likes: number;
   dislikes: number;
+  avatar_url: string | null;
   user_reaction: "like" | "dislike" | null;
   replies: Comment[];
 };
@@ -35,11 +45,20 @@ export default function CommentsSection({
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
+  const currentUser = useContactStore((state) => state.user);
 
   const currentUserId =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")?.id
       : null;
+  const getAvatarUrl = (comment: Comment) => {
+    // Если это комментарий текущего пользователя — берём свежую аватарку из store
+    if (comment.user_id === currentUser?.id) {
+      return currentUser.avatar_url || "default_cat.jpg";
+    }
+    // Иначе — аватарка из данных комментария
+    return comment.avatar_url || "default_cat.jpg";
+  };
 
   const entityType = lessonId ? "lessons" : "articles";
   const entityId = lessonId || articleId;
@@ -173,381 +192,170 @@ export default function CommentsSection({
 
   if (!entityId) return null;
   return (
-    <div className="mt-12 pt-8 border-t border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">💬 Комментарии</h2>
-
+    <div className="mt-12 pt-8 border-t w-full  border-gray-200">
+      <p className="font-bold bigger-text ">Комментарии</p>
+      <p className="text-gray-600 ord-text mt-[10px]">
+        Обсудите пройденный урок, поделитесь мнением, вопросами. Что было
+        непонятно? Что бы вы улучшили?
+      </p>
       {/* Форма нового комментария */}
-      <form onSubmit={(e) => handleSubmit(e)} className="mb-8">
+      <form onSubmit={(e) => handleSubmit(e)} className="mb-8 ord-text">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Напишите комментарий..."
-          className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+          className="w-full border border-purple-300 shadow-xs bg-white mt-[20px] rounded-xl focus:ring-2 focus:ring-purple-400 outline-none resize-none p-[10px]"
           rows={3}
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !newComment.trim()}
-          className="mt-3 px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2"
+          className="mt-3 px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 flex smaller-text items-center gap-2"
         >
           <Send className="w-4 h-4" /> Отправить
         </button>
       </form>
 
-      {/* Список комментариев */}
       <div className="space-y-6">
         {comments.map((comment) => (
-          <div key={comment.id} className="bg-gray-50 p-4 rounded-xl">
+          <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
             {/* Шапка комментария */}
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-semibold text-gray-900">
-                  {comment.username}
-                </span>
-                <span className="text-gray-500 text-sm ml-2">
-                  {new Date(comment.created_at).toLocaleDateString("ru-RU")}
-                </span>
-              </div>
-              {currentUserId === comment.user_id && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingId(comment.id);
-                      setEditContent(comment.content);
-                    }}
-                    className="text-gray-400 hover:text-purple-600 transition"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(comment.id)}
-                    className="text-gray-400 hover:text-red-600 transition"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Контент или режим редактирования */}
-            {editingId === comment.id ? (
-              <div className="mt-3">
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                  rows={2}
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleEdit(comment.id)}
-                    className="px-4 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition"
-                  >
-                    Сохранить
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-700 mt-2 whitespace-pre-wrap">
-                {comment.content}
-              </p>
-            )}
-
-            {/* Футер: реакции + ответ + время */}
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200">
-              {/* 👍👎 Реакции */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleReaction(comment.id, "like")}
-                  className={`flex items-center gap-1 text-sm transition ${
-                    comment.user_reaction === "like"
-                      ? "text-green-600 font-semibold"
-                      : "text-gray-500 hover:text-green-600"
-                  }`}
-                >
-                  👍 {comment.likes || 0}
-                </button>
-                <button
-                  onClick={() => handleReaction(comment.id, "dislike")}
-                  className={`flex items-center gap-1 text-sm transition ${
-                    comment.user_reaction === "dislike"
-                      ? "text-red-600 font-semibold"
-                      : "text-gray-500 hover:text-red-600"
-                  }`}
-                >
-                  👎 {comment.dislikes || 0}
-                </button>
-              </div>
-
-              {/* 💬 Ответить (для всех, не только корневых) */}
-              <button
-                onClick={() => {
-                  setReplyingTo(comment.id);
-                  setReplyContent(`@${comment.username} `);
-                }}
-                className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
-              >
-                💬 Ответить
-              </button>
-
-              {/* Время */}
-              <span className="text-xs text-gray-400 ml-auto">
-                {new Date(comment.created_at).toLocaleDateString("ru-RU")}
-              </span>
-            </div>
-
-            {/* Форма ответа (универсальная: и для корневых, и для вложенных) */}
-            {replyingTo === comment.id && (
-              <form
-                onSubmit={(e) => handleSubmit(e, comment.id)}
-                className="mt-4 ml-6 border-l-2 border-gray-200 pl-4"
-              >
-                <textarea
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder={`Ответить @${comment.username}...`}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-                  rows={2}
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="submit"
-                    disabled={loading || !replyContent.trim()}
-                    className="px-4 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
-                  >
-                    Отправить
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReplyingTo(null)}
-                    className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Ответы на комментарий (рекурсивный рендеринг) */}
-            {comment.replies?.length > 0 && (
-              <div className="mt-4 ml-6 space-y-3 border-l-2 border-gray-200 pl-4">
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} className="bg-white p-3 rounded-lg">
-                    {/* Шапка ответа */}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="font-semibold text-gray-900 text-sm">
-                          {reply.username}
-                        </span>
-                        <span className="text-gray-500 text-xs ml-2">
-                          {new Date(reply.created_at).toLocaleDateString(
-                            "ru-RU",
-                          )}
-                        </span>
-                      </div>
-                      {currentUserId === reply.user_id && (
-                        <div className="flex gap-1">
-                          {/* ✏️ Редактировать ответ */}
-                          <button
-                            onClick={() => {
-                              setEditingId(reply.id);
-                              setEditContent(reply.content);
-                            }}
-                            className="text-gray-400 hover:text-purple-600 transition"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          {/* 🗑️ Удалить ответ */}
-                          <button
-                            onClick={() => handleDelete(reply.id)}
-                            className="text-gray-400 hover:text-red-600 transition"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Контент ответа или режим редактирования */}
-                    {editingId === reply.id ? (
-                      <div className="mt-2">
-                        <textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                          rows={2}
-                        />
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => handleEdit(reply.id)}
-                            className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition"
-                          >
-                            Сохранить
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
-                          >
-                            Отмена
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-700 mt-1 text-sm whitespace-pre-wrap">
-                        {reply.content}
-                      </p>
-                    )}
-
-                    {/* 👍👎 Реакции + Ответить + Время */}
-                    <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => handleReaction(reply.id, "like")}
-                        className={`text-xs transition ${
-                          reply.user_reaction === "like"
-                            ? "text-green-600 font-semibold"
-                            : "text-gray-400 hover:text-green-600"
-                        }`}
-                      >
-                        👍 {reply.likes || 0}
-                      </button>
-                      <button
-                        onClick={() => handleReaction(reply.id, "dislike")}
-                        className={`text-xs transition ${
-                          reply.user_reaction === "dislike"
-                            ? "text-red-600 font-semibold"
-                            : "text-gray-400 hover:text-red-600"
-                        }`}
-                      >
-                        👎 {reply.dislikes || 0}
-                      </button>
-
-                      {/* 💬 Ответить на ответ (вложенный) */}
+            <img
+              src={`/avatars/white_cat.jpg`}
+              alt={comment.username}
+              className="w-[30px] h-[30px] rounded-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/avatars/default_cat.jpg";
+              }}
+            />
+            <div className="flex flex-col w-full">
+              <div className="flex flex-col ml-[10px]  w-full">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="font-semibold smaller-text text-gray-900">
+                      {comment.username}
+                    </span>
+                  </div>
+                  {currentUserId === comment.user_id && (
+                    <div className="flex gap-2 ">
                       <button
                         onClick={() => {
-                          setReplyingTo(reply.id);
-                          setReplyContent(`@${reply.username} `);
+                          setEditingId(comment.id);
+                          setEditContent(comment.content);
                         }}
-                        className="text-xs text-purple-600 hover:text-purple-700"
+                        className="text-gray-400 hover:text-purple-600 transition"
                       >
-                        💬 Ответить
+                        <Pencil className=" w-[15px] h-[15px]" />
                       </button>
-
-                      <span className="text-xs text-gray-400 ml-auto">
-                        {new Date(reply.created_at).toLocaleDateString("ru-RU")}
-                      </span>
-                    </div>
-
-                    {/* Форма ответа на ответ */}
-                    {replyingTo === reply.id && (
-                      <form
-                        onSubmit={(e) => handleSubmit(e, reply.id)}
-                        className="mt-3 ml-4 border-l-2 border-purple-200 pl-3"
+                      <button
+                        onClick={() => handleDelete(comment.id)}
+                        className="text-gray-400 hover:text-red-600 transition"
                       >
-                        <textarea
-                          value={replyContent}
-                          onChange={(e) => setReplyContent(e.target.value)}
-                          placeholder={`Ответить @${reply.username}...`}
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm resize-none"
-                          rows={2}
-                        />
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            type="submit"
-                            disabled={loading || !replyContent.trim()}
-                            className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition disabled:opacity-50"
-                          >
-                            Отправить
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setReplyingTo(null)}
-                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
-                          >
-                            Отмена
-                          </button>
-                        </div>
-                      </form>
-                    )}
+                        <Trash2 className="w-[15px] h-[15px]" />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-                    {/* Вложенные ответы 3-го уровня и глубже (рекурсия) */}
-                    {reply.replies?.length > 0 && (
-                      <div className="mt-3 ml-4 space-y-2 border-l-2 border-gray-100 pl-3">
-                        {reply.replies.map((nestedReply) => (
-                          <div
-                            key={nestedReply.id}
-                            className="bg-gray-50 p-2 rounded"
-                          >
-                            <div className="flex items-start justify-between">
-                              <span className="font-semibold text-gray-900 text-xs">
-                                {nestedReply.username}
-                              </span>
-                              {currentUserId === nestedReply.user_id && (
-                                <button
-                                  onClick={() => handleDelete(nestedReply.id)}
-                                  className="text-gray-400 hover:text-red-600 transition"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-gray-700 mt-1 text-xs whitespace-pre-wrap">
-                              {nestedReply.content}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <button
-                                onClick={() =>
-                                  handleReaction(nestedReply.id, "like")
-                                }
-                                className={`text-[10px] transition ${
-                                  nestedReply.user_reaction === "like"
-                                    ? "text-green-600"
-                                    : "text-gray-400 hover:text-green-600"
-                                }`}
-                              >
-                                👍 {nestedReply.likes || 0}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleReaction(nestedReply.id, "dislike")
-                                }
-                                className={`text-[10px] transition ${
-                                  nestedReply.user_reaction === "dislike"
-                                    ? "text-red-600"
-                                    : "text-gray-400 hover:text-red-600"
-                                }`}
-                              >
-                                👎 {nestedReply.dislikes || 0}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setReplyingTo(nestedReply.id);
-                                  setReplyContent(`@${nestedReply.username} `);
-                                }}
-                                className="text-[10px] text-purple-600 hover:text-purple-700"
-                              >
-                                💬 Ответить
-                              </button>
-                              <span className="text-[10px] text-gray-400 ml-auto">
-                                {new Date(
-                                  nestedReply.created_at,
-                                ).toLocaleDateString("ru-RU")}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {/* Контент или режим редактирования */}
+                {editingId === comment.id ? (
+                  <div className="mt-3">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                      rows={2}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => handleEdit(comment.id)}
+                        className="px-4 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition"
+                      >
+                        Сохранить
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition"
+                      >
+                        Отмена
+                      </button>
+                    </div>
                   </div>
-                ))}
+                ) : (
+                  <p className="text-gray-700 mt-2 whitespace-pre-wrap">
+                    {comment.content}
+                  </p>
+                )}
+
+                {/* Футер: реакции + ответ + время */}
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleReaction(comment.id, "like")}
+                      className={`flex items-center gap-1 text-sm transition ${
+                        comment.user_reaction === "like"
+                          ? "text-green-600 font-semibold"
+                          : "text-gray-500 hover:text-green-600"
+                      }`}
+                    >
+                      <ThumbsUp className="text-gray-500 w-[15px] h-[15px]"></ThumbsUp>{" "}
+                      {comment.likes || 0}
+                    </button>
+                    <button
+                      onClick={() => handleReaction(comment.id, "dislike")}
+                      className={`flex items-center gap-1 text-sm transition ${
+                        comment.user_reaction === "dislike"
+                          ? "text-red-600 font-semibold"
+                          : "text-gray-500 hover:text-red-600"
+                      }`}
+                    >
+                      <ThumbsDown className="text-gray-500 w-[15px] h-[15px]"></ThumbsDown>{" "}
+                      {comment.dislikes || 0}
+                    </button>
+                  </div>
+
+                  {/* Время */}
+                  <span className="text-xs text-gray-400 ml-auto">
+                    {new Date(comment.created_at).toLocaleDateString("ru-RU")}
+                  </span>
+                </div>
+
+                {/* Форма ответа (универсальная: и для корневых, и для вложенных) */}
+                {replyingTo === comment.id && (
+                  <form
+                    onSubmit={(e) => handleSubmit(e, comment.id)}
+                    className="mt-4 ml-6 border-l-2 border-gray-200 pl-4"
+                  >
+                    <textarea
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      placeholder={`Ответить @${comment.username}...`}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                      rows={2}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="submit"
+                        disabled={loading || !replyContent.trim()}
+                        className="px-4 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                      >
+                        Отправить
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition"
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
-            )}
+
+              {/* Ответы на комментарий (рекурсивный рендеринг) */}
+            </div>
           </div>
         ))}
 
