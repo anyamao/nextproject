@@ -67,6 +67,12 @@ class EgeLesson(Base):
     test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)  # Просто FK
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    test_results = relationship(
+        "TestResult",
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
 
 class EgeTest(Base):
@@ -222,6 +228,9 @@ class TestResult(Base):
     __tablename__ = "test_results"
 
     id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(
+        Integer, ForeignKey("ege_lessons.id"), nullable=True
+    )  # Может быть null, если тест не привязан к уроку
 
     # 🔗 Связи
     user_id = Column(
@@ -242,11 +251,24 @@ class TestResult(Base):
     # 🔗 Relationships (опционально, если нужно)
     user = relationship("User")
     test = relationship("EgeTest")
-
+    lesson = relationship("EgeLesson", back_populates="test_results")  # опционально
     # ✅ Уникальность: один результат на пользователя на тест (последний перезаписывается)
     __table_args__ = (
         # Если пользователь проходит тест повторно — обновляем старую запись (UPSERT)
         # Это реализуется на уровне запроса, не через unique constraint
+    )
+
+
+class UserCompletedLesson(Base):
+    __tablename__ = "user_completed_lessons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("ege_lessons.id"), nullable=False)
+    completed_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_completed"),
     )
 
 

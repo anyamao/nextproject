@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Clock, Eye } from "lucide-react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, Eye, Trophy, Lock, Clock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import LessonReactions from "@/components/LessonReactions"; // или создай локально
+import LessonReactions from "@/components/LessonReactions";
 import CommentsSection from "@/components/CommentsSection";
+import CopyLinkButton from "@/components/LinkButton";
+
 type Lesson = {
   id: number;
   title: string;
@@ -15,39 +18,52 @@ type Lesson = {
   time_minutes: number | null;
 };
 
-interface LessonClientProps {
-  lesson: Lesson;
-  subjectSlug: string;
-  lessonSlug: string;
-  testId: number | null;
-}
 type TestResult = {
   score: number;
   passed: boolean;
   completed_at: string;
 };
+
+interface LessonClientProps {
+  lesson: Lesson;
+  subjectSlug: string; // course slug
+  lessonSlug: string;
+  testId: number | null;
+}
+
 export default function LessonClient({
   lesson,
   subjectSlug,
   lessonSlug,
   testId,
 }: LessonClientProps) {
-  const [viewCount, setViewCount] = useState<number | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loadingResult, setLoadingResult] = useState(false);
-  console.log("🎨 [LessonClient] RENDERED with lesson.id:", lesson?.id);
-  // 👁️ Записать просмотр (только авторизованные, без sessionStorage!)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [viewCount, setViewCount] = useState<number | null>(null);
+
+  // ✅ Для хлебных крошек и "Следующего урока"
+  const [courseTitle, setCourseTitle] = useState<string>("");
+  const [nextLessonSlug, setNextLessonSlug] = useState<string | null>(null);
+  const [lessonsLoaded, setLessonsLoaded] = useState(false);
+
+  // 🔍 Проверка авторизации
   useEffect(() => {
-    console.log("👁️ [useEffect] lesson.id:", lesson.id); // ✅ ДОБАВЬ ЭТУ СТРОКУ
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+  }, []);
+
+  // 👁️ Записать просмотр (курсовой эндпоинт!)
+  useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
       if (!token || !lesson.id) return;
-
       try {
         await apiFetch(`/lessons/${lesson.id}/view`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("✅ View request sent");
       } catch (err) {
         console.log("ℹ️ View not recorded");
       }
@@ -55,7 +71,7 @@ export default function LessonClient({
     recordView();
   }, [lesson.id]);
 
-  // 👁️ Загрузить счётчик просмотров (с cache-busting)
+  // 👁️ Загрузить счётчик просмотров (курсовой эндпоинт!)
   useEffect(() => {
     if (!lesson.id) return;
     const fetchViews = async () => {
@@ -74,24 +90,17 @@ export default function LessonClient({
     fetchViews();
   }, [lesson.id]);
 
+  // 📥 Результат теста (курсовой эндпоинт!)
   useEffect(() => {
-    if (!testId) {
-      console.log("ℹ️ No testId, skipping result fetch");
-      return;
-    }
-
-    const fetchTestResult = async () => {
+    if (!testId) return;
+    const fetchResult = async () => {
       setLoadingResult(true);
-      console.log("🔍 Fetching test result for testId:", testId);
-
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          console.log("ℹ️ No token, skipping authenticated result fetch");
           setLoadingResult(false);
           return;
         }
-
         const result = await apiFetch(
           `/tests/${testId}/result?t=${Date.now()}`,
           {
@@ -99,125 +108,234 @@ export default function LessonClient({
             cache: "no-store",
           },
         );
-
-        console.log("✅ Test result received:", result);
-
-        if (result) {
-          setTestResult(result);
-        } else {
-          console.log("ℹ️ No saved result for this test");
-        }
-      } catch (err: any) {
-        console.log("❌ Failed to fetch test result:", err?.message || err);
+        if (result) setTestResult(result);
+      } catch (err) {
+        console.log("ℹ️ No saved result or not authorized");
       } finally {
         setLoadingResult(false);
       }
     };
-
-    fetchTestResult();
+    fetchResult();
   }, [testId]);
 
+  // ✅ Загрузка названия курса и следующего урока
+  // ✅ Загрузка названия курса и следующего урока
+  useEffect(() => {
+    async function loadCourseAndNextLesson() {
+      try {
+        // 1️⃣ Загружаем все КУРСЫ (предметы), чтобы найти название текущего
+        // ✅ ИЗМЕНЕНО: используем /courses/subjects вместо /courses
+        const courses: Array<{ id: number; title: string; slug: string }> =
+          await apiFetch("/courses/subjects");
+
+        const currentCourse = courses.find((c) => c.slug === subjectSlug);
+        if (currentCourse) {
+          setCourseTitle(currentCourse.title);
+          // ✅ Обновляем title страницы для SEO
+          document.title = `${currentCourse.title}: ${lesson.title} | MaoSchool`;
+        }
+
+        // 2️⃣ Загружаем УРОКИ этого курса, чтобы найти следующий
+        // ✅ ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ: нам нужен список уроков, а не предметов
+        const lessons: Array<{ id: number; slug: string }> = await apiFetch(
+          `/courses/${subjectSlug}`,
+        );
+
+        const sorted = lessons.sort((a, b) => a.id - b.id);
+        const currentIndex = sorted.findIndex((l) => l.id === lesson.id);
+
+        if (currentIndex !== -1 && currentIndex < sorted.length - 1) {
+          // ✅ Есть следующий урок!
+          setNextLessonSlug(sorted[currentIndex + 1].slug);
+        } else {
+          // ❌ Это последний урок
+          setNextLessonSlug(null);
+        }
+
+        setLessonsLoaded(true);
+      } catch (err) {
+        console.error("Failed to load course/next lesson", err);
+        setCourseTitle("Курс");
+        setNextLessonSlug(null);
+        setLessonsLoaded(true);
+      }
+    }
+
+    if (subjectSlug && lesson?.id) {
+      loadCourseAndNextLesson();
+    }
+  }, [subjectSlug, lesson?.id]);
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-4xl mx-auto">
-      <Link
-        href={`/courses/${subjectSlug}`}
-        className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2 mb-6"
-      >
-        <ArrowLeft className="w-5 h-5" /> Назад к курсу
-      </Link>
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
+      <div className="flex-1 w-full items-center justify-center">
+        <div className="flex flex-row items-center text-gray-500 smaller-text mb-[15px] font-semibold">
+          <Link className="hover:underline  " href={`/courses`}>
+            Курсы /
+          </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">{lesson.title}</h1>
+          <Link className="hover:underline " href={`/courses/${subjectSlug}`}>
+            {courseTitle || "Загрузка..."} /
+          </Link>
+        </div>
 
-      {lesson.time_minutes && (
-        <p className="text-gray-500 text-sm mb-6">
-          ~{lesson.time_minutes} минут
-        </p>
-      )}
+        {/* Заголовок + просмотры */}
+        <div className="w-full flex flex-row items-center justify-between">
+          <Link
+            href={`/courses/${subjectSlug}`}
+            className="text-black hover:text-purple-600 transition flex items-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Все уроки</span>
+          </Link>
 
-      {lesson.description && (
-        <p className="text-gray-700 text-lg mb-8 leading-relaxed">
-          {lesson.description}
-        </p>
-      )}
-
-      {lesson.content ? (
-        <article
-          className="prose prose-purple max-w-none w-full text-gray-800"
-          dangerouslySetInnerHTML={{ __html: lesson.content }}
-        />
-      ) : (
-        <p className="text-gray-500 italic">Контент урока пока не добавлен</p>
-      )}
-      {testId && localStorage.getItem("token") && (
-        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
-          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            🏆 Результат теста
-          </h3>
-
-          {loadingResult ? (
-            <div className="flex justify-center py-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
+          <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center mt-[5px] mr-[15px]">
+              <p className="smaller-text text-gray-800 mr-[5px]">
+                {viewCount?.toLocaleString("ru-RU") || "—"}
+              </p>
+              <Eye className="w-4 h-4 text-gray-500" />
             </div>
-          ) : testResult ? (
-            <div
-              className={`p-3 rounded-lg text-center ${testResult.passed ? "bg-green-50" : "bg-red-50"}`}
-            >
-              <div className="text-3xl font-bold mb-1">
-                <span
-                  className={
-                    testResult.passed ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  {testResult.score}%
-                </span>
+            <h1 className="bigger-text font-bold text-gray-900">
+              {lesson.title}
+            </h1>
+          </div>
+        </div>
+
+        {/* Панель: Поделиться + время + результат теста */}
+        <div className="flex flex-row items-center w-full mt-[15px] justify-between">
+          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
+            <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
+              <p className="smaller-text text-gray-600">Поделиться</p>
+              <CopyLinkButton variant="icon" />
+            </div>
+            {lesson.time_minutes && (
+              <div className="flex flex-row items-center border-l-[1px] border-gray-300">
+                <p className="text-gray-600 pl-[10px] text-sm">
+                  ~{lesson.time_minutes} минут
+                </p>
+                <Clock className="w-[15px] h-[15px] text-gray-600 ml-[5px]" />
               </div>
-              <p className="text-sm text-gray-600">
-                {testResult.passed ? "✅ Тест пройден!" : "❌ Не пройдено"}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(testResult.completed_at).toLocaleDateString("ru-RU")}
-              </p>
+            )}
+          </div>
+
+          {isAuthenticated ? (
+            <div className="p-[10px] bg-white rounded-lg h-[50px] flex flex-row items-center border border-gray-200 shadow-sm">
+              {loadingResult ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
+                </div>
+              ) : testResult ? (
+                <div className="flex flex-row items-center">
+                  <div
+                    className={`text-[12px] h-[30px] flex items-center rounded-lg px-[10px] ${
+                      testResult.passed
+                        ? "bg-green-50 border-green-400"
+                        : "bg-red-50 border-red-400"
+                    } border-[1px] font-bold mb-1 text-center`}
+                  >
+                    <span
+                      className={
+                        testResult.passed ? "text-green-400" : "text-red-400"
+                      }
+                    >
+                      {testResult.score}%
+                    </span>
+                  </div>
+                  <div className="flex flex-col ml-[10px]">
+                    <p className="text-sm text-center text-gray-600">
+                      {testResult.passed ? "Так держать!" : "Ты можешь лучше"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-2">
+                  Тест ещё не пройден
+                </p>
+              )}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 text-center py-2">
-              Тест ещё не пройден
-            </p>
+            <div className="p-4 bg-white shadow-sm h-[50px] rounded-lg flex flex-row border border-gray-200 items-center text-center">
+              <p className="text-sm text-gray-600 smaller-text">
+                <span className="font-medium smaller-text">Войдите</span>, чтобы
+                сохранять результаты
+              </p>
+            </div>
           )}
         </div>
-      )}
 
-      {testId && (
-        <Link
-          href={`/tests/${testId}`}
-          className="mt-8 mb-6 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md"
-        >
-          📝 Пройти тест по теме
-        </Link>
-      )}
-      <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-          <Eye className="w-4 h-4 text-blue-500" />
-          Просмотры
-        </h3>
-        <p className="text-2xl font-bold text-gray-900 text-center">
-          {viewCount?.toLocaleString("ru-RU") || "—"}
-        </p>
-        <p className="text-xs text-gray-500 text-center mt-1">
-          уникальных пользователей
-        </p>
+        {/* Описание урока */}
+        {lesson.description && (
+          <p className="text-purple-700 mt-[25px] ord-text w-full text-center mb-8 leading-relaxed">
+            {lesson.description}
+          </p>
+        )}
+
+        {/* Контент урока */}
+        {lesson.content ? (
+          <article
+            className="prose prose-purple max-w-none w-full text-gray-800 lesson-content-root"
+            dangerouslySetInnerHTML={{ __html: lesson.content }}
+          />
+        ) : (
+          <p className="text-gray-500 italic">Контент урока пока не добавлен</p>
+        )}
       </div>
 
-      {lesson.id && (
-        <div>
-          {" "}
-          <LessonReactions key={`stats-${lesson.id}`} lessonId={lesson.id} />
+      {/* Нижняя панель: реакции + тест + следующий урок */}
+      <div className="flex flex-col text-wrap w-full">
+        {testId && (
+          <p className="ord-text mb-[10px]">
+            <strong>Молодец!</strong> Ты прочитал всю теорию по данному уроку.
+            Теперь самая важная часть — практика! Пройди тест, чтобы знать,
+            остались ли где-то пробелы.
+          </p>
+        )}
+        <p className="ord-text">
+          Понравился урок? Поставь ему лайк и поделись с другом
+        </p>
+
+        <div className="flex flex-row items-center mt-[20px] justify-between">
+          {lesson.id && <LessonReactions lessonId={lesson.id} />}
+
+          {testId && (
+            <Link
+              href={`/tests/${testId}`}
+              className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
+            >
+              {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+            </Link>
+          )}
+
+          {/* ✅ Кнопка "Следующий урок" с умной логикой */}
+          <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center min-w-[90px] mr-[5px]">
+              <p className="smaller-text text-gray-600">Поделиться</p>
+              <CopyLinkButton variant="icon" />
+            </div>
+
+            {lessonsLoaded && nextLessonSlug ? (
+              <Link
+                href={`/courses/${subjectSlug}/${nextLessonSlug}`}
+                className="block smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-200 border-[1px] border-purple-300 hover:bg-purple-300 duration-300 text-purple-800 rounded-xl font-medium transition shadow-md text-center"
+              >
+                <p>Следующий урок</p>
+                <ArrowLeft className="rotate-180 w-[15px] ml-[5px] h-[15px]" />
+              </Link>
+            ) : lessonsLoaded ? (
+              <div className="smaller-text hidden items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-gray-100 border-[1px] border-gray-200 text-gray-400 rounded-xl font-medium text-center cursor-not-allowed">
+                <p>Последний урок 🎉</p>
+              </div>
+            ) : (
+              <div className="smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-100 border-[1px] border-purple-200 text-purple-600 rounded-xl font-medium text-center animate-pulse">
+                <p>Загрузка...</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
-      {lesson.id && (
-        <div className="mt-8">
-          <CommentsSection lessonId={lesson.id} />
-        </div>
-      )}
+      </div>
+
+      {/* Комментарии */}
+      {lesson.id && <CommentsSection lessonId={lesson.id} />}
     </main>
   );
 }

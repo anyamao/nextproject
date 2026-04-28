@@ -24,6 +24,7 @@ from models import (
     ArticleReaction,
     Comment,
     CommentReaction,
+    UserCompletedLesson,
 )
 from schemas import (
     UserRegister,
@@ -243,18 +244,75 @@ async def get_all_subjects(db: AsyncSession = Depends(get_db)):
 # ============================================================================
 
 
-@app.get("/ege/{slug}", response_model=list[EgeLessonOut])
-async def get_subject_lessons(slug: str, db: AsyncSession = Depends(get_db)):
+@app.get("/ege/{slug}")
+async def get_subject_lessons(
+    slug: str,
+    current_user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
     if not subject:
         raise HTTPException(status_code=404, detail=f"Subject '{slug}' not found")
+
     result = await db.execute(
         select(EgeLesson)
         .where(EgeLesson.subject_id == subject.id)
         .order_by(EgeLesson.created_at)
     )
-    return result.scalars().all()
+    lessons = result.scalars().all()
+
+    completed_lesson_ids = set()
+
+    # 🔍 ОТЛАДКА: проверяем авторизацию и результаты
+    if current_user:
+        print(
+            f"👤 [DEBUG] User authenticated: ID={current_user.id}, Email={current_user.email}"
+        )
+
+        for lesson in lessons:
+            if lesson.test_id:
+                try:
+                    # Ищем лучший результат для этого теста
+                    best = await db.execute(
+                        select(func.max(TestResult.score)).where(
+                            TestResult.user_id == current_user.id,
+                            TestResult.test_id == lesson.test_id,
+                        )
+                    )
+                    best_score = best.scalar_one_or_none()
+                    print(
+                        f"📊 [DEBUG] Lesson '{lesson.title}' (test_id={lesson.test_id}) -> best_score={best_score}"
+                    )
+
+                    if best_score is not None and best_score >= 75.0:
+                        completed_lesson_ids.add(lesson.id)
+                        print(f"✅ [DEBUG] Lesson {lesson.id} MARKED AS COMPLETED!")
+                except Exception as e:
+                    print(f"❌ [DEBUG] Error querying TestResult: {e}")
+    else:
+        print("⚠️ [DEBUG] NO USER (guest mode) -> is_completed will be False")
+
+    # Формируем ответ
+    lessons_out = []
+    for lesson in lessons:
+        lessons_out.append(
+            EgeLessonOut(
+                id=lesson.id,
+                title=lesson.title,
+                slug=lesson.slug,
+                description=lesson.description,
+                time_minutes=lesson.time_minutes,
+                test_id=lesson.test_id,
+                is_completed=lesson.id in completed_lesson_ids,
+                subject_id=getattr(lesson, "subject_id", None),
+                content=getattr(lesson, "content", None),
+                created_at=getattr(lesson, "created_at", None),
+                updated_at=getattr(lesson, "updated_at", None),
+            )
+        )
+
+    return lessons_out
 
 
 @app.get("/ege/{subject}/{lesson}", response_model=EgeLessonOut)
@@ -382,11 +440,10 @@ async def get_course_lesson(
 # ============================================================================
 
 ARTICLE_TOPICS_LIST = [
-    "забота о себе",
-    "продуктивность",
-    "технологии",
-    "лайфхаки",
-    "мотивация",
+    "Забота о себе",
+    "Продуктивность",
+    "Программирование",
+    "Наука",
 ]
 
 
@@ -400,6 +457,40 @@ async def get_articles(
         stmt = stmt.where(Article.topic == topic)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+# backend/main.py — добавь эту функцию
+
+
+async def mark_lesson_completed_if_needed(
+    user_id: int,
+    lesson_id: int,
+    score: float,
+    db: AsyncSession,
+    threshold: float = 75.0,
+) -> bool:
+    """
+    Если score >= threshold — помечаем урок как пройденный (если ещё не помечен).
+    Возвращает True, если урок был отмечен как пройденный в этом вызове.
+    """
+    if score < threshold:
+        return False
+
+    # Проверяем, не отмечен ли уже
+    existing = await db.execute(
+        select(UserCompletedLesson).where(
+            UserCompletedLesson.user_id == user_id,
+            UserCompletedLesson.lesson_id == lesson_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return True  # Уже был пройден раньше
+
+    # Отмечаем как пройденный
+    completed = UserCompletedLesson(user_id=user_id, lesson_id=lesson_id)
+    db.add(completed)
+    await db.commit()
+    return True
 
 
 # ============================================================================
@@ -713,7 +804,12 @@ async def check_single_answer(
 
 @app.post("/tests/{test_id}/submit", response_model=TestSubmissionResult)
 async def submit_test(
-    test_id: int, submission: TestSubmission, db: AsyncSession = Depends(get_db)
+    test_id: int,
+    submission: TestSubmission,
+    current_user: User = Depends(
+        get_current_user
+    ),  # ✅ ДОБАВЛЕНО: теперь current_user определён
+    db: AsyncSession = Depends(get_db),
 ):
     stmt = (
         select(EgeTest)
@@ -735,6 +831,19 @@ async def submit_test(
             correct += 1
     score = (correct / total) * 100 if total > 0 else 0
     passed = score >= test.passing_score
+    if test.lesson_id:
+        await mark_lesson_completed_if_needed(
+            user_id=current_user.id, lesson_id=test.lesson_id, score=score, db=db
+        )
+    test_result = TestResult(
+        user_id=current_user.id,
+        test_id=test_id,
+        lesson_id=test.lesson_id,  # ✅ Берём из объекта теста
+        score=score,
+        passed=passed,
+    )
+    db.add(test_result)
+    await db.commit()
     return TestSubmissionResult(
         score=round(score, 1),
         passed=passed,

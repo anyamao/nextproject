@@ -15,27 +15,58 @@ type Lesson = {
   time_minutes: number | null;
 };
 
+type Course = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+};
+
 export default function CourseLessonsPage() {
   const params = useParams();
   const slug = params.slug as string;
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [courseTitle, setCourseTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchLessons() {
+    async function fetchData() {
       try {
-        const data = await apiFetch(`/courses/${slug}`);
-        setLessons(data);
+        // 1️⃣ Загружаем уроки курса (этот эндпоинт точно есть!)
+        const lessonsData = await apiFetch(`/courses/${slug}`);
+        setLessons(lessonsData);
+
+        // 2️⃣ Пытаемся загрузить список курсов для получения названия
+        // ✅ ИСПРАВЛЕНО: /courses/subjects вместо /courses
+        try {
+          const courses: Course[] = await apiFetch("/courses/subjects");
+          const currentCourse = courses.find((c) => c.slug === slug);
+
+          if (currentCourse) {
+            setCourseTitle(currentCourse.title);
+            document.title = `${currentCourse.title} — Курсы | MaoSchool`;
+          } else {
+            // Курс не найден в списке — фолбэк на slug
+            setCourseTitle(slug.replace(/-/g, " "));
+          }
+        } catch (listErr) {
+          // ✅ Фолбэк: если эндпоинт не доступен — используем slug
+          console.log(
+            "ℹ️ /courses/subjects not available, using slug as fallback",
+          );
+          setCourseTitle(slug.replace(/-/g, " "));
+        }
       } catch (err: any) {
-        console.error("Failed to fetch lessons:", err);
-        setError(err?.message || "Не удалось загрузить уроки");
+        console.error("Failed to fetch ", err);
+        setError(err?.message || "Не удалось загрузить данные");
       } finally {
         setLoading(false);
       }
     }
-    fetchLessons();
+    fetchData();
   }, [slug]);
 
   if (loading) {
@@ -67,8 +98,10 @@ export default function CourseLessonsPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Все курсы</span>
         </Link>
+
+        {/* ✅ Показываем название курса или фолбэк на slug */}
         <h1 className="text-3xl font-bold text-gray-900 capitalize">
-          {slug.replace(/-/g, " ")}
+          {courseTitle || slug.replace(/-/g, " ")}
         </h1>
         <p className="text-gray-600 mt-2">Выберите урок для начала обучения</p>
       </div>

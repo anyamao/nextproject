@@ -12,7 +12,16 @@ type Lesson = {
   title: string;
   slug: string;
   description: string | null;
+  is_completed?: boolean;
   time_minutes: number | null;
+};
+
+type Subject = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
 };
 
 export default function SubjectLessonsPage() {
@@ -20,23 +29,36 @@ export default function SubjectLessonsPage() {
   const slug = params.slug as string;
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [subjectTitle, setSubjectTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchLessons() {
+    async function fetchData() {
       try {
-        // ✅ Запрос на /ege/{slug} (бэкенд на порту 8010)
-        // Например: /ege/math-profile
-        const data = await apiFetch(`/ege/${slug}`);
-        setLessons(data);
+        // 1️⃣ Загружаем уроки предмета
+        const lessonsData = await apiFetch(`/ege/${slug}`);
+        setLessons(lessonsData);
+
+        // 2️⃣ Загружаем все предметы и ищем нужный по slug
+        const subjects: Subject[] = await apiFetch("/ege");
+        const currentSubject = subjects.find((s) => s.slug === slug);
+
+        if (currentSubject) {
+          setSubjectTitle(currentSubject.title);
+          // ✅ Опционально: обновляем title страницы
+          document.title = `${currentSubject.title} — ЕГЭ Подготовка | MaoSchool`;
+        } else {
+          setSubjectTitle("Предмет не найден");
+        }
       } catch (err) {
-        console.error("Failed to fetch lessons:", err);
+        console.error("Failed to fetch ", err);
+        setError("Не удалось загрузить данные");
       } finally {
         setLoading(false);
       }
     }
-    fetchLessons();
+    fetchData();
   }, [slug]);
 
   if (loading) {
@@ -71,8 +93,10 @@ export default function SubjectLessonsPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Все предметы</span>
         </Link>
+
+        {/* ✅ Название предмета + "Все уроки" */}
         <h1 className="text-3xl font-bold text-gray-900 capitalize">
-          {slug.replace(/-/g, " ")}
+          {subjectTitle}{" "}
         </h1>
         <p className="text-gray-600 mt-2">Выберите урок для начала обучения</p>
       </div>
@@ -89,9 +113,25 @@ export default function SubjectLessonsPage() {
           {lessons.map((lesson) => (
             <Link
               key={lesson.id}
-              href={`/ege/${slug}/${lesson.slug}`} // ✅ Прямая ссылка на урок
-              className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
+              href={`/ege/${slug}/${lesson.slug}`}
+              className="block p-5 bg-white rounded-xl relative border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
             >
+              {lesson.is_completed && (
+                <div className="absolute top-3 right-3 flex mt-[40px] items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300">
+                  <svg
+                    className="w-3 h-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Пройдено</span>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900">

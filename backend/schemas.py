@@ -91,15 +91,16 @@ class EgeLessonCreate(BaseModel):
 class EgeLessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    subject_id: int
+    subject_id: int | None = None
     title: str
     slug: str
     description: str | None
-    content: str | None
+    content: str | None = None
     time_minutes: int | None
+    is_completed: bool = False
     test_id: int | None
-    created_at: datetime
-    updated_at: datetime | None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 # 📦 Список уроков для предмета
@@ -185,9 +186,7 @@ class LessonStatsOut(BaseModel):
 ##########Все для статей
 
 
-ARTICLE_TOPICS = Literal[
-    "забота о себе", "продуктивность", "технологии", "лайфхаки", "мотивация"
-]
+ARTICLE_TOPICS = Literal["Забота о себе", "Продуктивность", "Наука", "Программирование"]
 
 
 class ArticleCreate(BaseModel):
