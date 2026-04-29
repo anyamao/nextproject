@@ -1,15 +1,16 @@
 # backend/main.py
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete, text
 import os
 from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from database import engine, Base, get_db
 from typing import Any, Dict, Literal, Optional
+import asyncpg
 from models import (
     User,
     EgeSubject,
@@ -25,9 +26,18 @@ from models import (
     Comment,
     CommentReaction,
     UserCompletedLesson,
+    LanguageSubject,
+    LanguageLevel,
+    LanguageCategory,
+    LanguageLesson,
+    LanguageComment,
+    LanguageCommentReaction,
+    LanguageLessonView,
 )
 from schemas import (
     UserRegister,
+    LanguageLessonOut,
+    LanguageCommentOut,
     UserLogin,
     Token,
     UserOut,
@@ -65,7 +75,7 @@ from auth import (
     get_current_user,
     get_current_user_optional,
 )
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, relationship, backref, declarative_base
 
 load_dotenv()
 
@@ -212,6 +222,524 @@ async def update_profile_settings(
         status=current_user.status,
         created_at=current_user.created_at,
     )
+
+
+# ============================================================================
+# 🌍 LANGUAGES SECTION (полностью изолирована от ЕГЭ!)
+# ============================================================================
+
+# --- Схемы Pydantic ---
+
+
+# --- Эндпоинты ---
+
+
+# 🔁 Получить все языки
+@app.get("/languages", response_model=list[dict])
+async def get_all_languages(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(LanguageSubject).order_by(LanguageSubject.title))
+    return [
+        {"id": s.id, "title": s.title, "slug": s.slug, "description": s.description}
+        for s in result.scalars().all()
+    ]
+
+
+# 🔁 Получить уровни языка
+@app.get("/languages/{language}", response_model=list[dict])
+async def get_language_levels(language: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(LanguageLevel)
+        .join(LanguageSubject)
+        .where(LanguageSubject.slug == language)
+        .order_by(LanguageLevel.order_index)
+    )
+    return [
+        {"id": l.id, "title": l.title, "slug": l.slug, "description": l.description}
+        for l in result.scalars().all()
+    ]
+
+
+# 🔁 Получить категории уровня
+@app.get("/languages/{language}/{level}", response_model=list[dict])
+async def get_level_categories(
+    language: str, level: str, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(LanguageCategory)
+        .join(LanguageLevel)
+        .join(LanguageSubject)
+        .where(LanguageSubject.slug == language, LanguageLevel.slug == level)
+        .order_by(LanguageCategory.order_index)
+    )
+    return [
+        {"id": c.id, "title": c.title, "slug": c.slug, "description": c.description}
+        for c in result.scalars().all()
+    ]
+
+
+# 🔁 Получить уроки категории
+@app.get(
+    "/languages/{language}/{level}/{category}", response_model=list[LanguageLessonOut]
+)
+async def get_category_lessons(
+    language: str, level: str, category: str, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(LanguageLesson, LanguageCategory, LanguageLevel, LanguageSubject)
+        .join(LanguageCategory, LanguageLesson.category_id == LanguageCategory.id)
+        .join(LanguageLevel, LanguageCategory.level_id == LanguageLevel.id)
+        .join(LanguageSubject, LanguageLevel.subject_id == LanguageSubject.id)
+        .where(
+            LanguageSubject.slug == language,
+            LanguageLevel.slug == level,
+            LanguageCategory.slug == category,
+        )
+        .order_by(LanguageLesson.order_index)
+    )
+
+    lessons_out = []
+    for lesson, cat, lvl, subj in result.all():
+        lessons_out.append(
+            LanguageLessonOut(
+                id=lesson.id,
+                title=lesson.title,
+                slug=lesson.slug,
+                description=lesson.description,
+                content=lesson.content,
+                time_minutes=lesson.time_minutes,
+                category_slug=cat.slug,
+                level_slug=lvl.slug,
+                subject_slug=subj.slug,
+            )
+        )
+    return lessons_out
+
+
+# 🔁 Получить один урок
+@app.get(
+    "/languages/{language}/{level}/{category}/{lesson}",
+    response_model=LanguageLessonOut,
+)
+async def get_language_lesson(
+    language: str,
+    level: str,
+    category: str,
+    lesson: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(LanguageLesson, LanguageCategory, LanguageLevel, LanguageSubject)
+        .join(LanguageCategory, LanguageLesson.category_id == LanguageCategory.id)
+        .join(LanguageLevel, LanguageCategory.level_id == LanguageLevel.id)
+        .join(LanguageSubject, LanguageLevel.subject_id == LanguageSubject.id)
+        .where(
+            LanguageSubject.slug == language,
+            LanguageLevel.slug == level,
+            LanguageCategory.slug == category,
+            LanguageLesson.slug == lesson,
+        )
+    )
+    row = result.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    lesson_obj, cat, lvl, subj = row
+    return LanguageLessonOut(
+        id=lesson_obj.id,
+        title=lesson_obj.title,
+        slug=lesson_obj.slug,
+        description=lesson_obj.description,
+        content=lesson_obj.content,
+        time_minutes=lesson_obj.time_minutes,
+        category_slug=cat.slug,
+        level_slug=lvl.slug,
+        subject_slug=subj.slug,
+    )
+
+
+# 👁️ Записать просмотр
+# backend/main.py
+
+
+# backend/main.py
+
+from sqlalchemy.dialects.postgresql import insert as pg_insert  # ✅ Добавь этот импорт
+
+# ...
+
+
+@app.post("/languages/lessons/{lesson_id}/view")
+async def record_language_lesson_view(
+    lesson_id: int,
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        print(f"🔍 [DEBUG] POST /languages/lessons/{lesson_id}/view")
+
+        # Проверка урока
+        lesson = await db.get(LanguageLesson, lesson_id)
+        if not lesson:
+            raise HTTPException(status_code=404, detail="Lesson not found")
+
+        # ✅ Используем PostgreSQL-specific INSERT ... ON CONFLICT
+        stmt = pg_insert(LanguageLessonView).values(
+            lesson_id=lesson_id,
+            user_id=current_user.id if current_user else None,
+            ip_address=request.client.host if request.client else None,
+        )
+
+        if current_user:
+            # ✅ Если пользователь авторизован — игнорируем дубликаты (один просмотр на пользователя)
+            stmt = stmt.on_conflict_do_nothing(index_elements=["lesson_id", "user_id"])
+        else:
+            # ✅ Для анонимов можно разрешать множественные просмотры (или тоже уникализировать по IP)
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=["lesson_id", "ip_address"]
+            )
+
+        await db.execute(stmt)
+        await db.commit()
+
+        print(f"✅ [DEBUG] View recorded/ignored for lesson {lesson_id}")
+        return {"message": "View recorded", "lesson_id": lesson_id}
+
+    except Exception as e:
+        import traceback
+
+        print(f"❌ [DEBUG] EXCEPTION: {type(e).__name__}: {str(e)}")
+        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+
+# 👁️ Получить счётчик просмотров
+@app.get("/languages/lessons/{lesson_id}/views")
+async def get_language_lesson_views(lesson_id: int, db: AsyncSession = Depends(get_db)):
+    # Уникальные пользователи + анонимные просмотры
+    result = await db.execute(
+        select(func.count(func.distinct(LanguageLessonView.user_id))).where(
+            LanguageLessonView.lesson_id == lesson_id,
+            LanguageLessonView.user_id.isnot(None),
+        )
+    )
+    user_views = result.scalar_one_or_none() or 0
+
+    # Можно добавить анонимные просмотры, если нужно:
+    # anon_result = await db.execute(select(func.count(...)))
+
+    return {"view_count": user_views}
+
+
+# 💬 Получить комментарии урока (ИЗОЛИРОВАННЫЕ!)
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py — ВРЕМЕННАЯ ВЕРСИЯ ДЛЯ ОТЛАДКИ
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+@app.post("/languages/lessons/{lesson_id}/comments", response_model=LanguageCommentOut)
+async def create_language_comment(
+    lesson_id: int,
+    comment_data: dict,  # ✅ Проверь имя параметра!
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        print(f"🔍 [DEBUG] POST /languages/lessons/{lesson_id}/comments")
+        print(f"🔍 [DEBUG] comment_ {comment_data}")
+        print(
+            f"🔍 [DEBUG] current_user: {current_user.username} (id={current_user.id})"
+        )
+
+        lesson = await db.get(LanguageLesson, lesson_id)
+        if not lesson:
+            raise HTTPException(status_code=404, detail="Lesson not found")
+
+        new_comment = LanguageComment(
+            lesson_id=lesson_id,
+            user_id=current_user.id,
+            content=comment_data["content"].strip(),
+            parent_id=comment_data.get("parent_id"),
+        )
+        db.add(new_comment)
+
+        await db.commit()
+        await db.refresh(new_comment)
+
+        # 🔥 ПРОВЕРКА 1: Сразу читаем тем же сеансом
+        check_stmt = select(LanguageComment).where(LanguageComment.id == new_comment.id)
+        check_result = await db.execute(check_stmt)
+        saved = check_result.scalar_one_or_none()
+        print(
+            f"✅ [DEBUG] Comment saved: id={saved.id if saved else 'None'}, parent_id={saved.parent_id if saved else 'None'}"
+        )
+
+        # 🔥 ПРОВЕРКА 2: Считаем все комментарии для этого урока
+        count_stmt = select(func.count(LanguageComment.id)).where(
+            LanguageComment.lesson_id == lesson_id
+        )
+        count_result = await db.execute(count_stmt)
+        total = count_result.scalar()
+        print(f"📊 [DEBUG] Total comments in DB for lesson {lesson_id}: {total}")
+
+        # 🔥 ПРОВЕРКА 3: Считаем только корневые (parent_id IS NULL)
+        root_stmt = select(func.count(LanguageComment.id)).where(
+            LanguageComment.lesson_id == lesson_id, LanguageComment.parent_id.is_(None)
+        )
+        root_result = await db.execute(root_stmt)
+        root_count = root_result.scalar()
+        print(
+            f"📊 [DEBUG] Root comments (parent_id IS NULL) for lesson {lesson_id}: {root_count}"
+        )
+
+        # Загружаем пользователя для ответа
+        if new_comment.user is None and current_user:
+            new_comment.user = current_user
+
+        return {
+            "id": new_comment.id,
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "avatar_url": current_user.avatar_url,
+            "content": new_comment.content,
+            "parent_id": new_comment.parent_id,
+            "created_at": new_comment.created_at,
+            "updated_at": new_comment.updated_at,
+            "likes": 0,
+            "dislikes": 0,
+            "user_reaction": None,
+            "replies": [],
+        }
+
+    except Exception as e:
+        import traceback
+
+        print(f"❌ [DEBUG] EXCEPTION: {e}")
+        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+
+# backend/main.py
+
+
+# ..
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+# ✅ Добавь импорт в начало файла, если нет:
+# ...
+
+
+# backend/main.py
+
+
+# ...
+
+
+# backend/main.py
+
+
+@app.get("/languages/lessons/{lesson_id}/comments")
+async def get_language_lesson_comments(
+    lesson_id: int,
+    current_user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # 🔥 МАЯЧОК — должен появиться в логах
+    print(f"🚨 [MAYAK] GET /languages/lessons/{lesson_id}/comments CALLED")
+
+    # 🔥 Прямое подключение БЕЗ пробелов в параметрах
+    conn = await asyncpg.connect(
+        host="localhost",  # ✅ БЕЗ пробела
+        port=5432,
+        user="postgres",  # ✅ БЕЗ пробела
+        password="password",  # ✅ Замени на свой реальный пароль!
+        database="nextproject",  # ✅ БЕЗ пробела
+    )
+
+    try:
+        print(
+            f"🔥 [ASYNC] Connected to DB, fetching comments for lesson_id={lesson_id}"
+        )
+
+        rows = await conn.fetch(
+            """
+            SELECT 
+                lc.id,
+                lc.user_id,
+                lc.content,
+                lc.parent_id,
+                lc.created_at,
+                u.username,
+                u.avatar_url
+            FROM language_comments lc
+            LEFT JOIN users u ON lc.user_id = u.id
+            WHERE lc.lesson_id = $1
+              AND lc.parent_id IS NULL
+            ORDER BY lc.created_at ASC
+        """,
+            lesson_id,
+        )
+
+        print(f"🔥 [ASYNC] Fetched {len(rows)} rows from DB")
+
+        # Простое форматирование
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "id": int(row["id"]),
+                    "user_id": int(row["user_id"]),
+                    "username": str(row["username"]) if row["username"] else "Unknown",
+                    "avatar_url": str(row["avatar_url"]) if row["avatar_url"] else None,
+                    "content": str(row["content"]),
+                    "parent_id": int(row["parent_id"])
+                    if row["parent_id"] is not None
+                    else None,
+                    "created_at": str(row["created_at"]),
+                    "updated_at": None,
+                    "likes": 0,
+                    "dislikes": 0,
+                    "user_reaction": None,
+                    "replies": [],
+                }
+            )
+
+        print(f"🔥 [ASYNC] Returning {len(result)} comments")
+        if result:
+            print(
+                f"🔥 [ASYNC] First: id={result[0]['id']}, content='{result[0]['content']}'"
+            )
+
+        return result
+
+    except Exception as e:
+        import traceback
+
+        print(f"❌ [ASYNC] ERROR: {e}")
+        print(f"❌ [ASYNC] Traceback:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+        print(f"🔥 [ASYNC] Connection closed")
+
+
+@app.delete("/languages/comments/{comment_id}")
+async def delete_language_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    comment = await db.get(LanguageComment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    await db.delete(comment)
+    await db.commit()
+    return {"message": "Comment deleted"}
+
+
+# 👍 Реакция на комментарий
+# backend/main.py
+
+
+@app.post("/languages/comments/{comment_id}/reaction")
+async def react_to_language_comment(
+    comment_id: int,
+    reaction_data: dict,  # {"reaction_type": "like" | "dislike" | "none"}
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        print(f"🔍 [DEBUG] POST /languages/comments/{comment_id}/reaction")
+        print(f"🔍 [DEBUG] reaction_data: {reaction_data}")
+
+        reaction_type = reaction_data.get("reaction_type")
+
+        if reaction_type == "none":
+            # Удаляем реакцию
+            stmt = delete(LanguageCommentReaction).where(
+                LanguageCommentReaction.comment_id == comment_id,
+                LanguageCommentReaction.user_id == current_user.id,
+            )
+            await db.execute(stmt)
+            print(f"✅ [DEBUG] Reaction removed")
+        else:
+            is_like = reaction_type == "like"
+            # UPSERT: обновить или создать
+            stmt = (
+                insert(LanguageCommentReaction)
+                .values(comment_id=comment_id, user_id=current_user.id, is_like=is_like)
+                .on_conflict_do_update(
+                    index_elements=["comment_id", "user_id"], set_={"is_like": is_like}
+                )
+            )
+            await db.execute(stmt)
+            print(f"✅ [DEBUG] Reaction {'liked' if is_like else 'disliked'}")
+
+        await db.commit()
+
+        # ✅ Возвращаем обновлённые статистики
+        likes = (
+            await db.scalar(
+                select(func.count(LanguageCommentReaction.id)).where(
+                    LanguageCommentReaction.comment_id == comment_id,
+                    LanguageCommentReaction.is_like == True,
+                )
+            )
+            or 0
+        )
+        dislikes = (
+            await db.scalar(
+                select(func.count(LanguageCommentReaction.id)).where(
+                    LanguageCommentReaction.comment_id == comment_id,
+                    LanguageCommentReaction.is_like == False,
+                )
+            )
+            or 0
+        )
+
+        return {
+            "comment_id": comment_id,
+            "likes": likes,
+            "dislikes": dislikes,
+            "user_reaction": reaction_type if reaction_type != "none" else None,
+        }
+
+    except Exception as e:
+        import traceback
+
+        print(f"❌ [DEBUG] EXCEPTION in react_to_language_comment: {e}")
+        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 
 # ============================================================================
@@ -377,13 +905,30 @@ async def get_lesson_views(
 
 
 # ✅ Список курсов (исключая ЕГЭ) — статический, должен быть ДО /courses/{slug}
+# backend/main.py
+
+
 @app.get("/courses/subjects", response_model=list[EgeSubjectOut])
-async def get_course_subjects(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(EgeSubject)
-        .where(~EgeSubject.slug.in_(EGE_SLUGS))
-        .order_by(EgeSubject.title)
-    )
+async def get_course_subjects(
+    category: str | None = None,  # ✅ Фильтр по категории
+    search: str | None = None,  # ✅ Поиск по title
+    db: AsyncSession = Depends(get_db),
+):
+    # Базовый запрос: исключаем ЕГЭ-предметы
+    query = select(EgeSubject).where(~EgeSubject.slug.in_(EGE_SLUGS))
+
+    # 🔍 Фильтр по категории
+    if category:
+        query = query.where(EgeSubject.category == category)
+
+    # 🔍 Поиск по названию (регистронезависимый)
+    if search:
+        query = query.where(EgeSubject.title.ilike(f"%{search}%"))
+
+    # Сортировка
+    query = query.order_by(EgeSubject.title)
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 
@@ -448,14 +993,30 @@ ARTICLE_TOPICS_LIST = [
 
 
 # ✅ Список статей (статический — ДО /articles/{slug})
+# backend/main.py
+
+
 @app.get("/articles", response_model=list[ArticleOut])
 async def get_articles(
-    topic: str | None = Query(None), db: AsyncSession = Depends(get_db)
+    topic: str | None = None,
+    search: str | None = None,  # ✅ Новый параметр для поиска
+    db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Article).order_by(Article.created_at.desc())
-    if topic and topic in ARTICLE_TOPICS_LIST:
-        stmt = stmt.where(Article.topic == topic)
-    result = await db.execute(stmt)
+    # Базовый запрос
+    query = select(Article)
+
+    # 🔍 Фильтр по теме
+    if topic and topic != "Все":
+        query = query.where(Article.topic == topic)
+
+    # 🔍 Поиск по названию (регистронезависимый)
+    if search:
+        query = query.where(Article.title.ilike(f"%{search}%"))
+
+    # Сортировка по дате (новые сначала)
+    query = query.order_by(Article.created_at.desc())
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 

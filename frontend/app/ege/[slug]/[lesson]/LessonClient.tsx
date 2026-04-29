@@ -120,27 +120,34 @@ export default function LessonClient({
     };
     fetchResult();
   }, [isAuthenticated, testId]);
+
   useEffect(() => {
-    if (!isAuthenticated || !testId) return; // testId здесь — просто маркер, что урок загружен
+    console.log("✅ ENTERED RECORD VIEW MODE");
+
+    // 🔥 Читаем токен напрямую, как в комментариях и лайках
+    const token = localStorage.getItem("token");
+
+    if (!token || !lesson?.id) {
+      console.log("⚠️ Skipping view: no token or no lesson.id");
+      return;
+    }
+
+    console.log("✅ Token present, recording view...");
 
     const recordView = async () => {
-      const token = localStorage.getItem("token");
-      if (!token || !lesson.id) return;
-
       try {
-        // ✅ Просто отправляем запрос. Бэкенд сам разбеdevtestрется (ON CONFLICT DO NOTHING)
         await apiFetch(`/lessons/${lesson.id}/view`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("✅ View request sent");
       } catch (err) {
-        console.log("ℹ️ View not recorded (maybe already viewed or error)");
+        console.log("ℹ️ View not recorded:", err);
       }
     };
-    recordView();
-  }, [lesson.id]);
 
+    recordView();
+  }, [lesson?.id]); // ✅ Только lesson.id в зависимостях
   return (
     <main className="flex-1 flex flex-col  items-center  sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
       <div className="flex-1 w-full items-center justify-center ">

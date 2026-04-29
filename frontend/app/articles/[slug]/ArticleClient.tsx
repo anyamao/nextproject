@@ -145,12 +145,7 @@ export default function ArticleClient({ article }: { article: Article }) {
           </Link>
 
           <div className="flex flex-row items-center">
-            <div className="flex flex-row items-center mt-[5px] mr-[15px]">
-              <p className="smaller-text text-gray-800 mr-[5px]">
-                {viewCount?.toLocaleString("ru-RU") || "—"}
-              </p>
-              <Eye className="w-4 h-4 text-gray-500" />
-            </div>
+            <div className="flex flex-row items-center mt-[5px] mr-[15px]"></div>
             <h1 className="bigger-text font-bold text-gray-900">
               {article.title}
             </h1>

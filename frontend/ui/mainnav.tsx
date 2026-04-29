@@ -40,22 +40,13 @@ function Mainnav() {
             href="/chats"
             onClick={closeEverything}
             className="hover:text-blue-500 whitespace-nowrap hidden duration-300"
-          >
-            
-          </Link>
+          ></Link>
           <Link
             href="/english"
             onClick={closeEverything}
             className="hover:text-blue-500 whitespace-nowrap  ml-[20px] duration-300"
           >
-            ⭐Кружок английского &apos;Шэкспир&apos;
-          </Link>
-          <Link
-            href="/languages"
-            onClick={closeEverything}
-            className=" ml-[20px] whitespace-nowrap  hover:text-blue-500 duration-300"
-          >
-            Учить языки
+            Кружок английского &apos;Шeкспир&apos;
           </Link>
           <Link
             href="/ege"

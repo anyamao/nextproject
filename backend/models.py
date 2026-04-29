@@ -14,7 +14,7 @@ from database import Base
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import os
 from dotenv import load_dotenv
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import DeclarativeBase, relationship, backref
 
 
 class User(Base):
@@ -45,6 +45,9 @@ class EgeSubject(Base):
     description = Column(String, nullable=True)
     image = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    category = Column(
+        String(50), nullable=True
+    )  # "english", "programming", "math", etc.
 
     # ❌ УДАЛИТЕ back_populates, если в EgeLesson нет обратной связи:
     # ✅ Просто список уроков (без back_populates — безопасно)
@@ -73,6 +76,123 @@ class EgeLesson(Base):
         cascade="all, delete-orphan",
         lazy="select",
     )
+
+
+# backend/models.py
+
+
+class LanguageSubject(Base):
+    __tablename__ = "language_subjects"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(100), nullable=False)
+    slug = Column(String(50), unique=True, nullable=False)
+    description = Column(Text)
+    image = Column(String(255))
+    created_at = Column(DateTime, server_default=func.now())
+
+    levels = relationship(
+        "LanguageLevel", back_populates="subject", cascade="all, delete-orphan"
+    )
+
+
+class LanguageLevel(Base):
+    __tablename__ = "language_levels"
+    id = Column(Integer, primary_key=True, index=True)
+    subject_id = Column(Integer, ForeignKey("language_subjects.id"), nullable=False)
+    title = Column(String(20), nullable=False)
+    slug = Column(String(20), nullable=False)
+    description = Column(Text)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    subject = relationship("LanguageSubject", back_populates="levels")
+    categories = relationship(
+        "LanguageCategory", back_populates="level", cascade="all, delete-orphan"
+    )
+
+
+class LanguageCategory(Base):
+    __tablename__ = "language_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    level_id = Column(Integer, ForeignKey("language_levels.id"), nullable=False)
+    title = Column(String(100), nullable=False)
+    slug = Column(String(50), nullable=False)
+    description = Column(Text)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    level = relationship("LanguageLevel", back_populates="categories")
+    lessons = relationship(
+        "LanguageLesson", back_populates="category", cascade="all, delete-orphan"
+    )
+
+
+class LanguageLesson(Base):
+    __tablename__ = "language_lessons"
+    id = Column(Integer, primary_key=True, index=True)
+    category_id = Column(Integer, ForeignKey("language_categories.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    slug = Column(String(100), nullable=False)
+    content = Column(Text)
+    description = Column(Text)
+    time_minutes = Column(Integer)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    category = relationship("LanguageCategory", back_populates="lessons")
+    comments = relationship(
+        "LanguageComment", back_populates="lesson", cascade="all, delete-orphan"
+    )
+    views = relationship(
+        "LanguageLessonView", back_populates="lesson", cascade="all, delete-orphan"
+    )
+
+
+class LanguageComment(Base):
+    __tablename__ = "language_comments"
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("language_lessons.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    parent_id = Column(Integer, ForeignKey("language_comments.id"))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    lesson = relationship("LanguageLesson", back_populates="comments")
+    user = relationship("User")
+    replies = relationship(
+        "LanguageComment", backref=backref("parent", remote_side=[id])
+    )
+    reactions = relationship(
+        "LanguageCommentReaction",
+        back_populates="comment",
+        cascade="all, delete-orphan",
+    )
+
+
+class LanguageCommentReaction(Base):
+    __tablename__ = "language_comment_reactions"
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("language_comments.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_like = Column(Boolean, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    comment = relationship("LanguageComment", back_populates="reactions")
+    user = relationship("User")
+
+
+class LanguageLessonView(Base):
+    __tablename__ = "language_lesson_views"
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("language_lessons.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    viewed_at = Column(DateTime, server_default=func.now())
+    ip_address = Column(String(45))
+
+    lesson = relationship("LanguageLesson", back_populates="views")
+    user = relationship("User")
 
 
 class EgeTest(Base):

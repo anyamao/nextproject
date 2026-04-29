@@ -67,6 +67,7 @@ class EgeSubjectOut(BaseModel):
     slug: str
     description: str | None
     image: str | None
+    category: str | None = None
     created_at: datetime
 
 
@@ -270,6 +271,35 @@ class CommentsListOut(BaseModel):
     total: int
 
 
+class LanguageLessonOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    slug: str
+    description: str | None = None
+    content: str | None = None
+    time_minutes: int | None = None
+    category_slug: str | None = None
+    level_slug: str | None = None
+    subject_slug: str | None = None
+
+
+class LanguageCommentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    username: str
+    avatar_url: str | None = None
+    content: str
+    parent_id: int | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+    likes: int = 0
+    dislikes: int = 0
+    user_reaction: Literal["like", "dislike", None] = None
+    replies: list["LanguageCommentOut"] = []
+
+
 # конец #######################################################
 
 
@@ -308,4 +338,6 @@ __all__ = [
     "CommentWithStatsOut",
     "UserUpdate",
     "UserOut",
+    "LanguageLessonOut",
+    "LanguageCommentOut",
 ]
