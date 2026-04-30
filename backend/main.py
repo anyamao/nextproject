@@ -3,13 +3,34 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete, text
+from jose import JWTError, jwt
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Float,
+    Boolean,
+    DateTime,
+    Date,
+    ForeignKey,
+    func,
+    select,
+    insert,
+    update,
+    delete,
+    or_,
+    text,
+    inspect,
+)
+
 import os
 from sqlalchemy.dialects.postgresql import insert
 
 
 from dotenv import load_dotenv
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 from database import engine, Base, get_db
 from typing import Any, Dict, Literal, Optional
 import asyncpg
@@ -36,6 +57,9 @@ from models import (
     LanguageCommentReaction,
     LanguageLessonView,
     CourseUnit,
+    Flashcard,
+    FlashcardDeck,
+    FlashcardProgress,
 )
 from schemas import (
     UserRegister,
@@ -71,6 +95,9 @@ from schemas import (
     UserOut,
     UserUpdate,
     CourseUnitOut,
+    FlashcardDeckOut,
+    FlashcardAnswer,
+    FlashcardOut,
 )
 from auth import (
     get_password_hash,
@@ -235,7 +262,312 @@ async def update_profile_settings(
 # --- Схемы Pydantic ---
 
 
+# backend/main.py
+
+
+@app.post("/flashcards/{card_id}/answer", response_model=dict)
+async def answer_flashcard(
+    card_id: int,
+    answer: FlashcardAnswer,  # { rating: "again" | "hard" | "good" | "easy" }
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Находим карточку
+    card = await db.get(Flashcard, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    # Загружаем или создаём прогресс
+    progress = await db.execute(
+        select(FlashcardProgress).where(
+            FlashcardProgress.user_id == current_user.id,
+            FlashcardProgress.card_id == card_id,
+        )
+    )
+    progress = progress.scalar_one_or_none()
+
+    if not progress:
+        progress = FlashcardProgress(
+            user_id=current_user.id,
+            card_id=card_id,
+            next_review=date.today(),
+            interval_days=0,  # ✅ Явно задаём дефолты
+            ease_factor=2.5,
+            repetitions=0,
+            times_seen=0,
+            times_correct=0,
+        )
+        db.add(progress)
+
+    # 🔥 Безопасное получение значений (фоллбэк на дефолты)
+    interval_days = progress.interval_days if progress.interval_days is not None else 0
+    ease_factor = progress.ease_factor if progress.ease_factor is not None else 2.5
+    repetitions = progress.repetitions if progress.repetitions is not None else 0
+
+    rating = answer.rating
+    today = date.today()
+
+    # 🔥 Алгоритм интервального повторения (упрощённый SM-2)
+    if rating == "again":
+        new_repetitions = 0
+        new_interval = 0
+        new_ease = max(1.3, ease_factor - 0.2)
+        next_review = today
+
+    elif rating == "hard":
+        if repetitions == 0:
+            new_interval = 1
+        else:
+            new_interval = max(1, int(interval_days * 1.2))
+        new_ease = max(1.3, ease_factor - 0.15)
+        new_repetitions = max(0, repetitions - 1)
+        next_review = today + timedelta(days=new_interval)
+
+    elif rating == "good":
+        if repetitions == 0:
+            new_interval = 1
+        elif repetitions == 1:
+            new_interval = 3
+        else:
+            new_interval = int(interval_days * ease_factor)
+        new_repetitions = repetitions + 1
+        new_ease = ease_factor
+        next_review = today + timedelta(days=new_interval)
+
+    elif rating == "easy":
+        if repetitions == 0:
+            new_interval = 3
+        elif repetitions == 1:
+            new_interval = 7
+        else:
+            new_interval = int(interval_days * ease_factor * 1.3)
+        new_repetitions = repetitions + 1
+        new_ease = min(3.0, ease_factor + 0.1)
+        next_review = today + timedelta(days=new_interval)
+
+    else:
+        # Fallback для неизвестного rating
+        new_interval = 1
+        new_repetitions = repetitions
+        new_ease = ease_factor
+        next_review = today
+
+    # 🔥 Обновляем прогресс — гарантированно не None
+    progress.interval_days = new_interval
+    progress.ease_factor = new_ease
+    progress.repetitions = new_repetitions
+    progress.next_review = next_review
+
+    # Обновляем статистику (с защитой от None)
+    progress.times_seen = (progress.times_seen or 0) + 1
+    if rating in ("good", "easy"):
+        progress.times_correct = (progress.times_correct or 0) + 1
+    progress.last_answered = datetime.now(timezone.utc)
+
+    await db.commit()
+
+    return {
+        "card_id": card_id,
+        "rating": rating,
+        "next_review": progress.next_review.isoformat()
+        if progress.next_review
+        else None,
+        "interval_days": progress.interval_days,
+        "repetitions": progress.repetitions,
+        "message": "Answer saved",
+    }
+
+
 # --- Эндпоинты ---
+# backend/main.py
+
+
+@app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
+async def get_lesson_flashcards(
+    lesson_id: int,
+    current_user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Находим колоду
+    deck = await db.execute(
+        select(FlashcardDeck)
+        .where(FlashcardDeck.lesson_id == lesson_id)
+        .options(selectinload(FlashcardDeck.cards))
+    )
+    deck = deck.scalar_one_or_none()
+
+    if not deck:
+        raise HTTPException(status_code=404, detail="No flashcards for this lesson")
+
+    # Если пользователь авторизован — добавляем прогресс и фильтруем карточки
+    cards_out = []
+    due_count = new_count = mastered_count = 0
+
+    if current_user:
+        today = date.today()
+
+        for card in deck.cards:
+            # Загружаем прогресс пользователя
+            progress = await db.execute(
+                select(FlashcardProgress).where(
+                    FlashcardProgress.user_id == current_user.id,
+                    FlashcardProgress.card_id == card.id,
+                )
+            )
+            progress = progress.scalar_one_or_none()
+
+            # Классифицируем карточку
+            if not progress:
+                new_count += 1  # Новая карточка
+                card_data = card
+            elif progress.next_review and progress.next_review <= today:
+                due_count += 1  # Нужно повторить
+                card_data = card
+            elif progress.repetitions >= 5:  # Условие "выучено"
+                mastered_count += 1
+                card_data = None  # Не показываем выученные в обычной сессии
+            else:
+                card_data = None  # Ещё не время
+
+            if card_data:
+                cards_out.append(
+                    {
+                        "id": card.id,
+                        "front": card.front,
+                        "back": card.back,
+                        "hint": card.hint,
+                        "example": card.example,
+                        "user_progress": {
+                            "next_review": progress.next_review.isoformat()
+                            if progress and progress.next_review
+                            else None,
+                            "interval_days": progress.interval_days if progress else 0,
+                            "ease_factor": progress.ease_factor if progress else 2.5,
+                            "repetitions": progress.repetitions if progress else 0,
+                        }
+                        if progress
+                        else None,
+                    }
+                )
+    else:
+        # Для гостей — просто все карточки без прогресса
+        cards_out = [
+            {
+                "id": c.id,
+                "front": c.front,
+                "back": c.back,
+                "hint": c.hint,
+                "example": c.example,
+                "user_progress": None,
+            }
+            for c in deck.cards
+        ]
+        new_count = len(cards_out)
+
+    return {
+        "id": deck.id,
+        "title": deck.title,
+        "description": deck.description,
+        "lesson_id": deck.lesson_id,
+        "card_count": len(deck.cards),
+        "cards": cards_out,
+        "due_count": due_count,
+        "new_count": new_count,
+        "mastered_count": mastered_count,
+    }
+
+
+# backend/main.py
+
+
+@app.get("/lessons/{lesson_id}/flashcards/stats", response_model=dict)
+async def get_flashcard_stats(
+    lesson_id: int,
+    current_user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Находим колоду
+    deck = await db.execute(
+        select(FlashcardDeck).where(FlashcardDeck.lesson_id == lesson_id)
+    )
+    deck = deck.scalar_one_or_none()
+
+    if not deck:
+        return {"has_deck": False}
+
+    if not current_user:
+        return {
+            "has_deck": True,
+            "deck_id": deck.id,
+            "title": deck.title,
+            "total_cards": 0,
+            "due_count": 0,
+            "message": "Войдите, чтобы видеть прогресс",
+        }
+
+    # Считаем статистику
+    today = date.today()
+
+    # Все карточки колоды
+    all_cards = await db.execute(
+        select(Flashcard.id).where(Flashcard.deck_id == deck.id)
+    )
+    all_card_ids = [r[0] for r in all_cards.all()]
+
+    if not all_card_ids:
+        return {
+            "has_deck": True,
+            "deck_id": deck.id,
+            "title": deck.title,
+            "total_cards": 0,
+            "due_count": 0,
+            "new_count": 0,
+            "mastered_count": 0,
+            "ready_to_study": False,
+            "last_reviewed": None,
+        }
+
+    # Прогресс пользователя + последняя дата ответа
+    progress_data = await db.execute(
+        select(
+            FlashcardProgress.next_review,
+            FlashcardProgress.repetitions,
+            FlashcardProgress.last_answered,  # ✅ Добавляем это поле
+        ).where(
+            FlashcardProgress.user_id == current_user.id,
+            FlashcardProgress.card_id.in_(all_card_ids),
+        )
+    )
+
+    due_count = new_count = mastered_count = 0
+    last_reviewed = None  # ✅ Инициализируем
+
+    for next_review, repetitions, last_answered in progress_data.all():
+        # 🔥 Отслеживаем самую свежую дату ответа
+        if last_answered and (last_reviewed is None or last_answered > last_reviewed):
+            last_reviewed = last_answered
+
+        # Классифицируем карточку
+        if repetitions is not None and repetitions >= 5:
+            mastered_count += 1
+        elif next_review is None or next_review <= today:
+            due_count += 1
+        # else: ещё не время
+
+    new_count = len(all_card_ids) - due_count - mastered_count
+
+    return {
+        "has_deck": True,
+        "deck_id": deck.id,
+        "title": deck.title,
+        "total_cards": len(all_card_ids),
+        "due_count": due_count,
+        "new_count": new_count,
+        "mastered_count": mastered_count,
+        "ready_to_study": due_count + new_count > 0,
+        # ✅ Новое поле для фронтенда:
+        "last_reviewed": last_reviewed.isoformat() if last_reviewed else None,
+    }
 
 
 # 🔁 Получить все языки
@@ -779,7 +1111,7 @@ async def get_all_subjects(db: AsyncSession = Depends(get_db)):
 @app.get("/ege/{slug}")
 async def get_subject_lessons(
     slug: str,
-    current_user: User | None = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))

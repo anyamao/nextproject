@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Clock, BookOpen } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Lock } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 type Lesson = {
@@ -32,6 +32,7 @@ export default function SubjectLessonsPage() {
   const [subjectTitle, setSubjectTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState(false); // 🔥 Новый стейт
 
   useEffect(() => {
     async function fetchData() {
@@ -46,14 +47,46 @@ export default function SubjectLessonsPage() {
 
         if (currentSubject) {
           setSubjectTitle(currentSubject.title);
-          // ✅ Опционально: обновляем title страницы
           document.title = `${currentSubject.title} — ЕГЭ Подготовка | MaoSchool`;
         } else {
           setSubjectTitle("Предмет не найден");
         }
-      } catch (err) {
-        console.error("Failed to fetch ", err);
-        setError("Не удалось загрузить данные");
+      } catch (err: any) {
+        // 🔥 ОБРАБОТКА 401: гостевой режим
+        if (err?.status === 401) {
+          console.log("ℹ️ [EGE] Guest mode: loading public content");
+          setIsGuestMode(true);
+
+          // 🔥 Пробуем загрузить публичную версию уроков (без is_completed)
+          try {
+            // Повторный запрос БЕЗ токена (на случай, если apiFetch добавил его)
+            const publicLessons = await apiFetch(`/ege/${slug}`);
+            // Убираем is_completed, так как гость не может видеть прогресс
+            const sanitized = publicLessons.map((l: Lesson) => {
+              const { is_completed, ...rest } = l;
+              return rest;
+            });
+            setLessons(sanitized);
+
+            // Загружаем название предмета
+            const subjects: Subject[] = await apiFetch("/ege");
+            const current = subjects.find((s) => s.slug === slug);
+            if (current) {
+              setSubjectTitle(current.title);
+              document.title = `${current.title} — ЕГЭ Подготовка | MaoSchool`;
+            }
+          } catch (fallbackErr) {
+            console.error(
+              "❌ [EGE] Failed to load public content:",
+              fallbackErr,
+            );
+            setError("Не удалось загрузить публичный контент");
+          }
+        } else {
+          // 🔥 Другие ошибки — показываем как раньше
+          console.error("❌ [EGE] Failed to fetch:", err);
+          setError("Не удалось загрузить данные");
+        }
       } finally {
         setLoading(false);
       }
@@ -61,11 +94,12 @@ export default function SubjectLessonsPage() {
     fetchData();
   }, [slug]);
 
-  // Подсчёт прогресса
+  // Подсчёт прогресса (только если не гость)
   const totalLessons = lessons.length;
-  const completedLessons = lessons.filter(
-    (lesson) => lesson.is_completed,
-  ).length;
+  const completedLessons = isGuestMode
+    ? 0 // Гость не видит прогресс
+    : lessons.filter((lesson) => lesson.is_completed).length;
+
   const progressPercentage =
     totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
@@ -102,26 +136,52 @@ export default function SubjectLessonsPage() {
           <span>Все предметы</span>
         </Link>
 
+        {/* 🔥 Индикатор гостевого режима */}
+        {isGuestMode && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-800">
+            <Lock className="w-4 h-4" />
+            <span>
+              <strong>Гостевой режим</strong> •
+              <Link
+                href="/auth/login"
+                className="underline hover:text-yellow-900 ml-1"
+              >
+                Войдите для отслеживания прогресса
+              </Link>
+            </span>
+          </div>
+        )}
+
+        {/* Прогресс-бар */}
         <div className="mb-4">
           <div className="flex justify-between text-sm text-gray-600 mb-1">
             <span>Прогресс по предмету</span>
             <span className="text-gray-500">
-              {completedLessons}/{totalLessons}{" "}
-              {completedLessons == 0 ||
-              completedLessons / 10 == 0 ||
-              (completedLessons >= 5 && completedLessons <= 20) ||
-              completedLessons % 10 >= 5
-                ? "уроков пройдено"
-                : completedLessons == 1
-                  ? "урок пройден"
-                  : "урока пройдено"}
+              {isGuestMode ? (
+                "Войдите, чтобы видеть прогресс"
+              ) : (
+                <>
+                  {completedLessons}/{totalLessons}{" "}
+                  {completedLessons == 0 ||
+                  completedLessons / 10 == 0 ||
+                  (completedLessons >= 5 && completedLessons <= 20) ||
+                  completedLessons % 10 >= 5
+                    ? "уроков пройдено"
+                    : completedLessons == 1
+                      ? "урок пройден"
+                      : "урока пройдено"}
+                </>
+              )}
             </span>
           </div>
+
           {totalLessons > 0 ? (
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div
-                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  isGuestMode ? "bg-gray-400" : "bg-purple-600"
+                }`}
+                style={{ width: isGuestMode ? "0%" : `${progressPercentage}%` }}
               />
             </div>
           ) : (
@@ -134,9 +194,8 @@ export default function SubjectLessonsPage() {
           )}
         </div>
 
-        {/* ✅ Название предмета + "Все уроки" */}
         <h1 className="text-3xl font-bold text-gray-900 capitalize">
-          {subjectTitle}{" "}
+          {subjectTitle}
         </h1>
         <p className="text-gray-600 mt-2">Выберите урок для начала обучения</p>
       </div>
@@ -156,8 +215,9 @@ export default function SubjectLessonsPage() {
               href={`/ege/${slug}/${lesson.slug}`}
               className="block p-5 bg-white rounded-xl relative border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
             >
-              {lesson.is_completed && (
-                <div className="absolute top-3 right-3 flex mt-[40px] items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300">
+              {/* 🔥 Бейдж "Пройдено" только для авторизованных */}
+              {!isGuestMode && lesson.is_completed && (
+                <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300">
                   <svg
                     className="w-3 h-3"
                     fill="currentColor"
@@ -172,6 +232,7 @@ export default function SubjectLessonsPage() {
                   <span>Пройдено</span>
                 </div>
               )}
+
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900">

@@ -41,7 +41,7 @@ export function isTokenExpired(token: string): boolean {
   if (!payload?.exp) return true;
 
   // exp в секундах, Date.now() в миллисекундах
-  return payload.exp * 1000 < Date.now();
+  return payload.exp * 10000 < Date.now();
 }
 
 // Получить пользователя из токена

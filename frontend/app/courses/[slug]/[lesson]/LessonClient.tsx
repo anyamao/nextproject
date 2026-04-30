@@ -10,7 +10,9 @@ import LessonReactions from "@/components/LessonReactions";
 import CommentsSection from "@/components/CommentsSection";
 import CopyLinkButton from "@/components/LinkButton";
 import { saveTestReturnUrl } from "@/lib/test-return";
-
+import FlashcardSession from "@/components/FlashcardSession";
+import { BookOpen } from "lucide-react";
+import { formatTimeAgo } from "@/lib/format-date";
 type Lesson = {
   id: number;
   title: string;
@@ -47,6 +49,8 @@ export default function LessonClient({
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [nextLessonSlug, setNextLessonSlug] = useState<string | null>(null);
   const [lessonsLoaded, setLessonsLoaded] = useState(false);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [flashcardStats, setFlashcardStats] = useState<any>(null);
 
   // 🔍 Проверка авторизации
   useEffect(() => {
@@ -118,6 +122,26 @@ export default function LessonClient({
     };
     fetchResult();
   }, [testId]);
+
+  useEffect(() => {
+    async function fetchFlashcardStats() {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const stats = await apiFetch(`/lessons/${lesson.id}/flashcards/stats`, {
+          headers,
+        });
+        setFlashcardStats(stats);
+      } catch (err) {
+        // Карточек нет или ошибка — не страшно
+        console.log("ℹ️ No flashcards for this lesson");
+      }
+    }
+
+    if (lesson.id) {
+      fetchFlashcardStats();
+    }
+  }, [lesson.id]);
 
   // ✅ Загрузка названия курса и следующего урока
   // ✅ Загрузка названия курса и следующего урока
@@ -365,6 +389,61 @@ export default function LessonClient({
             )}
           </div>
         </div>
+      </div>
+      <div className="flex flex-row w-full  items-center">
+        {showFlashcards && (
+          <FlashcardSession
+            lessonId={lesson.id}
+            onClose={() => setShowFlashcards(false)}
+          />
+        )}
+        {flashcardStats?.has_deck && (
+          <div className="flex flex-row w-full items-center">
+            <button
+              onClick={() => setShowFlashcards(true)}
+              className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+            >
+              <BookOpen className="w-5 h-5" />
+              <div className="flex flex-col ml-[15px] ">
+                <span className="text-xs whitespace-nowrap font-semibold text-white w-full text-center  ">
+                  {flashcardStats.title}
+                </span>
+                <span className="w-full whitespace-nowrap">
+                  {(() => {
+                    const total =
+                      flashcardStats.due_count + flashcardStats.new_count;
+                    const lastDigit = total % 10;
+                    const lastTwoDigits = total % 100;
+
+                    let word;
+                    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+                      word = "карточек";
+                    } else if (lastDigit === 1) {
+                      word = "карточка";
+                    } else if (lastDigit >= 2 && lastDigit <= 4) {
+                      word = "карточки";
+                    } else {
+                      word = "карточек";
+                    }
+
+                    return `${total} ${word}`;
+                  })()}
+                </span>
+              </div>
+            </button>
+            <p className="smaller-text ml-[10px] ">
+              <span className="bg-purple-200 ord-text font-bold mr-[5px]">
+                Карточки для повторения
+              </span>
+              <strong>
+                - следующий шаг, для тех, кто правда хочет учиться.{" "}
+              </strong>
+              После прохождения теста возвращайся сюда раз в неделю и открывай
+              карточки к уроку. Там собраны в краткой форме все слова/ концепты
+              для быстрого повторения
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Комментарии */}

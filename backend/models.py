@@ -9,6 +9,8 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     CheckConstraint,
+    Float,
+    Date,
 )
 from database import Base
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -31,6 +33,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    flashcard_progress = relationship("FlashcardProgress", back_populates="user")
 
 
 ##ЭТО МЕСТО ДЛЯ ВСЕГО ЧТО СВЯЗАНО С ege_native ЕГЭ!!!!!!###"""
@@ -75,12 +78,87 @@ class EgeLesson(Base):
     test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)  # Просто FK
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    flashcard_deck = relationship(
+        "FlashcardDeck", back_populates="lesson", uselist=False
+    )
     test_results = relationship(
         "TestResult",
         back_populates="lesson",
         cascade="all, delete-orphan",
         lazy="select",
     )
+
+
+class FlashcardDeck(Base):
+    __tablename__ = "flashcard_decks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("ege_lessons.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    lesson = relationship("EgeLesson", back_populates="flashcard_deck")
+    cards = relationship(
+        "Flashcard",
+        back_populates="deck",
+        cascade="all, delete-orphan",
+        order_by="Flashcard.order_index",
+    )
+
+
+# backend/models.py
+
+
+class Flashcard(Base):
+    __tablename__ = "flashcards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    deck_id = Column(Integer, ForeignKey("flashcard_decks.id"), nullable=False)
+    front = Column(Text, nullable=False)
+    back = Column(Text, nullable=False)
+    hint = Column(Text)
+    example = Column(Text)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # 🔥 ИСПРАВЛЕНИЕ СВЯЗЕЙ:
+    deck = relationship("FlashcardDeck", back_populates="cards")
+
+    # Связь с прогрессом пользователя
+    progress = relationship(
+        "FlashcardProgress", back_populates="card", cascade="all, delete-orphan"
+    )
+
+
+# backend/models.py
+
+
+class FlashcardProgress(Base):
+    __tablename__ = "flashcard_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    card_id = Column(Integer, ForeignKey("flashcards.id"), nullable=False)
+
+    # Интервальное повторение
+    next_review = Column(Date)  # ✅ Используем Date из sqlalchemy
+    interval_days = Column(Integer, default=0)
+    ease_factor = Column(Float, default=2.5)  # ✅ Используем Float из sqlalchemy
+    repetitions = Column(Integer, default=0)
+
+    # Статистика
+    times_seen = Column(Integer, default=0)
+    times_correct = Column(Integer, default=0)
+    last_answered = Column(DateTime)
+
+    # 🔥 ИСПРАВЛЕНИЕ СВЯЗЕЙ:
+    # Называем связь 'user' и указываем back_populates='flashcard_progress'
+    user = relationship("User", back_populates="flashcard_progress")
+
+    # Называем связь 'card' и указываем back_populates='progress'
+    card = relationship("Flashcard", back_populates="progress")
 
 
 class CourseUnit(Base):

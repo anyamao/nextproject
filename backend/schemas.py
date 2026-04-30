@@ -310,6 +310,38 @@ class LanguageCommentOut(BaseModel):
     replies: list["LanguageCommentOut"] = []
 
 
+class FlashcardOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    front: str
+    back: str
+    hint: str | None = None
+    example: str | None = None
+    # Прогресс пользователя (если авторизован)
+    user_progress: dict | None = (
+        None  # { next_review, interval_days, ease_factor, repetitions }
+    )
+
+
+class FlashcardDeckOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    description: str | None = None
+    lesson_id: int
+    card_count: int = 0
+    cards: list[FlashcardOut] = []  # Загружается опционально
+    # Статистика для пользователя
+    due_count: int = 0  # Сколько карточек нужно повторить сегодня
+    new_count: int = 0  # Сколько новых карточек
+    mastered_count: int = 0  # Сколько выучено
+
+
+class FlashcardAnswer(BaseModel):
+    card_id: int
+    rating: str  # "again" | "hard" | "good" | "easy" (как в Anki)
+
+
 # конец #######################################################
 
 
@@ -351,4 +383,7 @@ __all__ = [
     "CourseUnitOut",
     "LanguageLessonOut",
     "LanguageCommentOut",
+    "FlashcardOut",
+    "FlashcardDeckOut",
+    "FlashcardAnswer",
 ]

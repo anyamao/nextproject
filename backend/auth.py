@@ -15,7 +15,7 @@ from models import User
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "5760"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
@@ -66,23 +66,28 @@ async def get_current_user(
     return user
 
 
+# backend/auth.py
+
+
 async def get_current_user_optional(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+    token: str | None = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User | None:
     """
-    Возвращает пользователя, если токен валиден, или None, если токена нет/невалиден.
-    Не выбрасывает ошибку — для публичных эндпоинтов типа /stats, /views.
+    Возвращает пользователя, если токен валиден.
+    Возвращает None, если токена нет или он невалиден — БЕЗ 401!
     """
-    if token is None:
-        return None  # ✅ Просто возвращаем None, не 401
+    if not token:
+        return None
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             return None
-    except JWTError:
-        return None  # ✅ Любая ошибка → None, не 401
 
-    result = await db.execute(select(User).where(User.email == email))
-    return result.scalar_one_or_none()
+        user = await db.execute(select(User).where(User.email == email))
+        return user.scalar_one_or_none()
+    except JWTError:
+        return None  # ✅ Не кидаем 401, просто возвращаем None
+    except Exception:
+        return None  # ✅ Любая ошибка = гость, а не 401
