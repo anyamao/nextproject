@@ -88,6 +88,15 @@ class EgeLessonCreate(BaseModel):
     test_id: int | None = None
 
 
+class CourseUnitOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str  # "My Friends and Me"
+    unit_number: int  # 1
+    description: str | None = None
+    lesson_count: int = 0  # опционально: количество уроков в юните
+
+
 # 📤 Ответ: урок
 class EgeLessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -100,6 +109,7 @@ class EgeLessonOut(BaseModel):
     time_minutes: int | None
     is_completed: bool = False
     test_id: int | None
+    unit: CourseUnitOut | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -338,6 +348,7 @@ __all__ = [
     "CommentWithStatsOut",
     "UserUpdate",
     "UserOut",
+    "CourseUnitOut",
     "LanguageLessonOut",
     "LanguageCommentOut",
 ]

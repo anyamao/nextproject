@@ -48,7 +48,9 @@ class EgeSubject(Base):
     category = Column(
         String(50), nullable=True
     )  # "english", "programming", "math", etc.
-
+    units = relationship(
+        "CourseUnit", back_populates="subject", cascade="all, delete-orphan"
+    )
     # ❌ УДАЛИТЕ back_populates, если в EgeLesson нет обратной связи:
     # ✅ Просто список уроков (без back_populates — безопасно)
     lessons = relationship("EgeLesson", cascade="all, delete-orphan")
@@ -66,6 +68,9 @@ class EgeLesson(Base):
     slug = Column(String, unique=True, nullable=False, index=True)
     description = Column(String, nullable=True)
     content = Column(Text, nullable=True)
+    unit_id = Column(Integer, ForeignKey("course_units.id"), nullable=True)
+    unit = relationship("CourseUnit", back_populates="lessons")
+
     time_minutes = Column(Integer, nullable=True)
     test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)  # Просто FK
     created_at = Column(DateTime, server_default=func.now())
@@ -75,6 +80,25 @@ class EgeLesson(Base):
         back_populates="lesson",
         cascade="all, delete-orphan",
         lazy="select",
+    )
+
+
+class CourseUnit(Base):
+    """Именованный юнит курса (например, "My Friends and Me")"""
+
+    __tablename__ = "course_units"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject_id = Column(Integer, ForeignKey("ege_subjects.id"), nullable=False)
+    title = Column(String(100), nullable=False)  # "My Friends and Me"
+    unit_number = Column(Integer, nullable=False)  # 1, 2, 3...
+    description = Column(Text)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    subject = relationship("EgeSubject", back_populates="units")
+    lessons = relationship(
+        "EgeLesson", back_populates="unit", cascade="all, delete-orphan"
     )
 
 

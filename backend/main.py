@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete, text
 import os
 from sqlalchemy.dialects.postgresql import insert
+
+
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from database import engine, Base, get_db
@@ -33,6 +35,7 @@ from models import (
     LanguageComment,
     LanguageCommentReaction,
     LanguageLessonView,
+    CourseUnit,
 )
 from schemas import (
     UserRegister,
@@ -67,6 +70,7 @@ from schemas import (
     CommentReactionCreate,
     UserOut,
     UserUpdate,
+    CourseUnitOut,
 )
 from auth import (
     get_password_hash,
@@ -937,47 +941,94 @@ async def get_course_subjects(
 # ============================================================================
 
 
-@app.get("/courses/{slug}", response_model=list[EgeLessonOut])
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+@app.get("/courses/{slug}")
 async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
     if slug in EGE_SLUGS:
         raise HTTPException(
             status_code=404, detail="This subject belongs to /ege/ section"
         )
+
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
+
+    # 🔍 Загружаем юниты курса
+    units_result = await db.execute(
+        select(CourseUnit, func.count(EgeLesson.id).label("lesson_count"))
+        .outerjoin(EgeLesson, EgeLesson.unit_id == CourseUnit.id)
+        .where(CourseUnit.subject_id == subject.id)
+        .group_by(CourseUnit.id)
+        .order_by(CourseUnit.unit_number)
+    )
+
+    units_with_counts = [
+        {
+            "id": unit.id,
+            "title": unit.title,
+            "unit_number": unit.unit_number,
+            "description": unit.description,
+            "lesson_count": count,
+        }
+        for unit, count in units_result.all()
+    ]
+
+    # 🔍 Загружаем уроки с явным JOIN для сортировки
+    lessons_result = await db.execute(
+        select(EgeLesson)
+        .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)  # ✅ FIX: явный JOIN
+        .options(selectinload(EgeLesson.unit))
+        .where(EgeLesson.subject_id == subject.id)
+        .order_by(
+            EgeLesson.unit_id.nulls_last(),
+            CourseUnit.unit_number.nulls_last(),  # ✅ Теперь работает
+            EgeLesson.created_at.asc(),
+        )
+    )
+    lessons = lessons_result.scalars().all()
+
+    return {"lessons": lessons, "units": units_with_counts}
+
+
+@app.get("/courses/{slug}/{lesson_slug}", response_model=EgeLessonOut)
+async def get_course_lesson_detail(
+    slug: str, lesson_slug: str, db: AsyncSession = Depends(get_db)
+):
+    # Исключаем ЕГЭ
+    if slug in EGE_SLUGS:
+        raise HTTPException(
+            status_code=404, detail="This subject belongs to /ege/ section"
+        )
+
+    # Находим предмет
+    subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    subject = subject_result.scalar_one_or_none()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # 🔥 Загружаем урок с ЯВНЫМ loading отношения unit
     result = await db.execute(
         select(EgeLesson)
-        .where(EgeLesson.subject_id == subject.id)
-        .order_by(EgeLesson.created_at)
-    )
-    return result.scalars().all()
-
-
-@app.get("/courses/{subject}/{lesson}", response_model=EgeLessonOut)
-async def get_course_lesson(
-    subject: str, lesson: str, db: AsyncSession = Depends(get_db)
-):
-    if subject in EGE_SLUGS:
-        raise HTTPException(
-            status_code=404, detail="This lesson belongs to /ege/ section"
-        )
-    subject_result = await db.execute(
-        select(EgeSubject).where(EgeSubject.slug == subject)
-    )
-    subject_obj = subject_result.scalar_one_or_none()
-    if not subject_obj:
-        raise HTTPException(status_code=404, detail="Subject not found")
-    lesson_result = await db.execute(
-        select(EgeLesson).where(
-            EgeLesson.slug == lesson, EgeLesson.subject_id == subject_obj.id
+        .where(EgeLesson.subject_id == subject.id, EgeLesson.slug == lesson_slug)
+        .options(
+            selectinload(EgeLesson.unit)  # ✅ FIX: загружаем unit заранее!
         )
     )
-    lesson_obj = lesson_result.scalar_one_or_none()
-    if not lesson_obj:
+
+    lesson = result.scalar_one_or_none()
+    if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    return lesson_obj
+
+    return lesson  # ✅ Теперь Pydantic сможет безопасно прочитать lesson.unit
 
 
 # ============================================================================
