@@ -61,6 +61,14 @@ export default function SubjectLessonsPage() {
     fetchData();
   }, [slug]);
 
+  // Подсчёт прогресса
+  const totalLessons = lessons.length;
+  const completedLessons = lessons.filter(
+    (lesson) => lesson.is_completed,
+  ).length;
+  const progressPercentage =
+    totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
@@ -93,6 +101,38 @@ export default function SubjectLessonsPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Все предметы</span>
         </Link>
+
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Прогресс по предмету</span>
+            <span className="text-gray-500">
+              {completedLessons}/{totalLessons}{" "}
+              {completedLessons == 0 ||
+              completedLessons / 10 == 0 ||
+              (completedLessons >= 5 && completedLessons <= 20) ||
+              completedLessons % 10 >= 5
+                ? "уроков пройдено"
+                : completedLessons == 1
+                  ? "урок пройден"
+                  : "урока пройдено"}
+            </span>
+          </div>
+          {totalLessons > 0 ? (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          ) : (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-gray-400 h-2 rounded-full"
+                style={{ width: "0%" }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* ✅ Название предмета + "Все уроки" */}
         <h1 className="text-3xl font-bold text-gray-900 capitalize">

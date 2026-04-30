@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api";
 import LessonReactions from "@/components/LessonReactions";
 import CommentsSection from "@/components/CommentsSection";
 import CopyLinkButton from "@/components/LinkButton";
+import { saveTestReturnUrl } from "@/lib/test-return";
 
 type Lesson = {
   id: number;
@@ -120,41 +121,60 @@ export default function LessonClient({
 
   // ✅ Загрузка названия курса и следующего урока
   // ✅ Загрузка названия курса и следующего урока
+
+  // frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
+
+  // ✅ Загрузка названия курса и следующего урока
   useEffect(() => {
     async function loadCourseAndNextLesson() {
       try {
         // 1️⃣ Загружаем все КУРСЫ (предметы), чтобы найти название текущего
-        // ✅ ИЗМЕНЕНО: используем /courses/subjects вместо /courses
         const courses: Array<{ id: number; title: string; slug: string }> =
           await apiFetch("/courses/subjects");
 
         const currentCourse = courses.find((c) => c.slug === subjectSlug);
         if (currentCourse) {
           setCourseTitle(currentCourse.title);
-          // ✅ Обновляем title страницы для SEO
           document.title = `${currentCourse.title}: ${lesson.title} | MaoSchool`;
         }
 
-        // 2️⃣ Загружаем УРОКИ этого курса, чтобы найти следующий
-        // ✅ ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ: нам нужен список уроков, а не предметов
-        const lessons: Array<{ id: number; slug: string }> = await apiFetch(
-          `/courses/${subjectSlug}`,
-        );
+        // 2️⃣ 🔥 Загружаем УРОКИ курса — теперь ответ { lessons, units }
+        const response = await apiFetch(`/courses/${subjectSlug}`);
 
-        const sorted = lessons.sort((a, b) => a.id - b.id);
+        // 🔥 ИЗВЛЕКАЕМ массив уроков из объекта!
+        const lessons: Array<{ id: number; slug: string }> =
+          response.lessons || [];
+
+        console.log(
+          `🔍 [LessonClient] Found ${lessons.length} lessons in course`,
+        );
+        console.log(`🔍 [LessonClient] Current lesson id: ${lesson.id}`);
+
+        // Сортируем и ищем следующий урок
+        const sorted = [...lessons].sort((a, b) => a.id - b.id); // 🔥 Копия массива, чтобы не мутировать оригинал
         const currentIndex = sorted.findIndex((l) => l.id === lesson.id);
 
+        console.log(
+          `🔍 [LessonClient] currentIndex: ${currentIndex}, total: ${sorted.length}`,
+        );
+
         if (currentIndex !== -1 && currentIndex < sorted.length - 1) {
-          // ✅ Есть следующий урок!
-          setNextLessonSlug(sorted[currentIndex + 1].slug);
+          const nextSlug = sorted[currentIndex + 1].slug;
+          console.log(`✅ [LessonClient] Next lesson slug: ${nextSlug}`);
+          setNextLessonSlug(nextSlug);
         } else {
-          // ❌ Это последний урок
+          console.log(
+            `ℹ️ [LessonClient] No next lesson (currentIndex=${currentIndex}, length=${sorted.length})`,
+          );
           setNextLessonSlug(null);
         }
 
         setLessonsLoaded(true);
       } catch (err) {
-        console.error("Failed to load course/next lesson", err);
+        console.error(
+          "❌ [LessonClient] Failed to load course/next lesson",
+          err,
+        );
         setCourseTitle("Курс");
         setNextLessonSlug(null);
         setLessonsLoaded(true);
@@ -165,6 +185,19 @@ export default function LessonClient({
       loadCourseAndNextLesson();
     }
   }, [subjectSlug, lesson?.id]);
+
+  const handleStartTest = () => {
+    // ✅ Формируем правильный URL возврата
+    const returnTo = `/courses/${subjectSlug}/${lessonSlug}`;
+
+    // ✅ Сохраняем через хелпер
+    saveTestReturnUrl(testId, returnTo);
+
+    // ✅ Переходим на тест с явным параметром returnTo
+    window.location.href = `/tests/${testId}?returnTo=${encodeURIComponent(returnTo)}`;
+  };
+
+  //
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
       <div className="flex-1 w-full items-center justify-center">
@@ -298,12 +331,12 @@ export default function LessonClient({
           {lesson.id && <LessonReactions lessonId={lesson.id} />}
 
           {testId && (
-            <Link
-              href={`/tests/${testId}`}
+            <button
+              onClick={handleStartTest}
               className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
             >
               {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-            </Link>
+            </button>
           )}
 
           {/* ✅ Кнопка "Следующий урок" с умной логикой */}

@@ -12,6 +12,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { getTestReturnUrl } from "@/lib/test-return";
 
 type Question = {
   id: number;
@@ -95,12 +96,35 @@ export default function TestClient({
     }
   };
 
+  useEffect(() => {
+    console.log("🧪 [TestClient] Mounted with props:", {
+      testId: test.id,
+      lessonSlug,
+      subjectSlug,
+    });
+
+    // 🔍 Читаем returnTo ИЗ ПАРАМЕТРОВ URL, а не из document.referrer!
+    const returnTo = getTestReturnUrl(
+      test.id,
+      `/ege/${subjectSlug}/${lessonSlug}`,
+    );
+
+    console.log("🧪 [TestClient] returnTo resolved:", returnTo);
+
+    // Сохраняем в состоянии для использования при редиректе
+    // (или просто используй getTestReturnUrl прямо в handleNext)
+  }, [test.id, subjectSlug, lessonSlug]);
+
   const handleNext = async () => {
     // Переход к следующему вопросу
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       return;
     }
+    const returnTo = getTestReturnUrl(
+      test.id,
+      `/ege/${subjectSlug}/${lessonSlug}`,
+    );
 
     // 🎯 Тест завершён — считаем результат
     const correctCount = questions.filter((q) => q.is_correct).length;
@@ -136,9 +160,8 @@ export default function TestClient({
         passed,
       }),
     );
-
+    window.location.href = `/tests/${test.id}/results?returnTo=${encodeURIComponent(returnTo)}`;
     // Редирект на страницу результатов
-    window.location.href = `/tests/${test.id}/results?returnTo=/ege/${subjectSlug}/${lessonSlug}`;
   };
 
   const handleRetry = () => {
