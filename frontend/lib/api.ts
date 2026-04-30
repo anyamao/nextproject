@@ -33,18 +33,15 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     cache: options.cache || "no-store",
   });
 
-  // Обработка 401 — токен истёк
-  if (response.status === 401) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/"; // или редирект на логин
-    throw new Error("Session expired");
-  }
-
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP ${response.status}`);
+    const error = new Error(errorData.detail || `HTTP ${response.status}`);
+    (error as any).status = response.status;
+    throw error;
   }
 
+  if (response.status === 204) {
+    return null;
+  }
   return response.json();
 }
