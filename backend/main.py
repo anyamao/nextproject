@@ -385,7 +385,7 @@ async def answer_flashcard(
 @app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
 async def get_lesson_flashcards(
     lesson_id: int,
-    current_user: User | None = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     # Находим колоду
@@ -483,7 +483,7 @@ async def get_lesson_flashcards(
 @app.get("/lessons/{lesson_id}/flashcards/stats", response_model=dict)
 async def get_flashcard_stats(
     lesson_id: int,
-    current_user: User | None = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     # Находим колоду

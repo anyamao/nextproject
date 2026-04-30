@@ -1,5 +1,6 @@
 // frontend/app/ege/[slug]/[lesson]/LessonClient.tsx
 "use client";
+import useContactStore from "@/store/states";
 import CommentsSection from "@/components/CommentsSection";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -47,6 +48,7 @@ export default function LessonClient({
   const [lessonsLoaded, setLessonsLoaded] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
+  const { openLogin } = useContactStore();
 
   useEffect(() => {
     async function loadSubjectAndNextLesson() {
@@ -157,8 +159,6 @@ export default function LessonClient({
   useEffect(() => {
     async function fetchFlashcardStats() {
       try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const stats = await apiFetch(
           `/lessons/${lesson.id}/flashcards/stats`,
           {},
@@ -296,14 +296,22 @@ export default function LessonClient({
         <div className="flex flex-row items-center mt-[20px] justify-between ">
           {lesson.id && <LessonReactions lessonId={lesson.id} />}
 
-          {testId && (
-            <Link
-              href={`/tests/${testId}`}
-              className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-md text-center"
-            >
-              {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-            </Link>
-          )}
+          {testId &&
+            (isAuthenticated ? (
+              <Link
+                href={`/tests/${testId}`}
+                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-md text-center"
+              >
+                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+              </Link>
+            ) : (
+              <button
+                onClick={openLogin}
+                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-md text-center"
+              >
+                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+              </button>
+            ))}
           <div className="flex flex-row items-center">
             <div className="flex flex-row items-center min-w-[90px] mr-[5px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
@@ -338,6 +346,7 @@ export default function LessonClient({
         )}
         {flashcardStats?.has_deck && (
           <div className="flex flex-row w-full items-center">
+            (isAuthenticated ? (
             <button
               onClick={() => setShowFlashcards(true)}
               className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[25px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
@@ -370,6 +379,19 @@ export default function LessonClient({
                 </span>
               </div>
             </button>
+            ) :{" "}
+            <button
+              onClick={openLogin}
+              className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[25px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+            >
+              <BookOpen className="w-5 h-5" />
+              <div className="flex flex-col ml-[15px] ">
+                <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
+                  {flashcardStats.title}
+                </span>
+              </div>
+            </button>
+            )
             <p className="smaller-text ml-[15px] ">
               <span className="bg-purple-200 ord-text font-bold mr-[5px]">
                 Карточки для повторения

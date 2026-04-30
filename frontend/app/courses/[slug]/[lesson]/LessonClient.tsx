@@ -1,6 +1,6 @@
 // frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
 "use client";
-
+import useContactStore from "@/store/states";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -51,6 +51,7 @@ export default function LessonClient({
   const [lessonsLoaded, setLessonsLoaded] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
+  const { openLogin } = useContactStore();
 
   // 🔍 Проверка авторизации
   useEffect(() => {
@@ -126,8 +127,6 @@ export default function LessonClient({
   useEffect(() => {
     async function fetchFlashcardStats() {
       try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const stats = await apiFetch(
           `/lessons/${lesson.id}/flashcards/stats`,
           {},
@@ -357,14 +356,22 @@ export default function LessonClient({
         <div className="flex flex-row items-center mt-[20px] justify-between">
           {lesson.id && <LessonReactions lessonId={lesson.id} />}
 
-          {testId && (
-            <button
-              onClick={handleStartTest}
-              className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
-            >
-              {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-            </button>
-          )}
+          {testId &&
+            (isAuthenticated ? (
+              <button
+                onClick={handleStartTest}
+                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
+              >
+                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+              </button>
+            ) : (
+              <button
+                onClick={openLogin}
+                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
+              >
+                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+              </button>
+            ))}
 
           {/* ✅ Кнопка "Следующий урок" с умной логикой */}
           <div className="flex flex-row items-center">
@@ -400,40 +407,56 @@ export default function LessonClient({
             onClose={() => setShowFlashcards(false)}
           />
         )}
+
         {flashcardStats?.has_deck && (
           <div className="flex flex-row w-full items-center">
-            <button
-              onClick={() => setShowFlashcards(true)}
-              className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
-            >
-              <BookOpen className="w-5 h-5" />
-              <div className="flex flex-col ml-[15px] ">
-                <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
-                  {flashcardStats.title}
-                </span>
-                <span className="w-full smaller-text  whitespace-nowrap">
-                  {(() => {
-                    const total =
-                      flashcardStats.due_count + flashcardStats.new_count;
-                    const lastDigit = total % 10;
-                    const lastTwoDigits = total % 100;
+            {isAuthenticated ? (
+              <button
+                onClick={() => setShowFlashcards(true)}
+                className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+              >
+                <BookOpen className="w-5 h-5" />
+                <div className="flex flex-col ml-[15px] ">
+                  <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
+                    {flashcardStats.title}
+                  </span>
+                  <span className="w-full smaller-text  whitespace-nowrap">
+                    {(() => {
+                      const total =
+                        flashcardStats.due_count + flashcardStats.new_count;
+                      const lastDigit = total % 10;
+                      const lastTwoDigits = total % 100;
 
-                    let word;
-                    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-                      word = "карточек";
-                    } else if (lastDigit === 1) {
-                      word = "карточка";
-                    } else if (lastDigit >= 2 && lastDigit <= 4) {
-                      word = "карточки";
-                    } else {
-                      word = "карточек";
-                    }
+                      let word;
+                      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+                        word = "карточек";
+                      } else if (lastDigit === 1) {
+                        word = "карточка";
+                      } else if (lastDigit >= 2 && lastDigit <= 4) {
+                        word = "карточки";
+                      } else {
+                        word = "карточек";
+                      }
 
-                    return `${total} ${word}`;
-                  })()}
-                </span>
-              </div>
-            </button>
+                      return `${total} ${word}`;
+                    })()}
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={openLogin}
+                className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+              >
+                <BookOpen className="w-5 h-5" />
+                <div className="flex flex-col ml-[15px] ">
+                  <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
+                    {flashcardStats.title}
+                  </span>
+                  <span className="w-full smaller-text  whitespace-nowrap"></span>
+                </div>
+              </button>
+            )}
             <p className="smaller-text ml-[15px] ">
               <span className="bg-purple-200 ord-text font-bold mr-[5px]">
                 Карточки для повторения
