@@ -1,20 +1,25 @@
-// frontend/lib/api.ts
-
+// 🔁 Определяем базовый URL: относительный для prod, localhost для dev
 const getBaseUrl = () => {
   if (typeof window !== "undefined") {
+    // В браузере: если на домене — используем относительный путь
     if (
       window.location.hostname === "maoschool.ru" ||
       window.location.hostname === "www.maoschool.ru"
     ) {
-      return "";
+      return ""; // Относительный: /api/... → nginx проксирует
     }
+    // Для localhost — явный порт бэкенда
     return "http://localhost:8010";
   }
+  // На сервере (SSR): используем env или дефолт
   return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8010";
 };
 
+// lib/api.ts
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const BASE_URL = getBaseUrl(); // ✅ Используем динамический baseURL
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8010";
+
+  // Получаем токен из localStorage (только на клиенте)
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -28,28 +33,17 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     cache: options.cache || "no-store",
   });
 
-  // 🔥 УБРАЛИ автоматический редирект на 401!
-  // Теперь компонент сам решает, что делать с ошибкой авторизации
+  // Обработка 401 — токен истёк
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/"; // или редирект на логин
+    throw new Error("Session expired");
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.detail || `HTTP ${response.status}`;
-
-    // 🔍 Логируем для отладки
-    console.warn(
-      `⚠️ [apiFetch] ${response.status} for ${endpoint}:`,
-      errorMessage,
-    );
-
-    // 🔥 Выбрасываем ошибку с кодом статуса, чтобы компонент мог проверить
-    const error = new Error(errorMessage);
-    (error as any).status = response.status;
-    throw error;
-  }
-
-  // Пустой ответ (204 No Content)
-  if (response.status === 204) {
-    return null;
+    throw new Error(errorData.detail || `HTTP ${response.status}`);
   }
 
   return response.json();
