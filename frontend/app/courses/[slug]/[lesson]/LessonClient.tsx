@@ -128,9 +128,10 @@ export default function LessonClient({
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const stats = await apiFetch(`/lessons/${lesson.id}/flashcards/stats`, {
-          headers,
-        });
+        const stats = await apiFetch(
+          `/lessons/${lesson.id}/flashcards/stats`,
+          {},
+        );
         setFlashcardStats(stats);
       } catch (err) {
         // Карточек нет или ошибка — не страшно
@@ -214,8 +215,10 @@ export default function LessonClient({
     // ✅ Формируем правильный URL возврата
     const returnTo = `/courses/${subjectSlug}/${lessonSlug}`;
 
-    // ✅ Сохраняем через хелпер
-    saveTestReturnUrl(testId, returnTo);
+    if (testId) {
+      // ✅ Сохраняем через хелпер
+      saveTestReturnUrl(testId, returnTo);
+    }
 
     // ✅ Переходим на тест с явным параметром returnTo
     window.location.href = `/tests/${testId}?returnTo=${encodeURIComponent(returnTo)}`;
@@ -401,14 +404,14 @@ export default function LessonClient({
           <div className="flex flex-row w-full items-center">
             <button
               onClick={() => setShowFlashcards(true)}
-              className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+              className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
             >
               <BookOpen className="w-5 h-5" />
               <div className="flex flex-col ml-[15px] ">
-                <span className="text-xs whitespace-nowrap font-semibold text-white w-full text-center  ">
+                <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
                   {flashcardStats.title}
                 </span>
-                <span className="w-full whitespace-nowrap">
+                <span className="w-full smaller-text  whitespace-nowrap">
                   {(() => {
                     const total =
                       flashcardStats.due_count + flashcardStats.new_count;
@@ -431,7 +434,7 @@ export default function LessonClient({
                 </span>
               </div>
             </button>
-            <p className="smaller-text ml-[10px] ">
+            <p className="smaller-text ml-[15px] ">
               <span className="bg-purple-200 ord-text font-bold mr-[5px]">
                 Карточки для повторения
               </span>

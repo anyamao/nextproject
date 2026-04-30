@@ -61,9 +61,7 @@ export default function FlashcardSession({
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const data = await apiFetch(`/lessons/${lessonId}/flashcards`, {
-          headers,
-        });
+        const data = await apiFetch(`/lessons/${lessonId}/flashcards`, {});
         setDeck(data);
 
         // Фильтруем карточки: новые + те, что пора повторить
