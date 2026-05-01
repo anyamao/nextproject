@@ -49,13 +49,6 @@ function Mainnav() {
             Кружок английского &apos;Шeкспир&apos;
           </Link>
           <Link
-            href="/ege"
-            onClick={closeEverything}
-            className="ml-[20px] hover:text-blue-500  whitespace-nowrap  duration-300"
-          >
-            Подготовиться к ЕГЭ
-          </Link>
-          <Link
             href="/courses"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500    whitespace-nowrap  duration-300"

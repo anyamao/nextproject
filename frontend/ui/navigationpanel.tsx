@@ -20,10 +20,17 @@ function NavigationPanel() {
 
               <Link
                 onClick={toggleNavigation}
-                href="/ege/math-profile"
+                href="/courses/math-profile"
                 className="cursor-pointer ord-text mt-[10px] font-semibold"
               >
                 ЕГЭ Математика
+              </Link>
+              <Link
+                onClick={toggleNavigation}
+                href="/courses/physics"
+                className="cursor-pointer ord-text mt-[10px] font-semibold"
+              >
+                ЕГЭ Физика
               </Link>
             </div>
           </div>

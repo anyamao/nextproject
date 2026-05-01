@@ -227,7 +227,7 @@ export default function LessonClient({
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
       <div className="flex-1 w-full items-center justify-center">
-        <div className="flex flex-row items-center text-gray-500 smaller-text mb-[15px] font-semibold">
+        <div className="flex flex-row items-center text-gray-500 max-w-[400px] whitespace-nowrap overflow-x-auto smaller-text mb-[15px] font-semibold">
           <Link className="hover:underline  " href={`/courses`}>
             Курсы /
           </Link>
@@ -238,30 +238,34 @@ export default function LessonClient({
         </div>
 
         {/* Заголовок + просмотры */}
-        <div className="w-full flex flex-row items-center justify-between">
-          <Link
-            href={`/courses/${subjectSlug}`}
-            className="text-black hover:text-purple-600 transition flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Все уроки</span>
-          </Link>
+        <div className="w-full flex flex-col md:flex-row items-center justify-between">
+          <div className="w-full">
+            <Link
+              href={`/courses/${subjectSlug}`}
+              className="text-black hover:text-purple-600 transition flex items-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Все уроки</span>
+            </Link>
+          </div>
 
-          <div className="flex flex-row items-center">
-            <div className="flex flex-row items-center mt-[5px] mr-[15px]">
-              <p className="smaller-text text-gray-800 mr-[5px]">
-                {viewCount?.toLocaleString("ru-RU") || "—"}
-              </p>
-              <Eye className="w-4 h-4 text-gray-500" />
+          <div className="w-full justify-end ">
+            <div className="flex flex-row items-center justify-end ">
+              <div className="flex flex-row items-center mt-[5px] mr-[15px]">
+                <p className="smaller-text text-gray-800 mr-[5px]">
+                  {viewCount?.toLocaleString("ru-RU") || "—"}
+                </p>
+                <Eye className="w-4 h-4 text-gray-500" />
+              </div>
+              <h1 className="bigger-text font-bold text-gray-900">
+                {lesson.title}
+              </h1>
             </div>
-            <h1 className="bigger-text font-bold text-gray-900">
-              {lesson.title}
-            </h1>
           </div>
         </div>
 
         {/* Панель: Поделиться + время + результат теста */}
-        <div className="flex flex-row items-center w-full mt-[15px] justify-between">
+        <div className="flex md:flex-row flex-col items-center w-full mt-[15px] justify-between">
           <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
@@ -278,7 +282,7 @@ export default function LessonClient({
           </div>
 
           {isAuthenticated ? (
-            <div className="p-[10px] bg-white rounded-lg h-[50px] flex flex-row items-center border border-gray-200 shadow-sm">
+            <div className="p-[10px] bg-white rounded-lg mt-[10px] md:mt-[0px] h-[50px] flex flex-row items-center border border-gray-200 shadow-sm">
               {loadingResult ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
@@ -353,14 +357,14 @@ export default function LessonClient({
           Понравился урок? Поставь ему лайк и поделись с другом
         </p>
 
-        <div className="flex flex-row items-center mt-[20px] justify-between">
+        <div className="flex flex-col md:flex-row items-center mt-[20px] justify-between">
           {lesson.id && <LessonReactions lessonId={lesson.id} />}
 
           {testId &&
             (isAuthenticated ? (
               <button
                 onClick={handleStartTest}
-                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
+                className="block w-[90%] max-w-[300px] mt-[10px] md:mt-[0px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
               >
                 {testResult?.score ? "Перепройти тест" : "Пройти тест"}
               </button>
@@ -374,7 +378,7 @@ export default function LessonClient({
             ))}
 
           {/* ✅ Кнопка "Следующий урок" с умной логикой */}
-          <div className="flex flex-row items-center">
+          <div className="flex flex-row items-center mt-[10px] md:mt-[0px] ">
             <div className="flex flex-row items-center min-w-[90px] mr-[5px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
               <CopyLinkButton variant="icon" />
@@ -400,7 +404,7 @@ export default function LessonClient({
           </div>
         </div>
       </div>
-      <div className="flex flex-row w-full  items-center">
+      <div className="flex md:flex-row flex-col w-full  items-center">
         {showFlashcards && (
           <FlashcardSession
             lessonId={lesson.id}

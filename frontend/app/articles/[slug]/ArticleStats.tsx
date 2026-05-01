@@ -65,10 +65,6 @@ export default function ArticleStats({ slug }: { slug: string }) {
     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-6 border-t border-b border-gray-200 mt-8">
       {/* 👍👎 Реакции */}
       <div className="flex items-center gap-4">
-        <p className="text-sm font-medium text-gray-500 mr-2">
-          Понравилась статья?
-        </p>
-
         <button
           onClick={() => handleReaction("like")}
           disabled={loading}

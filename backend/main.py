@@ -1251,7 +1251,7 @@ async def get_course_subjects(
     db: AsyncSession = Depends(get_db),
 ):
     # Базовый запрос: исключаем ЕГЭ-предметы
-    query = select(EgeSubject).where(~EgeSubject.slug.in_(EGE_SLUGS))
+    query = select(EgeSubject)
 
     # 🔍 Фильтр по категории
     if category:
@@ -1284,10 +1284,6 @@ async def get_course_subjects(
 
 @app.get("/courses/{slug}")
 async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
-    if slug in EGE_SLUGS:
-        raise HTTPException(
-            status_code=404, detail="This subject belongs to /ege/ section"
-        )
 
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
@@ -1336,10 +1332,6 @@ async def get_course_lesson_detail(
     slug: str, lesson_slug: str, db: AsyncSession = Depends(get_db)
 ):
     # Исключаем ЕГЭ
-    if slug in EGE_SLUGS:
-        raise HTTPException(
-            status_code=404, detail="This subject belongs to /ege/ section"
-        )
 
     # Находим предмет
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))

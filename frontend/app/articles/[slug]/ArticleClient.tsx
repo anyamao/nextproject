@@ -121,8 +121,7 @@ export default function ArticleClient({ article }: { article: Article }) {
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
       <div className="flex-1 w-full items-center justify-center">
-        {/* 🍞 Хлебные крошки: Статьи / Тема / */}
-        <div className="flex flex-row items-center text-gray-500 smaller-text mb-[15px] font-semibold">
+        <div className="flex flex-row items-center text-gray-500 max-w-[400px] whitespace-nowrap overflow-x-auto smaller-text mb-[15px] font-semibold">
           <Link className="hover:underline" href="/articles">
             Статьи /
           </Link>
@@ -135,25 +134,28 @@ export default function ArticleClient({ article }: { article: Article }) {
         </div>
 
         {/* Заголовок + просмотры */}
-        <div className="w-full flex flex-row items-center justify-between">
-          <Link
-            href={`/articles?topic=${encodeURIComponent(article.topic)}`}
-            className="text-black hover:text-purple-600 transition flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Все статьи в теме</span>
-          </Link>
-
-          <div className="flex flex-row items-center">
-            <div className="flex flex-row items-center mt-[5px] mr-[15px]"></div>
-            <h1 className="bigger-text font-bold text-gray-900">
-              {article.title}
-            </h1>
+        <div className="w-full flex flex-col md:flex-row items-center justify-between">
+          <div className="w-full ">
+            <Link
+              href={`/articles?topic=${encodeURIComponent(article.topic)}`}
+              className="text-black hover:text-purple-600 transition flex items-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Все статьи в теме</span>
+            </Link>
+          </div>
+          <div className="w-full justify-end">
+            <div className="flex flex-row items-center w-full justify-end">
+              <div className="flex flex-row items-center mt-[5px] mr-[15px]"></div>
+              <h1 className="bigger-text font-bold text-gray-900">
+                {article.title}
+              </h1>
+            </div>
           </div>
         </div>
 
         {/* Панель: Поделиться + время */}
-        <div className="flex flex-row items-center mb-[40px] w-full mt-[15px] justify-between">
+        <div className="flex flex-col md:flex-row items-center mb-[40px] w-full mt-[15px] justify-between">
           <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
@@ -170,7 +172,7 @@ export default function ArticleClient({ article }: { article: Article }) {
           </div>
 
           {/* Пустой блок для сохранения выравнивания (нет теста) */}
-          <div className="h-[50px] items-center flex flex-row ">
+          <div className="h-[50px] mt-[10px] md:mt-[0px] items-center flex flex-row ">
             <span className="px-3 py-1 bg-purple-100 h-[30px] text-purple-700 text-sm rounded-full font-medium">
               {article.topic}
             </span>

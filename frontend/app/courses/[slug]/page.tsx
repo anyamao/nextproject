@@ -52,59 +52,89 @@ export default function CourseLessonsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        console.log(`🔍 [CoursesPage] Fetching /courses/${slug}...`);
-
+        // 🔥 FIX: переменная data с типом CourseResponse
         const data: CourseResponse = await apiFetch(`/courses/${slug}`);
-        if (!data) {
-          console.error("❌ [CoursesPage] Response is null");
+
+        if (!data || !data.lessons) {
+          console.error("❌ [CoursesPage] Invalid response");
           return;
         }
 
-        let lessonsData = data.lessons || [];
-        const unitsData = data.units || [];
-
-        // 🔥 КЛИЕНТСКИЙ РАСЧЁТ: загружаем результаты тестов
         const token = localStorage.getItem("token");
-        if (token) {
-          console.log("🔍 [CoursesPage] Fetching test results for progress...");
+        const processedLessons: Lesson[] = [];
 
-          const lessonsWithTests = lessonsData.filter((l) => l.test_id);
-          console.log(
-            `🔍 [CoursesPage] Found ${lessonsWithTests.length} lessons with tests`,
-          );
+        // 🔥 Обрабатываем каждый урок ПО ОТДЕЛЬНОСТИ
+        for (const lesson of data.lessons) {
+          let isCompleted = false; // По умолчанию — НЕ пройден
 
-          const results = await Promise.all(
-            lessonsWithTests.map(async (lesson) => {
-              try {
-                const result = await apiFetch(
-                  `/tests/${lesson.test_id}/result`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                    cache: "no-store",
-                  },
+          // 🔥 Только если есть тест И пользователь авторизован — проверяем результат
+          if (token && lesson.test_id) {
+            try {
+              const result = await apiFetch(`/tests/${lesson.test_id}/result`, {
+                headers: { Authorization: `Bearer ${token}` },
+                cache: "no-store",
+              });
+              // 🔥 ЕДИНСТВЕННОЕ условие для is_completed: score >= 75
+              if (result?.score !== undefined && result.score >= 75) {
+                isCompleted = true;
+                console.log(
+                  `✅ Lesson ${lesson.id} "${lesson.title}": score=${result.score} → COMPLETED`,
                 );
-
-                if (result?.passed === true && result?.score >= 75) {
-                  console.log(
-                    `✅ [CoursesPage] Lesson ${lesson.id} completed (score: ${result.score}%)`,
-                  );
-                  return { ...lesson, is_completed: true };
-                }
-                return lesson;
-              } catch (err) {
-                return lesson;
+              } else {
+                console.log(
+                  `⚠️ Lesson ${lesson.id} "${lesson.title}": score=${result?.score ?? "N/A"} → NOT completed`,
+                );
               }
-            }),
-          );
+            } catch (err) {
+              console.warn(
+                `⚠️ Could not fetch test result for lesson ${lesson.id}`,
+              );
+              isCompleted = false;
+            }
+          } else if (!lesson.test_id) {
+            // 🔥 Урок без теста — НИКОГДА не считается пройденным
+            console.log(
+              `ℹ️ Lesson ${lesson.id} "${lesson.title}": no test → NOT completed`,
+            );
+          }
 
-          lessonsData = lessonsData.map((lesson) => {
-            const updated = results.find((r) => r.id === lesson.id);
-            return updated || lesson;
-          });
+          // 🔥 Явно создаём новый объект с правильным is_completed
+          processedLessons.push({ ...lesson, is_completed: isCompleted });
         }
 
-        setLessons(lessonsData);
-        setUnits(unitsData);
+        // 🔥 Лог ПЕРЕД рендером — показывает РЕАЛЬНЫЕ значения
+        console.log(
+          "🎨 [CoursesPage] Final lessons (REAL values):",
+          processedLessons.map((l) => ({
+            id: l.id,
+            title: l.title,
+            test_id: l.test_id,
+            is_completed: l.is_completed,
+          })),
+        );
+
+        // Создаём виртуальные юниты для уроков без unit
+        const rawUnits = data.units || [];
+        const virtualUnits: CourseUnit[] = [];
+
+        const finalLessons = processedLessons.map((lesson) => {
+          if (!lesson.unit) {
+            const vUnit: CourseUnit = {
+              id: 1000000 + lesson.id,
+              title: lesson.title,
+              unit_number: 0,
+              description: null,
+              lesson_count: 1,
+              progress: null,
+            };
+            virtualUnits.push(vUnit);
+            return { ...lesson, unit: vUnit };
+          }
+          return lesson;
+        });
+
+        setLessons(finalLessons);
+        setUnits([...rawUnits, ...virtualUnits]);
 
         // Название курса
         const subjects = await apiFetch("/courses/subjects");
@@ -120,9 +150,7 @@ export default function CourseLessonsPage() {
       }
     }
 
-    if (slug) {
-      fetchData();
-    }
+    if (slug) fetchData();
   }, [slug]);
 
   const toggleUnit = (unitId: number) => {
@@ -134,7 +162,6 @@ export default function CourseLessonsPage() {
     });
   };
 
-  // Группируем уроки по юнитам
   const lessonsByUnit = lessons.reduce(
     (acc, lesson) => {
       const unitId = lesson.unit?.id ?? 0;
@@ -145,34 +172,25 @@ export default function CourseLessonsPage() {
     {} as Record<number, Lesson[]>,
   );
 
-  // 🔥 Прогресс по урокам внутри юнитов (для отображения внутри юнита)
   const unitsWithProgress = units.map((unit) => {
     const unitLessons = lessonsByUnit[unit.id] || [];
     const lessonsWithTests = unitLessons.filter((l) => l.test_id);
 
-    if (lessonsWithTests.length === 0) {
-      return { ...unit, progress: null };
-    }
+    if (lessonsWithTests.length === 0) return { ...unit, progress: null };
 
-    const completed = unitLessons.filter((l) => l.is_completed).length;
+    const completed = unitLessons.filter((l) => l.is_completed === true).length;
     const total = lessonsWithTests.length;
     const percent = Math.round((completed / total) * 100);
 
     return { ...unit, progress: { completed, total, percent } };
   });
 
-  // 🔥🔥 ПРОГРЕСС ПО ЮНИТАМ (для верхней полоски)
-  // Юнит считается пройденным, если ВСЕ уроки с тестами в нём пройдены
   const totalUnits = units.length;
   const completedUnits = units.filter((unit) => {
     const unitLessons = lessonsByUnit[unit.id] || [];
     const lessonsWithTests = unitLessons.filter((l) => l.test_id);
-
-    // Если в юните нет уроков с тестами — считаем его "автоматически пройденным"
-    if (lessonsWithTests.length === 0) return true;
-
-    // Иначе: все уроки с тестами должны быть пройдены
-    return lessonsWithTests.every((l) => l.is_completed);
+    if (lessonsWithTests.length === 0) return false;
+    return lessonsWithTests.every((l) => l.is_completed === true);
   }).length;
 
   const unitProgressPercent =
@@ -180,7 +198,6 @@ export default function CourseLessonsPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-4xl mx-auto">
-      {/* 🔝 Заголовок + ПОЛОСКА ПРОГРЕССА ПО ЮНИТАМ */}
       <div className="w-full mb-8">
         <Link
           href="/courses"
@@ -189,7 +206,6 @@ export default function CourseLessonsPage() {
           <ArrowLeft className="w-5 h-5" /> Все курсы
         </Link>
 
-        {/* 🟣 ПОЛОСКА ПРОГРЕССА ПО ЮНИТАМ (как в ЕГЭ) */}
         <div className="mb-4 rounded-xl">
           <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
             <span className="font-medium flex items-center gap-2">
@@ -215,18 +231,14 @@ export default function CourseLessonsPage() {
               пройдено
             </span>
           </div>
-
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className={` rounded-full h-2 transition-all duration-700 ease-out ${
-                unitProgressPercent === 100
-                  ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                  : "bg-gradient-to-r from-purple-500 to-indigo-600"
+              className={`rounded-full h-2 transition-all duration-700 ease-out ${
+                unitProgressPercent === 100 ? "bg-green-500" : "bg-purple-500"
               }`}
               style={{ width: `${unitProgressPercent}%` }}
             />
           </div>
-
           {unitProgressPercent === 100 && (
             <p className="text-center text-sm text-green-700 font-medium mt-2 flex items-center justify-center gap-1">
               <Trophy className="w-4 h-4" /> Курс завершён! 🎉
@@ -254,28 +266,25 @@ export default function CourseLessonsPage() {
           {unitsWithProgress.map((unit) => {
             const unitLessons = lessonsByUnit[unit.id] || [];
             const isExpanded = expandedUnits.has(unit.id);
-
-            // 🔥 Определяем, пройден ли юнит (для визуального индикатора)
             const lessonsWithTests = unitLessons.filter((l) => l.test_id);
             const isUnitCompleted =
               lessonsWithTests.length === 0
-                ? true
-                : lessonsWithTests.every((l) => l.is_completed);
+                ? false
+                : lessonsWithTests.every((l) => l.is_completed === true);
 
             return (
               <div
                 key={unit.id}
                 className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
               >
-                {/* Прогресс внутри юнита */}
                 {unit.progress && (
                   <div className="mt-3 flex items-center gap-3 px-4">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
                           unit.progress.percent === 100
-                            ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                            : "bg-gradient-to-r from-purple-400 to-indigo-500"
+                            ? "bg-green-400"
+                            : "bg-purple-400 "
                         }`}
                         style={{ width: `${unit.progress.percent}%` }}
                       />
@@ -286,29 +295,21 @@ export default function CourseLessonsPage() {
                   </div>
                 )}
 
-                {/* Заголовок юнита */}
                 <button
                   onClick={() => toggleUnit(unit.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
+                  className="w-full flex items-center justify-between p-5 px-[20px] hover:bg-gray-50 transition"
                 >
-                  <div className="flex items-center gap-4">
-                    {/* ✅ Индикатор пройденного юнита */}
-                    <div
-                      className={`w-10 h-10 rounded-full font-bold flex items-center justify-center text-sm shadow-md ${
-                        isUnitCompleted
-                          ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white"
-                          : "bg-gradient-to-br from-purple-400 to-indigo-500 text-white"
-                      }`}
-                    >
-                      {isUnitCompleted ? "✓" : unit.unit_number}
-                    </div>
-
+                  <div className="flex items-center gap-4 ">
                     <div className="text-left">
                       <div className="flex flex-row">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                          Unit {unit.unit_number} -
-                        </h2>
-                        <h2 className="text-lg font-semibold ml-[3px] text-gray-900">
+                        {unit.unit_number > 0 && (
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            Unit {unit.unit_number} -
+                          </h2>
+                        )}
+                        <h2
+                          className={`text-lg font-semibold ${unit.unit_number > 0 ? "ml-[3px]" : ""} text-gray-900`}
+                        >
                           {unit.title}
                         </h2>
                       </div>
@@ -319,7 +320,6 @@ export default function CourseLessonsPage() {
                       )}
                     </div>
                   </div>
-
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-500">
                       {unitLessons.length} урок
@@ -341,18 +341,16 @@ export default function CourseLessonsPage() {
                   </div>
                 </button>
 
-                {/* Уроки */}
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-4">
                     {unitLessons.map((lesson) => (
                       <Link
                         key={lesson.id}
                         href={`/courses/${slug}/${lesson.slug}`}
-                        className="group block p-4 bg-gray-50 rounded-xl relative border border-gray-200 hover:border-purple-300 hover:shadow-md hover:bg-white transition-all"
+                        className="group block p-4 bg-white shadow-xs relative rounded-xl  border border-gray-200 hover:border-purple-300 hover:shadow-sm hover:bg-white transition-all"
                       >
-                        {/* Бейдж "Пройдено" */}
-                        {lesson.is_completed && (
-                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300 z-10">
+                        {lesson.is_completed === true && (
+                          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300 z-10">
                             <svg
                               className="w-3 h-3"
                               fill="currentColor"
@@ -393,28 +391,6 @@ export default function CourseLessonsPage() {
               </div>
             );
           })}
-
-          {/* Уроки без юнита */}
-          {lessonsByUnit[0]?.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Дополнительные материалы
-              </h2>
-              <div className="space-y-3">
-                {lessonsByUnit[0].map((lesson) => (
-                  <Link
-                    key={lesson.id}
-                    href={`/courses/${slug}/${lesson.slug}`}
-                    className="group block p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all"
-                  >
-                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-700">
-                      {lesson.title}
-                    </h3>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </main>
