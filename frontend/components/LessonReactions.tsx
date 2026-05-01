@@ -4,13 +4,14 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
+import useContactStore from "@/store/states";
 export default function LessonReactions({ lessonId }: { lessonId: number }) {
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [myReaction, setMyReaction] = useState<"like" | "dislike" | null>(null);
   const [loading, setLoading] = useState(false);
   const [views, setViews] = useState(0);
+  const { openLogin } = useContactStore();
   // 📥 Загрузка статистики при открытии
   // frontend/components/LessonReactions.tsx (или где он у тебя лежит)
 
@@ -56,7 +57,7 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
   const handleReaction = async (type: "like" | "dislike") => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Войдите, чтобы оценивать уроки!");
+      openLogin();
       return;
     }
 

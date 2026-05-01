@@ -205,9 +205,13 @@ export default function TestClient({
               <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
                 {currentIndex + 1}
               </span>
-              <p className="text-lg font-medium text-gray-900 leading-relaxed">
-                {currentQuestion?.question_text}
-              </p>
+
+              <div
+                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                dangerouslySetInnerHTML={{
+                  __html: currentQuestion?.question_text || "",
+                }}
+              />
             </div>
           </div>
 
