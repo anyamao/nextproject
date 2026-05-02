@@ -40,7 +40,6 @@ export function isTokenExpired(token: string): boolean {
   const payload = decodeJWT(token);
   if (!payload?.exp) return true;
 
-  // exp в секундах, Date.now() в миллисекундах
   return payload.exp * 10000 < Date.now();
 }
 

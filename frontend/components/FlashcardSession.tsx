@@ -180,7 +180,7 @@ export default function FlashcardSession({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Загружаем карточки...</p>
@@ -191,7 +191,7 @@ export default function FlashcardSession({
 
   if (!deck || queue.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-gray-100  flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-8 max-w-md text-center">
           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <RotateCw className="w-8 h-8 text-purple-600" />
@@ -218,7 +218,6 @@ export default function FlashcardSession({
   return (
     <div className="fixed inset-0 bg-gray-100   flex items-center justify-center z-50 p-4 pt-[100px]">
       <div className="w-full max-w-2xl">
-        {/* 🔝 Заголовок + кнопка "Вернуться к уроку" */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={handleReturnToLesson}
@@ -229,7 +228,7 @@ export default function FlashcardSession({
             <span className="text-sm font-medium">Вернуться к уроку</span>
           </button>
 
-          <div className="text-right">
+          <div className="text-right   hidden md:flex  flex items-center justify-center flex-1">
             <p className="text-gray-600 text-sm">
               Карточка {currentIndex + 1} из {queue.length}
             </p>
@@ -243,6 +242,11 @@ export default function FlashcardSession({
             <X className="w-6 h-6" />
           </button>
         </div>
+        <div className="text-right   md:hidden  flex items-center justify-center flex-1">
+          <p className="text-gray-600 text-sm">
+            Карточка {currentIndex + 1} из {queue.length}
+          </p>
+        </div>
 
         {/* 📊 Прогресс-бар */}
         <div className="mb-6">
@@ -252,7 +256,7 @@ export default function FlashcardSession({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
+              className="bg-purple-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -312,7 +316,7 @@ export default function FlashcardSession({
 
         {/* 🗂️ Карточка с анимацией переворота */}
         <div
-          className={`relative w-full aspect-[4/3] [perspective:1000px] cursor-pointer select-none ${
+          className={`relative w-full  aspect-[4/3] [perspective:1000px] cursor-pointer select-none ${
             isFlipped ? "flipped" : ""
           }`}
           onClick={handleFlip}
@@ -324,9 +328,13 @@ export default function FlashcardSession({
           >
             {/* 🔹 Лицевая сторона (вопрос) */}
             <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-3xl shadow-xl border-2 border-purple-100 p-8 flex flex-col items-center justify-center text-center">
-              <p className="text-2xl font-medium text-gray-900 mb-4">
-                {currentCard.front}
-              </p>
+              <div
+                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                dangerouslySetInnerHTML={{
+                  __html: currentCard.front || "",
+                }}
+              />
+
               {currentCard.hint && (
                 <p className="text-sm text-gray-500 italic">
                   💡 {currentCard.hint}
@@ -339,18 +347,29 @@ export default function FlashcardSession({
 
             {/* 🔹 Обратная сторона (ответ) */}
             <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-3xl shadow-xl border-2 border-purple-200 p-8 flex flex-col items-center justify-center text-center">
-              <p className="text-2xl font-semibold text-purple-800 mb-2">
-                {currentCard.back}
-              </p>
-              <p className="ord-text font-semibold text-gray-600 mb-4">
-                {currentCard.front}
-              </p>
+              <div
+                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                dangerouslySetInnerHTML={{
+                  __html: currentCard.back || "",
+                }}
+              />
+
+              <div
+                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                dangerouslySetInnerHTML={{
+                  __html: currentCard.front || "",
+                }}
+              />
 
               {currentCard.example && (
-                <p className="text-sm text-gray-600 italic  border-purple-300  py-2">
-                  "{currentCard.example}"
-                </p>
+                <div
+                  className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                  dangerouslySetInnerHTML={{
+                    __html: currentCard.example || "",
+                  }}
+                />
               )}
+
               <p className="absolute bottom-6 text-xs text-gray-400">
                 ← Нажмите или используйте стрелки →
               </p>

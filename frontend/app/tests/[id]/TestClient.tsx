@@ -9,6 +9,8 @@ import {
   Check,
   X,
   RefreshCw,
+  ChevronDown,
+  BookOpen,
   Trophy,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -22,6 +24,7 @@ type Question = {
   is_answered?: boolean;
   is_correct?: boolean;
   expected_answer?: string;
+  solution?: string | null;
 };
 
 type Test = {
@@ -47,6 +50,7 @@ export default function TestClient({
   const [feedback, setFeedback] = useState<{
     correct: boolean;
     expected?: string;
+    solution?: string | null;
   } | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
@@ -72,7 +76,11 @@ export default function TestClient({
         { method: "POST" },
       );
 
-      setFeedback({ correct: result.correct, expected: result.expected });
+      setFeedback({
+        correct: result.correct,
+        expected: result.expected,
+        solution: result.solution,
+      });
 
       // Обновляем вопрос в списке
       setQuestions((prev) =>
@@ -84,6 +92,7 @@ export default function TestClient({
                 is_answered: true,
                 is_correct: result.correct,
                 expected_answer: result.expected,
+                solution: result.solution,
               }
             : q,
         ),
@@ -169,24 +178,69 @@ export default function TestClient({
     setFeedback(null);
   };
 
+  // 🔹 Вспомогательный компонент для сворачиваемого решения
+  function SolutionBlock({ solution }: { solution: string }) {
+    const [isExpanded, setIsExpanded] = useState(true); // ✅ По умолчанию развёрнуто
+
+    return (
+      <div className="mt-3 mx-[20px] my-[20px] ">
+        {/* 🔹 Заголовок с кнопкой сворачивания */}
+        <button
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="w-full flex items-center justify-between px-[10px] py-2 text-left hover:bg-purple-50 rounded-lg transition group"
+        >
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-purple-600" />
+            <span className="text-sm bigger-text font-medium text-purple-800">
+              Решение:
+            </span>
+          </div>
+
+          {/* 🔹 Стрелочка с анимацией поворота */}
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+              isExpanded ? "rotate-180" : ""
+            } group-hover:text-purple-600`}
+          />
+        </button>
+
+        {/* 🔹 Контент решения с анимацией появления */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div
+            className="text-sm text-gray-700 my-[10px] px-[10px] pb-[20px] pb-2 solution-content"
+            dangerouslySetInnerHTML={{ __html: solution }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className=" w-full max-w-[1100px] py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* 🔙 Назад + Прогресс */}
-        <div className="mb-8">
+        <div className="mb-5">
           <Link
-            href={`/ege/${subjectSlug}/${lessonSlug}`}
+            href={`/courses/${subjectSlug}/${lessonSlug}`}
             className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Вернуться к уроку</span>
           </Link>
 
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
-            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
-              {currentIndex + 1} / {questions.length}
-            </span>
+          <div className="flex items-center flex-col md:flex-row justify-between mb-2">
+            <div className="w-full">
+              <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
+            </div>
+            <div className="w-full flex justify-end h-[30px] ">
+              <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
+                {currentIndex + 1} / {questions.length}
+              </span>
+            </div>
           </div>
 
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -197,11 +251,19 @@ export default function TestClient({
           </div>
         </div>
 
+        <div className="my-3 text-center text-sm text-gray-500">
+          Правильных:{" "}
+          <span className="">
+            {questions.filter((q) => q.is_correct).length}
+          </span>{" "}
+          / {questions.length}
+        </div>
+
         {/* 📦 Карточка вопроса */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Текст вопроса */}
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
-            <div className="flex items-start gap-3">
+            <div className="flex flex-col md:flex-row  items-start gap-3">
               <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
                 {currentIndex + 1}
               </span>
@@ -216,7 +278,7 @@ export default function TestClient({
           </div>
 
           {/* Поле ввода */}
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 w-full">
             <div className="relative">
               <input
                 type="text"
@@ -227,7 +289,7 @@ export default function TestClient({
                 }
                 placeholder="Введите ваш ответ..."
                 disabled={!!feedback}
-                className={`w-full p-4 pr-12 border-2 rounded-xl text-lg outline-none transition ${
+                className={`w-full whitespace-nowrap overflow-x-auto  p-4 pr-12 border-2 rounded-xl text-lg outline-none transition ${
                   feedback
                     ? feedback.correct
                       ? "border-green-300 bg-green-50"
@@ -252,59 +314,63 @@ export default function TestClient({
 
             {/* Обратная связь */}
             {feedback && (
-              <div
-                className={`p-4 rounded-xl border-2 ${
-                  feedback.correct
-                    ? "bg-green-50 border-green-200"
-                    : "bg-red-50 border-red-200"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      feedback.correct
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {feedback.correct ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      <X className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p
-                      className={`font-semibold ${
-                        feedback.correct ? "text-green-800" : "text-red-800"
+              <div className="flex flex-col">
+                <div
+                  className={`p-4 rounded-xl border-2 ${
+                    feedback.correct
+                      ? "bg-green-50 border-green-200"
+                      : "bg-red-50 border-red-200"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                        feedback.correct
+                          ? "bg-green-100 text-green-600"
+                          : "bg-red-100 text-red-600"
                       }`}
                     >
-                      {feedback.correct ? "✅ Правильно!" : "❌ Неверно"}
-                    </p>
-                    {!feedback.correct && feedback.expected && (
-                      <p className="text-sm text-gray-700 mt-1">
-                        Правильный ответ:{" "}
-                        <span className="font-mono font-medium">
-                          {feedback.expected}
-                        </span>
-                      </p>
-                    )}
-                    {!feedback.correct && (
-                      <button
-                        onClick={handleRetry}
-                        className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1"
+                      {feedback.correct ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        <X className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p
+                        className={`font-semibold ${
+                          feedback.correct ? "text-green-800" : "text-red-800"
+                        }`}
                       >
-                        <RefreshCw className="w-3 h-3" /> Попробовать ещё раз
-                      </button>
-                    )}
+                        {feedback.correct ? "✅ Правильно!" : "❌ Неверно"}
+                      </p>
+                      {!feedback.correct && feedback.expected && (
+                        <p className="text-sm text-gray-700 mt-1">
+                          Правильный ответ:{" "}
+                          <span className="font-mono font-medium">
+                            {feedback.expected}
+                          </span>
+                        </p>
+                      )}
+                      {!feedback.correct && (
+                        <button
+                          onClick={handleRetry}
+                          className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1"
+                        >
+                          <RefreshCw className="w-3 h-3" /> Попробовать ещё раз
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Кнопка повторной попытки (если неверно) */}
               </div>
             )}
           </div>
 
           {/* Кнопки навигации */}
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-6 py-2  flex items-center justify-between">
             <button
               onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
               disabled={currentIndex === 0}
@@ -346,16 +412,13 @@ export default function TestClient({
               </button>
             )}
           </div>
+
+          {feedback && feedback.solution && (
+            <SolutionBlock solution={feedback.solution} />
+          )}
         </div>
 
         {/* Статистика */}
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Правильных:{" "}
-          <span className="font-semibold text-purple-700">
-            {questions.filter((q) => q.is_correct).length}
-          </span>{" "}
-          / {questions.length}
-        </div>
       </div>
     </div>
   );

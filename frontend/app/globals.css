@@ -115,6 +115,53 @@
 .perspective-1000 {
   perspective: 1000px;
 }
+.solution-content {
+  & > :first-child {
+    margin-top: 0;
+  }
+  & > :last-child {
+    margin-bottom: 0;
+  }
+
+  & p {
+    margin: 0.5em 0;
+    line-height: 1.6;
+  }
+  & strong,
+  & b {
+    font-weight: 600;
+    color: #4c1d95;
+  }
+  & em,
+  & i {
+    font-style: italic;
+    color: #6b7280;
+  }
+  & ul,
+  & ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+  & li {
+    margin: 0.25em 0;
+  }
+  & a {
+    color: #7c3aed;
+    text-decoration: none;
+    border-bottom: 1px dashed #7c3aed;
+  }
+  & a:hover {
+    color: #6d28d9;
+    border-bottom-style: solid;
+  }
+  & code {
+    background: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+}
 .transform-style-3d {
   transform-style: preserve-3d;
 }

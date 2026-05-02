@@ -327,7 +327,7 @@ class EgeTestQuestion(Base):
     question_text = Column(Text, nullable=False)
     correct_answer = Column(String, nullable=False)
     order_index = Column(Integer, default=0)
-
+    solution = Column(Text, nullable=True)
     # ✅ Обратная связь на тест (единственная, которая нужна с back_populates)
     test = relationship("EgeTest", back_populates="questions")
 

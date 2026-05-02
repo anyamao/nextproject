@@ -1,6 +1,7 @@
+// frontend/components/Login.tsx — твой оригинальный код + 2 правки
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 🔥 ПРАВКА 1: добавил useEffect
 import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
 import { X, Eye, EyeOff } from "lucide-react";
@@ -41,6 +42,13 @@ export default function Login() {
     email: "",
     password: "",
   });
+
+  // 🔥 ПРАВКА 1: Скролл наверх при открытии модалки
+  useEffect(() => {
+    if (loginState) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [loginState]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -85,9 +93,11 @@ export default function Login() {
         avatar_url: data.user.avatar_url || "default_cat.jpg", // ✅ Обязательно!
         status: data.user.status,
       });
-      // ✅ Закрываем модалку и обновляем роутер
+      // ✅ Закрываем модалку
       toggleLogin();
-      router.refresh();
+
+      // 🔥 ПРАВКА 2: Полная перезагрузка ТЕКУЩЕЙ страницы (не редирект!)
+      window.location.reload();
     } catch (err: unknown) {
       const rawMessage =
         err instanceof Error ? err.message : "Failed to log in";

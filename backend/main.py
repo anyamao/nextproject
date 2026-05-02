@@ -1735,6 +1735,7 @@ async def check_single_answer(
         "correct": is_correct,
         "expected": correct_ans if not is_correct else None,
         "question_id": question_id,
+        "solution": question.solution,
     }
 
 
