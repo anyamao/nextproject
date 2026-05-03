@@ -34,13 +34,8 @@ function Mainnav() {
             <Register></Register>
           </div>
         </div>
-        <div className=" flex overflow-x-scroll  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white sm:justify-center   mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   sm:items-center">
+        <div className=" flex overflow-x-auto  overflow-y-hidden w-full scrollbar-thin scrollbar-thumb-white scrollbar-track-white sm:justify-center   mb-[10px] flex-row smaller-text  p-[10px] pb-[15px]   sm:items-center">
           {" "}
-          <Link
-            href="/chats"
-            onClick={closeEverything}
-            className="hover:text-blue-500 whitespace-nowrap hidden duration-300"
-          ></Link>
           <Link
             href="/english"
             onClick={closeEverything}
@@ -54,14 +49,6 @@ function Mainnav() {
             className="ml-[20px] hover:text-blue-500    whitespace-nowrap  duration-300"
           >
             Разные курсы
-          </Link>
-          {" "}
-          <Link
-            href="/tutor"
-            onClick={closeEverything}
-            className=" ml-[20px] hidden whitespace-nowrap  hover:text-blue-500 duration-300"
-          >
-            ИИ-учитель
           </Link>
           <Link
             href="/articles"

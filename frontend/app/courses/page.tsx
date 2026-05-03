@@ -11,6 +11,9 @@ import {
   Globe,
   Calculator,
   Filter,
+  LanguagesIcon,
+  Notebook,
+  Braces,
 } from "lucide-react";
 
 type Course = {
@@ -27,6 +30,9 @@ const CATEGORIES = [
   { value: "", label: "Все", icon: Filter },
   { value: "Английский", label: "Английский", icon: Globe },
   { value: "Веб-разработка", label: "Веб-разработка", icon: Code },
+  { value: "Анализ данных", label: "Анализ данных", icon: Braces },
+  { value: "ЕГЭ", label: "ЕГЭ", icon: Notebook },
+  { value: "Китайский", label: "Китайский", icon: LanguagesIcon },
 ];
 
 export default function CoursesPage() {

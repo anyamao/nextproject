@@ -16,7 +16,7 @@ export function saveTestReturnUrl(testId: number, returnUrl: string): void {
  */
 export function getTestReturnUrl(
   testId: number,
-  defaultReturn: string = "/ege/math-profile",
+  defaultReturn: string = "/courses",
 ): string {
   if (typeof window === "undefined") return defaultReturn;
 

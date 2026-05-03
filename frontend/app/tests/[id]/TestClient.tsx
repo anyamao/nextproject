@@ -115,7 +115,7 @@ export default function TestClient({
     // 🔍 Читаем returnTo ИЗ ПАРАМЕТРОВ URL, а не из document.referrer!
     const returnTo = getTestReturnUrl(
       test.id,
-      `/ege/${subjectSlug}/${lessonSlug}`,
+      `/courses/${subjectSlug}/${lessonSlug}`,
     );
 
     console.log("🧪 [TestClient] returnTo resolved:", returnTo);
@@ -132,7 +132,7 @@ export default function TestClient({
     }
     const returnTo = getTestReturnUrl(
       test.id,
-      `/ege/${subjectSlug}/${lessonSlug}`,
+      `/courses/${subjectSlug}/${lessonSlug}`,
     );
 
     // 🎯 Тест завершён — считаем результат
