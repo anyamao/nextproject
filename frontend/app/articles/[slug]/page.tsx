@@ -1,4 +1,3 @@
-// frontend/app/articles/[slug]/page.tsx
 import ArticleClient from "./ArticleClient";
 import { notFound } from "next/navigation";
 import { apiFetch } from "@/lib/api";

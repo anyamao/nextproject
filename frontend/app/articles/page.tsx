@@ -1,4 +1,3 @@
-// frontend/app/articles/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -31,12 +30,10 @@ export default function ArticlesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Загрузка статей с бэкенда
   useEffect(() => {
     async function fetchArticles() {
       setLoading(true);
       try {
-        // ✅ Формируем параметры запроса
         const params = new URLSearchParams();
         if (activeTopic !== "Все") {
           params.append("topic", activeTopic);
@@ -51,24 +48,20 @@ export default function ArticlesPage() {
         const data = await apiFetch(url);
         setArticles(data);
       } catch (err) {
-        console.error("Failed to fetch articles", err);
       } finally {
         setLoading(false);
       }
     }
     fetchArticles();
-  }, [activeTopic, searchQuery]); // ✅ Перезагружаем при изменении фильтров
+  }, [activeTopic, searchQuery]);
 
-  // 🔍 Локальная фильтрация для мгновенного отклика (опционально)
   useEffect(() => {
     let result = articles;
 
-    // Фильтр по теме (если бэкенд не справился)
     if (activeTopic !== "Все") {
       result = result.filter((a) => a.topic === activeTopic);
     }
 
-    // Поиск по названию (если бэкенд не справился)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter((a) => a.title.toLowerCase().includes(query));
@@ -92,9 +85,7 @@ export default function ArticlesPage() {
         </p>
       </div>
 
-      {/* 🔍 Поиск + Фильтр по темам */}
       <div className="w-full mb-8 space-y-4">
-        {/* Поисковая строка */}
         <div className="relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -114,7 +105,6 @@ export default function ArticlesPage() {
           )}
         </div>
 
-        {/* Кнопки тем */}
         <div className="flex flex-wrap justify-center gap-2">
           {TOPICS.map((topic) => (
             <button
@@ -133,7 +123,6 @@ export default function ArticlesPage() {
         </div>
       </div>
 
-      {/* 📰 Список статей */}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600" />
@@ -181,7 +170,6 @@ export default function ArticlesPage() {
         </div>
       )}
 
-      {/* 💡 Инфо о фильтрации */}
       {!loading && (searchQuery || activeTopic !== "Все") && (
         <p className="text-center text-sm text-gray-500 mt-6">
           Показано {filteredArticles.length} из {articles.length} статей

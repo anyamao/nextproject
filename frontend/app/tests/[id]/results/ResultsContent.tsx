@@ -1,5 +1,4 @@
-// frontend/app/tests/[id]/results/ResultsContent.tsx
-"use client"; // ✅ Только здесь!
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -15,7 +14,7 @@ type Result = {
 
 interface ResultsContentProps {
   testId: number;
-  returnTo: string | null; // ✅ Принимаем returnTo как prop
+  returnTo: string | null;
 }
 
 export default function ResultsContent({
@@ -32,9 +31,7 @@ export default function ResultsContent({
     if (stored) {
       try {
         setResult(JSON.parse(stored));
-      } catch (e) {
-        console.error("❌ Failed to parse result:", e);
-      }
+      } catch (e) {}
     }
     setLoading(false);
   }, [testId]);
@@ -65,20 +62,16 @@ export default function ResultsContent({
     );
   }
 
-  // 🔥 Умный редирект: используем returnTo или определяем из sessionStorage
   const getReturnUrl = () => {
-    // 1️⃣ Если передан returnTo — используем его
     if (returnTo) {
       return returnTo;
     }
 
-    // 2️⃣ Пробуем взять из sessionStorage (сохраняем перед тестом)
     const saved = sessionStorage.getItem(`test_${testId}_returnTo`);
     if (saved) {
       return saved;
     }
 
-    // 3️⃣ Дефолт для ЕГЭ
     return "/ege/math-profile";
   };
 
@@ -87,7 +80,6 @@ export default function ResultsContent({
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-12 px-4">
       <div className="max-w-2xl mx-auto text-center">
-        {/* 🏆 Заголовок */}
         <div
           className={`inline-flex items-center gap-3 px-6 py-3 rounded-full mb-8 ${
             result.passed
@@ -100,7 +92,6 @@ export default function ResultsContent({
           </span>
         </div>
 
-        {/* 📊 Результат */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 mb-8">
           <div className="text-7xl font-bold mb-2 bg-gradient-to-r from-purple-500 to-blue-600 bg-clip-text text-transparent">
             {result.score}%
@@ -109,7 +100,6 @@ export default function ResultsContent({
             {result.correct} из {result.total} правильных ответов
           </p>
 
-          {/* Прогресс-круг */}
           <div className="relative w-32 h-32 mx-auto mb-6">
             <svg
               className="w-full h-full transform -rotate-90"
@@ -142,10 +132,9 @@ export default function ResultsContent({
             </div>
           </div>
 
-          {/* Кнопки действий */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href={finalReturnTo} // ✅ Используем умный редирект
+              href={finalReturnTo}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition"
             >
               <ArrowLeft className="w-4 h-4" /> Вернуться к уроку

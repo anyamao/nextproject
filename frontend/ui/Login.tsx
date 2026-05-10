@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
 import { X, Eye, EyeOff } from "lucide-react";
 
-// ✅ Вынесем утилиту в отдельный файл позже, пока оставим здесь
 function getRussianErrorMessage(error: string): string {
   const errorMap: Record<string, string> = {
     "User already registered": "Этот email уже зарегистрирован",
@@ -43,7 +42,6 @@ export default function Login() {
     password: "",
   });
 
-  // 🔥 ПРАВКА 1: Скролл наверх при открытии модалки
   useEffect(() => {
     if (loginState) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -61,14 +59,13 @@ export default function Login() {
     setError(null);
 
     try {
-      // ✅ Используем apiFetch или прямой fetch с правильным URL и JSON
       const BASE_URL =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
 
       const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // ✅ JSON, не form-data!
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: formData.email,
@@ -82,21 +79,17 @@ export default function Login() {
         throw new Error(data.detail || "Failed to log in");
       }
 
-      // ✅ Сохраняем токен и пользователя
-      // ✅ Сохраняем токен и пользователя
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser({
         id: data.user.id,
         username: data.user.username,
         email: data.user.email,
-        avatar_url: data.user.avatar_url || "default_cat.jpg", // ✅ Обязательно!
+        avatar_url: data.user.avatar_url || "default_cat.jpg",
         status: data.user.status,
       });
-      // ✅ Закрываем модалку
       toggleLogin();
 
-      // 🔥 ПРАВКА 2: Полная перезагрузка ТЕКУЩЕЙ страницы (не редирект!)
       window.location.reload();
     } catch (err: unknown) {
       const rawMessage =
@@ -127,7 +120,6 @@ export default function Login() {
             onSubmit={handleLogin}
             className="w-full max-w-[400px] flex flex-col items-center"
           >
-            {/* Email */}
             <div className="flex flex-col min-w-full mt-[20px]">
               <label className="ml-[10px] font-semibold">Ваш email</label>
               <div className="w-full bg-white mt-[5px] h-[40px] p-[10px] px-[20px] overflow-x-auto overflow-y-hidden border-[1px] border-gray-300 flex items-center rounded-lg">
@@ -143,7 +135,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password */}
             <div className="flex flex-col min-w-full mt-[20px]">
               <label className="ml-[10px] font-semibold">Ваш пароль</label>
               <div className="w-full bg-white mt-[5px] h-[40px] p-[10px] px-[20px] overflow-x-auto overflow-y-hidden border-[1px] border-gray-300 flex items-center rounded-lg">
@@ -179,12 +170,10 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Error */}
             <p className="h-[15px] smaller-text mt-[10px] text-center text-red-700">
               {error || ""}
             </p>
 
-            {/* Submit */}
             <button
               type="submit"
               className="w-[80%] h-[40px] mt-[20px] bg-purple-500 text-white rounded-lg disabled:opacity-50"
@@ -194,7 +183,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Register link */}
           <div className="mt-[10px] flex">
             <p>Нет аккаунта?</p>
             <p

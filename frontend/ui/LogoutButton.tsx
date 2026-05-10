@@ -12,13 +12,10 @@ export default function LogoutButton() {
 
   const handleLogout = () => {
     try {
-      // 1. Очищаем localStorage
       authStorage.clear();
 
-      // 2. Очищаем Zustand store
       logout();
 
-      // 3. Перезагружаем страницу (или можно router.push('/') для редиректа)
       window.location.reload();
     } catch (err) {
       console.error("Logout error:", err);

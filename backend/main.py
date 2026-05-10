@@ -1,4 +1,3 @@
-# backend/main.py
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -115,14 +114,12 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ БД подключена. Таблицы проверены/созданы.")
     yield
     await engine.dispose()
 
 
 app = FastAPI(title="NextProject Auth API", version="1.0.0", lifespan=lifespan)
 
-# 🔐 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -139,11 +136,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ============================================================================
-# 🔐 AUTH
-# ============================================================================
 
 
 @app.post("/auth/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -213,7 +205,6 @@ async def update_profile_settings(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Проверка юзернейма
     if data.username and data.username != current_user.username:
         existing = await db.execute(
             select(User).where(User.username == data.username.lower())
@@ -222,7 +213,6 @@ async def update_profile_settings(
             raise HTTPException(status_code=400, detail="Username already taken")
         current_user.username = data.username.lower()
 
-    # ✅ Обновление аватара (только из разрешённого списка)
     ALLOWED_AVATARS = {
         "default_cat.jpg",
         "orange_cat.jpg",
@@ -255,16 +245,6 @@ async def update_profile_settings(
     )
 
 
-# ============================================================================
-# 🌍 LANGUAGES SECTION (полностью изолирована от ЕГЭ!)
-# ============================================================================
-
-# --- Схемы Pydantic ---
-
-
-# backend/main.py
-
-
 @app.post("/flashcards/{card_id}/answer", response_model=dict)
 async def answer_flashcard(
     card_id: int,
@@ -272,12 +252,10 @@ async def answer_flashcard(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Находим карточку
     card = await db.get(Flashcard, card_id)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    # Загружаем или создаём прогресс
     progress = await db.execute(
         select(FlashcardProgress).where(
             FlashcardProgress.user_id == current_user.id,
@@ -291,7 +269,7 @@ async def answer_flashcard(
             user_id=current_user.id,
             card_id=card_id,
             next_review=date.today(),
-            interval_days=0,  # ✅ Явно задаём дефолты
+            interval_days=0,
             ease_factor=2.5,
             repetitions=0,
             times_seen=0,
@@ -299,7 +277,6 @@ async def answer_flashcard(
         )
         db.add(progress)
 
-    # 🔥 Безопасное получение значений (фоллбэк на дефолты)
     interval_days = progress.interval_days if progress.interval_days is not None else 0
     ease_factor = progress.ease_factor if progress.ease_factor is not None else 2.5
     repetitions = progress.repetitions if progress.repetitions is not None else 0
@@ -307,7 +284,6 @@ async def answer_flashcard(
     rating = answer.rating
     today = date.today()
 
-    # 🔥 Алгоритм интервального повторения (упрощённый SM-2)
     if rating == "again":
         new_repetitions = 0
         new_interval = 0
@@ -346,19 +322,16 @@ async def answer_flashcard(
         next_review = today + timedelta(days=new_interval)
 
     else:
-        # Fallback для неизвестного rating
         new_interval = 1
         new_repetitions = repetitions
         new_ease = ease_factor
         next_review = today
 
-    # 🔥 Обновляем прогресс — гарантированно не None
     progress.interval_days = new_interval
     progress.ease_factor = new_ease
     progress.repetitions = new_repetitions
     progress.next_review = next_review
 
-    # Обновляем статистику (с защитой от None)
     progress.times_seen = (progress.times_seen or 0) + 1
     if rating in ("good", "easy"):
         progress.times_correct = (progress.times_correct or 0) + 1
@@ -378,17 +351,12 @@ async def answer_flashcard(
     }
 
 
-# --- Эндпоинты ---
-# backend/main.py
-
-
 @app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
 async def get_lesson_flashcards(
     lesson_id: int,
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    # Находим колоду
     deck = await db.execute(
         select(FlashcardDeck)
         .where(FlashcardDeck.lesson_id == lesson_id)
@@ -399,7 +367,6 @@ async def get_lesson_flashcards(
     if not deck:
         raise HTTPException(status_code=404, detail="No flashcards for this lesson")
 
-    # Если пользователь авторизован — добавляем прогресс и фильтруем карточки
     cards_out = []
     due_count = new_count = mastered_count = 0
 
@@ -407,7 +374,6 @@ async def get_lesson_flashcards(
         today = date.today()
 
         for card in deck.cards:
-            # Загружаем прогресс пользователя
             progress = await db.execute(
                 select(FlashcardProgress).where(
                     FlashcardProgress.user_id == current_user.id,
@@ -416,18 +382,17 @@ async def get_lesson_flashcards(
             )
             progress = progress.scalar_one_or_none()
 
-            # Классифицируем карточку
             if not progress:
-                new_count += 1  # Новая карточка
+                new_count += 1
                 card_data = card
             elif progress.next_review and progress.next_review <= today:
-                due_count += 1  # Нужно повторить
+                due_count += 1
                 card_data = card
-            elif progress.repetitions >= 5:  # Условие "выучено"
+            elif progress.repetitions >= 5:
                 mastered_count += 1
-                card_data = None  # Не показываем выученные в обычной сессии
+                card_data = None
             else:
-                card_data = None  # Ещё не время
+                card_data = None
 
             if card_data:
                 cards_out.append(
@@ -450,7 +415,6 @@ async def get_lesson_flashcards(
                     }
                 )
     else:
-        # Для гостей — просто все карточки без прогресса
         cards_out = [
             {
                 "id": c.id,
@@ -477,16 +441,12 @@ async def get_lesson_flashcards(
     }
 
 
-# backend/main.py
-
-
 @app.get("/lessons/{lesson_id}/flashcards/stats", response_model=dict)
 async def get_flashcard_stats(
     lesson_id: int,
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    # Находим колоду
     deck = await db.execute(
         select(FlashcardDeck).where(FlashcardDeck.lesson_id == lesson_id)
     )
@@ -505,10 +465,8 @@ async def get_flashcard_stats(
             "message": "Войдите, чтобы видеть прогресс",
         }
 
-    # Считаем статистику
     today = date.today()
 
-    # Все карточки колоды
     all_cards = await db.execute(
         select(Flashcard.id).where(Flashcard.deck_id == deck.id)
     )
@@ -527,12 +485,11 @@ async def get_flashcard_stats(
             "last_reviewed": None,
         }
 
-    # Прогресс пользователя + последняя дата ответа
     progress_data = await db.execute(
         select(
             FlashcardProgress.next_review,
             FlashcardProgress.repetitions,
-            FlashcardProgress.last_answered,  # ✅ Добавляем это поле
+            FlashcardProgress.last_answered,
         ).where(
             FlashcardProgress.user_id == current_user.id,
             FlashcardProgress.card_id.in_(all_card_ids),
@@ -540,19 +497,16 @@ async def get_flashcard_stats(
     )
 
     due_count = new_count = mastered_count = 0
-    last_reviewed = None  # ✅ Инициализируем
+    last_reviewed = None
 
     for next_review, repetitions, last_answered in progress_data.all():
-        # 🔥 Отслеживаем самую свежую дату ответа
         if last_answered and (last_reviewed is None or last_answered > last_reviewed):
             last_reviewed = last_answered
 
-        # Классифицируем карточку
         if repetitions is not None and repetitions >= 5:
             mastered_count += 1
         elif next_review is None or next_review <= today:
             due_count += 1
-        # else: ещё не время
 
     new_count = len(all_card_ids) - due_count - mastered_count
 
@@ -565,12 +519,10 @@ async def get_flashcard_stats(
         "new_count": new_count,
         "mastered_count": mastered_count,
         "ready_to_study": due_count + new_count > 0,
-        # ✅ Новое поле для фронтенда:
         "last_reviewed": last_reviewed.isoformat() if last_reviewed else None,
     }
 
 
-# 🔁 Получить все языки
 @app.get("/languages", response_model=list[dict])
 async def get_all_languages(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(LanguageSubject).order_by(LanguageSubject.title))
@@ -580,7 +532,6 @@ async def get_all_languages(db: AsyncSession = Depends(get_db)):
     ]
 
 
-# 🔁 Получить уровни языка
 @app.get("/languages/{language}", response_model=list[dict])
 async def get_language_levels(language: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -595,7 +546,6 @@ async def get_language_levels(language: str, db: AsyncSession = Depends(get_db))
     ]
 
 
-# 🔁 Получить категории уровня
 @app.get("/languages/{language}/{level}", response_model=list[dict])
 async def get_level_categories(
     language: str, level: str, db: AsyncSession = Depends(get_db)
@@ -613,7 +563,6 @@ async def get_level_categories(
     ]
 
 
-# 🔁 Получить уроки категории
 @app.get(
     "/languages/{language}/{level}/{category}", response_model=list[LanguageLessonOut]
 )
@@ -651,7 +600,6 @@ async def get_category_lessons(
     return lessons_out
 
 
-# 🔁 Получить один урок
 @app.get(
     "/languages/{language}/{level}/{category}/{lesson}",
     response_model=LanguageLessonOut,
@@ -693,15 +641,7 @@ async def get_language_lesson(
     )
 
 
-# 👁️ Записать просмотр
-# backend/main.py
-
-
-# backend/main.py
-
-from sqlalchemy.dialects.postgresql import insert as pg_insert  # ✅ Добавь этот импорт
-
-# ...
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 
 @app.post("/languages/lessons/{lesson_id}/view")
@@ -712,14 +652,10 @@ async def record_language_lesson_view(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        print(f"🔍 [DEBUG] POST /languages/lessons/{lesson_id}/view")
-
-        # Проверка урока
         lesson = await db.get(LanguageLesson, lesson_id)
         if not lesson:
             raise HTTPException(status_code=404, detail="Lesson not found")
 
-        # ✅ Используем PostgreSQL-specific INSERT ... ON CONFLICT
         stmt = pg_insert(LanguageLessonView).values(
             lesson_id=lesson_id,
             user_id=current_user.id if current_user else None,
@@ -727,10 +663,8 @@ async def record_language_lesson_view(
         )
 
         if current_user:
-            # ✅ Если пользователь авторизован — игнорируем дубликаты (один просмотр на пользователя)
             stmt = stmt.on_conflict_do_nothing(index_elements=["lesson_id", "user_id"])
         else:
-            # ✅ Для анонимов можно разрешать множественные просмотры (или тоже уникализировать по IP)
             stmt = stmt.on_conflict_do_nothing(
                 index_elements=["lesson_id", "ip_address"]
             )
@@ -738,21 +672,16 @@ async def record_language_lesson_view(
         await db.execute(stmt)
         await db.commit()
 
-        print(f"✅ [DEBUG] View recorded/ignored for lesson {lesson_id}")
         return {"message": "View recorded", "lesson_id": lesson_id}
 
     except Exception as e:
         import traceback
 
-        print(f"❌ [DEBUG] EXCEPTION: {type(e).__name__}: {str(e)}")
-        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 
-# 👁️ Получить счётчик просмотров
 @app.get("/languages/lessons/{lesson_id}/views")
 async def get_language_lesson_views(lesson_id: int, db: AsyncSession = Depends(get_db)):
-    # Уникальные пользователи + анонимные просмотры
     result = await db.execute(
         select(func.count(func.distinct(LanguageLessonView.user_id))).where(
             LanguageLessonView.lesson_id == lesson_id,
@@ -761,52 +690,17 @@ async def get_language_lesson_views(lesson_id: int, db: AsyncSession = Depends(g
     )
     user_views = result.scalar_one_or_none() or 0
 
-    # Можно добавить анонимные просмотры, если нужно:
-    # anon_result = await db.execute(select(func.count(...)))
-
     return {"view_count": user_views}
-
-
-# 💬 Получить комментарии урока (ИЗОЛИРОВАННЫЕ!)
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py — ВРЕМЕННАЯ ВЕРСИЯ ДЛЯ ОТЛАДКИ
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
 
 
 @app.post("/languages/lessons/{lesson_id}/comments", response_model=LanguageCommentOut)
 async def create_language_comment(
     lesson_id: int,
-    comment_data: dict,  # ✅ Проверь имя параметра!
+    comment_data: dict,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        print(f"🔍 [DEBUG] POST /languages/lessons/{lesson_id}/comments")
-        print(f"🔍 [DEBUG] comment_ {comment_data}")
-        print(
-            f"🔍 [DEBUG] current_user: {current_user.username} (id={current_user.id})"
-        )
-
         lesson = await db.get(LanguageLesson, lesson_id)
         if not lesson:
             raise HTTPException(status_code=404, detail="Lesson not found")
@@ -822,33 +716,22 @@ async def create_language_comment(
         await db.commit()
         await db.refresh(new_comment)
 
-        # 🔥 ПРОВЕРКА 1: Сразу читаем тем же сеансом
         check_stmt = select(LanguageComment).where(LanguageComment.id == new_comment.id)
         check_result = await db.execute(check_stmt)
         saved = check_result.scalar_one_or_none()
-        print(
-            f"✅ [DEBUG] Comment saved: id={saved.id if saved else 'None'}, parent_id={saved.parent_id if saved else 'None'}"
-        )
 
-        # 🔥 ПРОВЕРКА 2: Считаем все комментарии для этого урока
         count_stmt = select(func.count(LanguageComment.id)).where(
             LanguageComment.lesson_id == lesson_id
         )
         count_result = await db.execute(count_stmt)
         total = count_result.scalar()
-        print(f"📊 [DEBUG] Total comments in DB for lesson {lesson_id}: {total}")
 
-        # 🔥 ПРОВЕРКА 3: Считаем только корневые (parent_id IS NULL)
         root_stmt = select(func.count(LanguageComment.id)).where(
             LanguageComment.lesson_id == lesson_id, LanguageComment.parent_id.is_(None)
         )
         root_result = await db.execute(root_stmt)
         root_count = root_result.scalar()
-        print(
-            f"📊 [DEBUG] Root comments (parent_id IS NULL) for lesson {lesson_id}: {root_count}"
-        )
 
-        # Загружаем пользователя для ответа
         if new_comment.user is None and current_user:
             new_comment.user = current_user
 
@@ -870,35 +753,8 @@ async def create_language_comment(
     except Exception as e:
         import traceback
 
-        print(f"❌ [DEBUG] EXCEPTION: {e}")
-        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-
-# backend/main.py
-
-
-# ..
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-# ✅ Добавь импорт в начало файла, если нет:
-# ...
-
-
-# backend/main.py
-
-
-# ...
-
-
-# backend/main.py
 
 
 @app.get("/languages/lessons/{lesson_id}/comments")
@@ -907,23 +763,16 @@ async def get_language_lesson_comments(
     current_user: User | None = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # 🔥 МАЯЧОК — должен появиться в логах
-    print(f"🚨 [MAYAK] GET /languages/lessons/{lesson_id}/comments CALLED")
 
-    # 🔥 Прямое подключение БЕЗ пробелов в параметрах
     conn = await asyncpg.connect(
-        host="localhost",  # ✅ БЕЗ пробела
+        host="localhost",
         port=5432,
-        user="postgres",  # ✅ БЕЗ пробела
-        password="password",  # ✅ Замени на свой реальный пароль!
-        database="nextproject",  # ✅ БЕЗ пробела
+        user="postgres",
+        password="password",
+        database="nextproject",
     )
 
     try:
-        print(
-            f"🔥 [ASYNC] Connected to DB, fetching comments for lesson_id={lesson_id}"
-        )
-
         rows = await conn.fetch(
             """
             SELECT 
@@ -943,9 +792,6 @@ async def get_language_lesson_comments(
             lesson_id,
         )
 
-        print(f"🔥 [ASYNC] Fetched {len(rows)} rows from DB")
-
-        # Простое форматирование
         result = []
         for row in rows:
             result.append(
@@ -967,23 +813,14 @@ async def get_language_lesson_comments(
                 }
             )
 
-        print(f"🔥 [ASYNC] Returning {len(result)} comments")
-        if result:
-            print(
-                f"🔥 [ASYNC] First: id={result[0]['id']}, content='{result[0]['content']}'"
-            )
-
         return result
 
     except Exception as e:
         import traceback
 
-        print(f"❌ [ASYNC] ERROR: {e}")
-        print(f"❌ [ASYNC] Traceback:\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
-        print(f"🔥 [ASYNC] Connection closed")
 
 
 @app.delete("/languages/comments/{comment_id}")
@@ -1003,10 +840,6 @@ async def delete_language_comment(
     return {"message": "Comment deleted"}
 
 
-# 👍 Реакция на комментарий
-# backend/main.py
-
-
 @app.post("/languages/comments/{comment_id}/reaction")
 async def react_to_language_comment(
     comment_id: int,
@@ -1015,22 +848,16 @@ async def react_to_language_comment(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        print(f"🔍 [DEBUG] POST /languages/comments/{comment_id}/reaction")
-        print(f"🔍 [DEBUG] reaction_data: {reaction_data}")
-
         reaction_type = reaction_data.get("reaction_type")
 
         if reaction_type == "none":
-            # Удаляем реакцию
             stmt = delete(LanguageCommentReaction).where(
                 LanguageCommentReaction.comment_id == comment_id,
                 LanguageCommentReaction.user_id == current_user.id,
             )
             await db.execute(stmt)
-            print(f"✅ [DEBUG] Reaction removed")
         else:
             is_like = reaction_type == "like"
-            # UPSERT: обновить или создать
             stmt = (
                 insert(LanguageCommentReaction)
                 .values(comment_id=comment_id, user_id=current_user.id, is_like=is_like)
@@ -1039,11 +866,9 @@ async def react_to_language_comment(
                 )
             )
             await db.execute(stmt)
-            print(f"✅ [DEBUG] Reaction {'liked' if is_like else 'disliked'}")
 
         await db.commit()
 
-        # ✅ Возвращаем обновлённые статистики
         likes = (
             await db.scalar(
                 select(func.count(LanguageCommentReaction.id)).where(
@@ -1073,26 +898,18 @@ async def react_to_language_comment(
     except Exception as e:
         import traceback
 
-        print(f"❌ [DEBUG] EXCEPTION in react_to_language_comment: {e}")
-        print(f"❌ [DEBUG] Traceback:\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
-
-# ============================================================================
-# 📚 ЕГЭ: СТАТИЧЕСКИЕ МАРШРУТЫ (ПЕРВЫМИ!)
-# ============================================================================
 
 EGE_SLUGS = ["math-profile", "physics-ege", "russian-ege", "informatics-ege"]
 
 
-# ✅ Список предметов ЕГЭ (статический — должен быть ДО /ege/{slug})
 @app.get("/ege/subjects", response_model=list[EgeSubjectOut])
 async def get_subjects(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(EgeSubject).order_by(EgeSubject.title))
     return result.scalars().all()
 
 
-# ✅ Все предметы ЕГЭ (фильтр по списку)
 @app.get("/ege", response_model=list[EgeSubjectOut])
 async def get_all_subjects(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -1103,104 +920,6 @@ async def get_all_subjects(db: AsyncSession = Depends(get_db)):
     return result.scalars().all()
 
 
-# ============================================================================
-# 📚 ЕГЭ: ДИНАМИЧЕСКИЕ МАРШРУТЫ (ПОСЛЕ СТАТИЧЕСКИХ!)
-# ============================================================================
-
-
-@app.get("/ege/{slug}")
-async def get_subject_lessons(
-    slug: str,
-    current_user: User | None = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
-):
-    subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
-    subject = subject_result.scalar_one_or_none()
-    if not subject:
-        raise HTTPException(status_code=404, detail=f"Subject '{slug}' not found")
-
-    result = await db.execute(
-        select(EgeLesson)
-        .where(EgeLesson.subject_id == subject.id)
-        .order_by(EgeLesson.created_at)
-    )
-    lessons = result.scalars().all()
-
-    completed_lesson_ids = set()
-
-    # 🔍 ОТЛАДКА: проверяем авторизацию и результаты
-    if current_user:
-        print(
-            f"👤 [DEBUG] User authenticated: ID={current_user.id}, Email={current_user.email}"
-        )
-
-        for lesson in lessons:
-            if lesson.test_id:
-                try:
-                    # Ищем лучший результат для этого теста
-                    best = await db.execute(
-                        select(func.max(TestResult.score)).where(
-                            TestResult.user_id == current_user.id,
-                            TestResult.test_id == lesson.test_id,
-                        )
-                    )
-                    best_score = best.scalar_one_or_none()
-                    print(
-                        f"📊 [DEBUG] Lesson '{lesson.title}' (test_id={lesson.test_id}) -> best_score={best_score}"
-                    )
-
-                    if best_score is not None and best_score >= 75.0:
-                        completed_lesson_ids.add(lesson.id)
-                        print(f"✅ [DEBUG] Lesson {lesson.id} MARKED AS COMPLETED!")
-                except Exception as e:
-                    print(f"❌ [DEBUG] Error querying TestResult: {e}")
-    else:
-        print("⚠️ [DEBUG] NO USER (guest mode) -> is_completed will be False")
-
-    # Формируем ответ
-    lessons_out = []
-    for lesson in lessons:
-        lessons_out.append(
-            EgeLessonOut(
-                id=lesson.id,
-                title=lesson.title,
-                slug=lesson.slug,
-                description=lesson.description,
-                time_minutes=lesson.time_minutes,
-                test_id=lesson.test_id,
-                is_completed=lesson.id in completed_lesson_ids,
-                subject_id=getattr(lesson, "subject_id", None),
-                content=getattr(lesson, "content", None),
-                created_at=getattr(lesson, "created_at", None),
-                updated_at=getattr(lesson, "updated_at", None),
-            )
-        )
-
-    return lessons_out
-
-
-@app.get("/ege/{subject}/{lesson}", response_model=EgeLessonOut)
-async def get_single_lesson(
-    subject: str, lesson: str, db: AsyncSession = Depends(get_db)
-):
-    subject_result = await db.execute(
-        select(EgeSubject).where(EgeSubject.slug == subject)
-    )
-    subject_obj = subject_result.scalar_one_or_none()
-    if not subject_obj:
-        raise HTTPException(status_code=404, detail="Subject not found")
-    result = await db.execute(
-        select(EgeLesson).where(
-            EgeLesson.slug == lesson, EgeLesson.subject_id == subject_obj.id
-        )
-    )
-    lesson_obj = result.scalar_one_or_none()
-    if not lesson_obj:
-        raise HTTPException(status_code=404, detail="Lesson not found")
-    return lesson_obj
-
-
-# 👁️ Записать просмотр урока (по slug, только авторизованные)
 @app.post("/ege/{subject}/{lesson}/view", status_code=status.HTTP_201_CREATED)
 async def record_lesson_view(
     subject: str,
@@ -1219,7 +938,6 @@ async def record_lesson_view(
     return {"message": "View recorded"}
 
 
-# 📥 Получить просмотры урока (по slug, публичный)
 @app.get("/ege/{subject}/{lesson}/views")
 async def get_lesson_views(
     subject: str, lesson: str, db: AsyncSession = Depends(get_db)
@@ -1235,51 +953,24 @@ async def get_lesson_views(
     return {"view_count": count or 0}
 
 
-# ============================================================================
-# 💻 КУРСЫ: СТАТИЧЕСКИЕ МАРШРУТЫ (ПЕРВЫМИ!)
-# ============================================================================
-
-
-# ✅ Список курсов (исключая ЕГЭ) — статический, должен быть ДО /courses/{slug}
-# backend/main.py
-
-
 @app.get("/courses/subjects", response_model=list[EgeSubjectOut])
 async def get_course_subjects(
-    category: str | None = None,  # ✅ Фильтр по категории
-    search: str | None = None,  # ✅ Поиск по title
+    category: str | None = None,
+    search: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # Базовый запрос: исключаем ЕГЭ-предметы
     query = select(EgeSubject)
 
-    # 🔍 Фильтр по категории
     if category:
         query = query.where(EgeSubject.category == category)
 
-    # 🔍 Поиск по названию (регистронезависимый)
     if search:
         query = query.where(EgeSubject.title.ilike(f"%{search}%"))
 
-    # Сортировка
     query = query.order_by(EgeSubject.title)
 
     result = await db.execute(query)
     return result.scalars().all()
-
-
-# ============================================================================
-# 💻 КУРСЫ: ДИНАМИЧЕСКИЕ МАРШРУТЫ (ПОСЛЕ СТАТИЧЕСКИХ!)
-# ============================================================================
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
 
 
 @app.get("/courses/{slug}")
@@ -1290,7 +981,6 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    # 🔍 Загружаем юниты курса
     units_result = await db.execute(
         select(CourseUnit, func.count(EgeLesson.id).label("lesson_count"))
         .outerjoin(EgeLesson, EgeLesson.unit_id == CourseUnit.id)
@@ -1310,15 +1000,14 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
         for unit, count in units_result.all()
     ]
 
-    # 🔍 Загружаем уроки с явным JOIN для сортировки
     lessons_result = await db.execute(
         select(EgeLesson)
-        .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)  # ✅ FIX: явный JOIN
+        .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)
         .options(selectinload(EgeLesson.unit))
         .where(EgeLesson.subject_id == subject.id)
         .order_by(
             EgeLesson.unit_id.nulls_last(),
-            CourseUnit.unit_number.nulls_last(),  # ✅ Теперь работает
+            CourseUnit.unit_number.nulls_last(),
             EgeLesson.created_at.asc(),
         )
     )
@@ -1331,33 +1020,23 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
 async def get_course_lesson_detail(
     slug: str, lesson_slug: str, db: AsyncSession = Depends(get_db)
 ):
-    # Исключаем ЕГЭ
-
-    # Находим предмет
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    # 🔥 Загружаем урок с ЯВНЫМ loading отношения unit
     result = await db.execute(
         select(EgeLesson)
         .where(EgeLesson.subject_id == subject.id, EgeLesson.slug == lesson_slug)
-        .options(
-            selectinload(EgeLesson.unit)  # ✅ FIX: загружаем unit заранее!
-        )
+        .options(selectinload(EgeLesson.unit))
     )
 
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    return lesson  # ✅ Теперь Pydantic сможет безопасно прочитать lesson.unit
+    return lesson
 
-
-# ============================================================================
-# 📰 СТАТЬИ: СТАТИЧЕСКИЕ МАРШРУТЫ (ПЕРВЫМИ!)
-# ============================================================================
 
 ARTICLE_TOPICS_LIST = [
     "Забота о себе",
@@ -1367,35 +1046,24 @@ ARTICLE_TOPICS_LIST = [
 ]
 
 
-# ✅ Список статей (статический — ДО /articles/{slug})
-# backend/main.py
-
-
 @app.get("/articles", response_model=list[ArticleOut])
 async def get_articles(
     topic: str | None = None,
-    search: str | None = None,  # ✅ Новый параметр для поиска
+    search: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # Базовый запрос
     query = select(Article)
 
-    # 🔍 Фильтр по теме
     if topic and topic != "Все":
         query = query.where(Article.topic == topic)
 
-    # 🔍 Поиск по названию (регистронезависимый)
     if search:
         query = query.where(Article.title.ilike(f"%{search}%"))
 
-    # Сортировка по дате (новые сначала)
     query = query.order_by(Article.created_at.desc())
 
     result = await db.execute(query)
     return result.scalars().all()
-
-
-# backend/main.py — добавь эту функцию
 
 
 async def mark_lesson_completed_if_needed(
@@ -1412,7 +1080,6 @@ async def mark_lesson_completed_if_needed(
     if score < threshold:
         return False
 
-    # Проверяем, не отмечен ли уже
     existing = await db.execute(
         select(UserCompletedLesson).where(
             UserCompletedLesson.user_id == user_id,
@@ -1420,30 +1087,14 @@ async def mark_lesson_completed_if_needed(
         )
     )
     if existing.scalar_one_or_none():
-        return True  # Уже был пройден раньше
+        return True
 
-    # Отмечаем как пройденный
     completed = UserCompletedLesson(user_id=user_id, lesson_id=lesson_id)
     db.add(completed)
     await db.commit()
     return True
 
 
-# ============================================================================
-# 📰 СТАТЬИ: ДИНАМИЧЕСКИЕ МАРШРУТЫ
-# ============================================================================
-
-
-@app.get("/articles/{slug}", response_model=ArticleOut)
-async def get_article(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Article).where(Article.slug == slug))
-    article = result.scalar_one_or_none()
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-    return article
-
-
-# 👁️ Просмотр статьи
 @app.post("/articles/{slug}/view", status_code=status.HTTP_201_CREATED)
 async def record_article_view(
     slug: str,
@@ -1461,7 +1112,6 @@ async def record_article_view(
     return {"message": "View recorded"}
 
 
-# 👍 Реакция на статью
 @app.post("/articles/{slug}/reaction", status_code=status.HTTP_200_OK)
 async def set_article_reaction(
     slug: str,
@@ -1501,7 +1151,6 @@ async def set_article_reaction(
         return {"message": f"Reaction set to {data.reaction_type}"}
 
 
-# 📊 Статистика статьи
 @app.get("/articles/{slug}/stats", response_model=ArticleStatsOut)
 async def get_article_stats(
     slug: str,
@@ -1553,11 +1202,6 @@ async def get_article_stats(
     return ArticleStatsOut(
         likes=likes, dislikes=dislikes, views=views, user_reaction=user_reaction
     )
-
-
-# ============================================================================
-# 🔁 УНИВЕРСАЛЬНЫЕ ЭНДПОИНТЫ ДЛЯ УРОКОВ (ПО ID) — РАБОТАЮТ ДЛЯ /ege/ И /courses/
-# ============================================================================
 
 
 @app.get("/lessons/{lesson_id}", response_model=EgeLessonOut)
@@ -1680,11 +1324,6 @@ async def get_lesson_stats_by_id(
     )
 
 
-# ============================================================================
-# 🧪 ТЕСТЫ
-# ============================================================================
-
-
 @app.get("/tests/{test_id}", response_model=EgeTestOut)
 async def get_test(test_id: int, db: AsyncSession = Depends(get_db)):
     stmt = (
@@ -1743,9 +1382,7 @@ async def check_single_answer(
 async def submit_test(
     test_id: int,
     submission: TestSubmission,
-    current_user: User = Depends(
-        get_current_user
-    ),  # ✅ ДОБАВЛЕНО: теперь current_user определён
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = (
@@ -1775,7 +1412,7 @@ async def submit_test(
     test_result = TestResult(
         user_id=current_user.id,
         test_id=test_id,
-        lesson_id=test.lesson_id,  # ✅ Берём из объекта теста
+        lesson_id=test.lesson_id,
         score=score,
         passed=passed,
     )
@@ -1840,12 +1477,6 @@ async def get_user_test_result(
     return result.scalar_one_or_none()
 
 
-# ============================================================================
-# 👍👎 РЕАКЦИИ НА УРОКИ (СТАРОЕ — ОСТАВЛЕНО ДЛЯ СОВМЕСТИМОСТИ)
-# ============================================================================
-
-
-# 📤 Поставить реакцию (только авторизованным)
 @app.post("/lessons/{lesson_id}/reaction", status_code=status.HTTP_200_OK)
 async def set_lesson_reaction(
     lesson_id: int,
@@ -1880,29 +1511,24 @@ async def set_lesson_reaction(
         return {"message": f"Reaction set to {data.reaction_type}"}
 
 
-##########ВСЕ ЧТО СВЯЗАННО С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
 @app.delete("/comments/{comment_id}", status_code=status.HTTP_200_OK)
 async def delete_comment(
     comment_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Находим комментарий
     comment = await db.get(Comment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    # Проверяем права: только автор может удалить
     if comment.user_id != current_user.id:
         raise HTTPException(
             status_code=403, detail="Not allowed to delete this comment"
         )
 
-    # Удаляем
     await db.delete(comment)
     await db.commit()
 
-    # ✅ 204 No Content — тело ответа не нужно
     return {"message": "Comment deleted", "id": comment_id}
 
 
@@ -1913,18 +1539,15 @@ async def set_comment_reaction(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Проверяем, что комментарий существует
     comment = await db.get(Comment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    # Определяем новое значение
     if data.reaction_type == "none":
         new_is_like = None
     else:
         new_is_like = data.reaction_type == "like"
 
-    # Ищем существующую реакцию
     existing_stmt = select(CommentReaction).where(
         CommentReaction.user_id == current_user.id,
         CommentReaction.comment_id == comment_id,
@@ -1933,13 +1556,11 @@ async def set_comment_reaction(
     existing_reaction = res.scalar_one_or_none()
 
     if new_is_like is None:
-        # Удаление реакции
         if existing_reaction:
             await db.delete(existing_reaction)
             await db.commit()
         return {"message": "Reaction removed"}
     else:
-        # Обновление или создание
         if existing_reaction:
             existing_reaction.is_like = new_is_like
         else:
@@ -1962,7 +1583,6 @@ async def get_comment_stats(
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    # Считаем лайки
     likes = (
         await db.scalar(
             select(func.count(CommentReaction.id)).where(
@@ -1973,7 +1593,6 @@ async def get_comment_stats(
         or 0
     )
 
-    # Считаем дизлайки
     dislikes = (
         await db.scalar(
             select(func.count(CommentReaction.id)).where(
@@ -1984,7 +1603,6 @@ async def get_comment_stats(
         or 0
     )
 
-    # Реакция текущего пользователя
     user_reaction = None
     if current_user:
         stmt = select(CommentReaction.is_like).where(
@@ -2004,7 +1622,6 @@ async def get_comment_stats(
 async def format_comment_with_stats(
     comment: Comment, db: AsyncSession, current_user: User | None
 ) -> Dict[str, Any]:
-    # Считаем реакции
     likes = (
         await db.scalar(
             select(func.count(CommentReaction.id)).where(
@@ -2048,7 +1665,7 @@ async def format_comment_with_stats(
         "likes": likes,
         "dislikes": dislikes,
         "user_reaction": user_reaction,
-        "replies": [],  # Заполним ниже если нужно
+        "replies": [],
     }
 
 
@@ -2062,7 +1679,6 @@ async def get_lesson_comments(
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # Загружаем корневые комментарии + пользователи + ответы + пользователи ответов
     result = await db.execute(
         select(Comment)
         .where(Comment.lesson_id == lesson_id, Comment.parent_id.is_(None))
@@ -2074,11 +1690,9 @@ async def get_lesson_comments(
     )
     comments = result.scalars().all()
 
-    # Форматируем с реакциями
     formatted = []
     for c in comments:
         c_data = await format_comment_with_stats(c, db, current_user)
-        # Обрабатываем ответы
         for r in c.replies:
             r_data = await format_comment_with_stats(r, db, current_user)
             c_data["replies"].append(r_data)
@@ -2119,14 +1733,12 @@ async def get_article_comments(
     return formatted
 
 
-# 📤 Добавить комментарий (исправленная версия)
 @app.post("/comments", response_model=CommentOut, status_code=status.HTTP_201_CREATED)
 async def create_comment(
     data: CommentCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Получаем lesson_id или article_id из тела запроса
     lesson_id = data.lesson_id if hasattr(data, "lesson_id") else None
     article_id = data.article_id if hasattr(data, "article_id") else None
 
@@ -2135,7 +1747,6 @@ async def create_comment(
             status_code=400, detail="Specify either lesson_id or article_id"
         )
 
-    # Проверяем существование объекта
     if lesson_id:
         obj = await db.get(EgeLesson, lesson_id)
         if not obj:
@@ -2145,7 +1756,6 @@ async def create_comment(
         if not obj:
             raise HTTPException(status_code=404, detail="Article not found")
 
-    # Если это ответ — проверяем родительский комментарий
     if data.parent_id:
         parent = await db.get(Comment, data.parent_id)
         if not parent or (
@@ -2153,7 +1763,6 @@ async def create_comment(
         ):
             raise HTTPException(status_code=400, detail="Invalid parent comment")
 
-    # Создаём комментарий
     comment = Comment(
         user_id=current_user.id,
         lesson_id=lesson_id,
@@ -2163,24 +1772,19 @@ async def create_comment(
     )
     db.add(comment)
     await db.commit()
-    await db.refresh(comment)  # ✅ refresh подгружает id и created_at
+    await db.refresh(comment)
 
-    # ✅ Возвращаем без nested replies (они пустые при создании)
     return CommentOut(
         id=comment.id,
         user_id=comment.user_id,
-        username=current_user.username,  # ✅ Берём из current_user, не из comment.user
+        username=current_user.username,
         content=comment.content,
         parent_id=comment.parent_id,
         created_at=comment.created_at,
-        replies=[],  # ✅ Пустой список, чтобы не триггерить lazy load
+        replies=[],
     )
 
 
-# ✏️ Обновить комментарий
-
-
-# ✏️ Обновить комментарий (только автор)
 @app.patch("/comments/{comment_id}", response_model=CommentOut)
 async def update_comment(
     comment_id: int,
@@ -2188,11 +1792,10 @@ async def update_comment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # ✅ Загружаем комментарий с пользователем
     result = await db.execute(
         select(Comment)
         .where(Comment.id == comment_id)
-        .options(selectinload(Comment.user))  # ✅ Явно загружаем user
+        .options(selectinload(Comment.user))
     )
     comment = result.scalar_one_or_none()
 
@@ -2206,7 +1809,6 @@ async def update_comment(
     await db.commit()
     await db.refresh(comment)
 
-    # ✅ Берём username из загруженного user или из current_user
     return CommentOut(
         id=comment.id,
         user_id=comment.user_id,
@@ -2216,10 +1818,6 @@ async def update_comment(
         created_at=comment.created_at,
         replies=[],
     )
-
-
-# 🏥 HEALTH CHECK
-# ============================================================================
 
 
 @app.get("/health")

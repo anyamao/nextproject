@@ -58,7 +58,14 @@ export default function TestClient({
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
 
-  // 🔁 Сброс состояния ТОЛЬКО при смене индекса вопроса
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnToParam = urlParams.get("returnTo");
+
+    if (returnToParam) {
+      sessionStorage.setItem(`test_${test.id}_return_to`, returnToParam);
+    }
+  }, [test.id]);
   useEffect(() => {
     setCurrentAnswer(questions[currentIndex]?.user_answer || "");
     setFeedback(null);
@@ -82,7 +89,6 @@ export default function TestClient({
         solution: result.solution,
       });
 
-      // Обновляем вопрос в списке
       setQuestions((prev) =>
         prev.map((q, idx) =>
           idx === currentIndex
@@ -98,7 +104,6 @@ export default function TestClient({
         ),
       );
     } catch (err) {
-      console.error("❌ Check failed:", err);
       setFeedback({ correct: false, expected: "Ошибка сети" });
     } finally {
       setIsChecking(false);
@@ -106,26 +111,13 @@ export default function TestClient({
   };
 
   useEffect(() => {
-    console.log("🧪 [TestClient] Mounted with props:", {
-      testId: test.id,
-      lessonSlug,
-      subjectSlug,
-    });
-
-    // 🔍 Читаем returnTo ИЗ ПАРАМЕТРОВ URL, а не из document.referrer!
     const returnTo = getTestReturnUrl(
       test.id,
       `/courses/${subjectSlug}/${lessonSlug}`,
     );
-
-    console.log("🧪 [TestClient] returnTo resolved:", returnTo);
-
-    // Сохраняем в состоянии для использования при редиректе
-    // (или просто используй getTestReturnUrl прямо в handleNext)
   }, [test.id, subjectSlug, lessonSlug]);
 
   const handleNext = async () => {
-    // Переход к следующему вопросу
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       return;
@@ -135,12 +127,10 @@ export default function TestClient({
       `/courses/${subjectSlug}/${lessonSlug}`,
     );
 
-    // 🎯 Тест завершён — считаем результат
     const correctCount = questions.filter((q) => q.is_correct).length;
     const score = Math.round((correctCount / questions.length) * 100);
     const passed = score >= test.passing_score;
 
-    // 🔐 Если пользователь авторизован — сохраняем результат в БД
     try {
       const token = localStorage.getItem("token");
       if (token) {
@@ -152,14 +142,9 @@ export default function TestClient({
           },
           body: JSON.stringify({ score, passed }),
         });
-        console.log("✅ Result saved to database");
       }
-    } catch (err) {
-      console.error("❌ Failed to save result:", err);
-      // Не блокируем пользователя, если сохранение не удалось
-    }
+    } catch (err) {}
 
-    // Сохраняем в sessionStorage для мгновенного отображения результатов
     sessionStorage.setItem(
       `test_${test.id}_result`,
       JSON.stringify({
@@ -170,7 +155,6 @@ export default function TestClient({
       }),
     );
     window.location.href = `/tests/${test.id}/results?returnTo=${encodeURIComponent(returnTo)}`;
-    // Редирект на страницу результатов
   };
 
   const handleRetry = () => {
@@ -178,13 +162,11 @@ export default function TestClient({
     setFeedback(null);
   };
 
-  // 🔹 Вспомогательный компонент для сворачиваемого решения
   function SolutionBlock({ solution }: { solution: string }) {
     const [isExpanded, setIsExpanded] = useState(true); // ✅ По умолчанию развёрнуто
 
     return (
       <div className="mt-3 mx-[20px] my-[20px] ">
-        {/* 🔹 Заголовок с кнопкой сворачивания */}
         <button
           onClick={() => setIsExpanded((prev) => !prev)}
           className="w-full flex items-center justify-between px-[10px] py-2 text-left hover:bg-purple-50 rounded-lg transition group"
@@ -196,7 +178,6 @@ export default function TestClient({
             </span>
           </div>
 
-          {/* 🔹 Стрелочка с анимацией поворота */}
           <ChevronDown
             className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
               isExpanded ? "rotate-180" : ""
@@ -204,7 +185,6 @@ export default function TestClient({
           />
         </button>
 
-        {/* 🔹 Контент решения с анимацией появления */}
         <div
           className={`overflow-hidden transition-all duration-300 ease-in-out ${
             isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
@@ -222,7 +202,6 @@ export default function TestClient({
   return (
     <div className=" w-full max-w-[1100px] py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        {/* 🔙 Назад + Прогресс */}
         <div className="mb-5">
           <Link
             href={`/courses/${subjectSlug}/${lessonSlug}`}
@@ -259,9 +238,7 @@ export default function TestClient({
           / {questions.length}
         </div>
 
-        {/* 📦 Карточка вопроса */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Текст вопроса */}
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
             <div className="flex flex-col md:flex-row  items-start gap-3">
               <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
@@ -277,7 +254,6 @@ export default function TestClient({
             </div>
           </div>
 
-          {/* Поле ввода */}
           <div className="p-6 space-y-4 w-full">
             <div className="relative">
               <input
@@ -312,7 +288,6 @@ export default function TestClient({
               )}
             </div>
 
-            {/* Обратная связь */}
             {feedback && (
               <div className="flex flex-col">
                 <div
@@ -363,13 +338,10 @@ export default function TestClient({
                     </div>
                   </div>
                 </div>
-
-                {/* Кнопка повторной попытки (если неверно) */}
               </div>
             )}
           </div>
 
-          {/* Кнопки навигации */}
           <div className="px-6 py-2  flex items-center justify-between">
             <button
               onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
@@ -379,7 +351,6 @@ export default function TestClient({
               <ArrowLeft className="w-4 h-4" /> Назад
             </button>
 
-            {/* Логика кнопок: проверяем -> показываем результат -> переходим дальше */}
             {!feedback ? (
               <button
                 onClick={handleAnswerSubmit}
@@ -391,12 +362,10 @@ export default function TestClient({
             ) : feedback.correct ? (
               <button
                 onClick={handleNext}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition shadow-md inline-flex items-center gap-2"
+                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition shadow-md inline-flex items-center gap-2"
               >
                 {isLastQuestion ? (
-                  <>
-                    Завершить тест <Trophy className="w-4 h-4" />
-                  </>
+                  <>Завершить тест</>
                 ) : (
                   <>
                     Далее <ArrowRight className="w-4 h-4" />
@@ -417,8 +386,6 @@ export default function TestClient({
             <SolutionBlock solution={feedback.solution} />
           )}
         </div>
-
-        {/* Статистика */}
       </div>
     </div>
   );

@@ -1,8 +1,5 @@
-// frontend/app/tests/[id]/results/page.tsx
-// 🚫 БЕЗ "use client" — это серверный компонент!
-
 import { Suspense } from "react";
-import ResultsContent from "./ResultsContent"; // ✅ Импортируем клиентский компонент
+import ResultsContent from "./ResultsContent";
 
 export default async function TestResultsPage({
   params,
@@ -16,7 +13,6 @@ export default async function TestResultsPage({
 
   const testId = parseInt(resolvedParams.id, 10);
 
-  // 🔍 Получаем returnTo из URL-параметров
   const returnTo = resolvedSearchParams.returnTo || null;
 
   return (
@@ -27,7 +23,6 @@ export default async function TestResultsPage({
         </div>
       }
     >
-      {/* ✅ Передаём testId и returnTo как обычные props */}
       <ResultsContent testId={testId} returnTo={returnTo} />
     </Suspense>
   );

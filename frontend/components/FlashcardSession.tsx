@@ -1,4 +1,3 @@
-// frontend/components/FlashcardSession.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -54,7 +53,6 @@ export default function FlashcardSession({
   const [loading, setLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false); // 🔥 Для анимации завершения
 
-  // Загружаем колоду
   useEffect(() => {
     async function fetchDeck() {
       try {
@@ -64,7 +62,6 @@ export default function FlashcardSession({
         const data = await apiFetch(`/lessons/${lessonId}/flashcards`, {});
         setDeck(data);
 
-        // Фильтруем карточки: новые + те, что пора повторить
         const studyQueue = data.cards.filter((c: Flashcard) => {
           if (!c.user_progress) return true;
           const nextReview = c.user_progress.next_review;
@@ -72,11 +69,7 @@ export default function FlashcardSession({
         });
 
         setQueue(studyQueue);
-        console.log(
-          `🗂️ [Flashcards] Loaded ${studyQueue.length} cards for study`,
-        );
       } catch (err) {
-        console.error("❌ Failed to load flashcards", err);
       } finally {
         setLoading(false);
       }
@@ -89,7 +82,6 @@ export default function FlashcardSession({
     queue.length > 0 ? Math.round((currentIndex / queue.length) * 100) : 0;
   const isLastCard = currentIndex === queue.length - 1;
 
-  // 🔹 Переход к следующей карточке
   const handleNext = () => {
     setIsFlipped(false);
     setTimeout(() => {
@@ -99,18 +91,15 @@ export default function FlashcardSession({
     }, 150);
   };
 
-  // 🔹 Завершение сессии
   const handleComplete = () => {
     setIsCompleting(true);
     setIsFlipped(false);
 
-    // 🔥 Небольшая задержка для анимации, затем закрываем
     setTimeout(() => {
       onClose();
     }, 800);
   };
 
-  // 🔹 Переход к предыдущей карточке
   const handlePrev = () => {
     setIsFlipped(false);
     setTimeout(() => {
@@ -120,23 +109,19 @@ export default function FlashcardSession({
     }, 150);
   };
 
-  // 🔹 Переворот карточки
   const handleFlip = () => {
     if (!isFlipped) setIsFlipped(true);
     if (isFlipped) setIsFlipped(false);
   };
 
-  // 🔹 Возврат к уроку (досрочное закрытие)
   const handleReturnToLesson = () => {
-    // 🔥 Можно добавить сохранение прогресса здесь
     onClose();
   };
 
-  // 🔹 Обработка клавиш ← → / Esc
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === " " || e.code === "Space") {
-        e.preventDefault(); // 🔥 Чтобы страница не скроллилась
+        e.preventDefault();
         handleFlip();
         return;
       }
@@ -151,7 +136,6 @@ export default function FlashcardSession({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentIndex, queue.length, isLastCard, isFlipped]);
 
-  // 🔹 Экран завершения с анимацией
   if (isCompleting) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center z-50 p-4">
@@ -248,7 +232,6 @@ export default function FlashcardSession({
           </p>
         </div>
 
-        {/* 📊 Прогресс-бар */}
         <div className="mb-6">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>Прогресс сессии</span>
@@ -262,7 +245,6 @@ export default function FlashcardSession({
           </div>
         </div>
 
-        {/* 🎮 Навигация: стрелки ← → (или "Завершить" на последней) */}
         <div className="flex items-center justify-between mb-4 px-2">
           <button
             onClick={handlePrev}
@@ -288,7 +270,6 @@ export default function FlashcardSession({
             />
           </button>
 
-          {/* 🔥 Кнопка меняется на последней карточке */}
           {isLastCard ? (
             <button
               onClick={handleComplete}
@@ -314,7 +295,6 @@ export default function FlashcardSession({
           )}
         </div>
 
-        {/* 🗂️ Карточка с анимацией переворота */}
         <div
           className={`relative w-full  aspect-[4/3] [perspective:1000px] cursor-pointer select-none ${
             isFlipped ? "flipped" : ""
@@ -326,7 +306,6 @@ export default function FlashcardSession({
               isFlipped ? "[transform:rotateY(180deg)]" : ""
             }`}
           >
-            {/* 🔹 Лицевая сторона (вопрос) */}
             <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-3xl shadow-xl border-2 border-purple-100 p-8 flex flex-col items-center justify-center text-center">
               <div
                 className="text-lg font-medium text-gray-900 leading-relaxed question-content"
@@ -345,7 +324,6 @@ export default function FlashcardSession({
               </p>
             </div>
 
-            {/* 🔹 Обратная сторона (ответ) */}
             <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-3xl shadow-xl border-2 border-purple-200 p-8 flex flex-col items-center justify-center text-center">
               <div
                 className="text-lg font-medium text-gray-900 leading-relaxed question-content"
@@ -377,7 +355,6 @@ export default function FlashcardSession({
           </div>
         </div>
 
-        {/* 💡 Подсказка по управлению */}
         <div className="mt-6 text-center text-xs text-gray-500">
           <span className="hidden sm:inline">← → клавиши для навигации •</span>
           <span>

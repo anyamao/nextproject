@@ -46,7 +46,6 @@ export default function Signup() {
     setLoading(true);
     setError(null);
 
-    // 🔐 Валидация (убран конфликт 36/72, оставлено логичное ограничение)
     if (formData.password.length < 6) {
       setError("Пароль должен быть минимум 6 символов");
       setLoading(false);
@@ -81,7 +80,7 @@ export default function Signup() {
         id: data.user.id,
         username: data.user.username,
         email: data.user.email,
-        avatar_url: data.user.avatar_url || "default_cat.jpg", // ✅ Обязательно!
+        avatar_url: data.user.avatar_url || "default_cat.jpg",
         status: data.user.status,
       });
       setSuccess(true);
@@ -95,7 +94,6 @@ export default function Signup() {
     }
   };
 
-  // ✅ Экран успеха
   if (success) {
     return (
       <main>

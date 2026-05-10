@@ -27,7 +27,6 @@ export default function RootLayout({
     const user = localStorage.getItem("user");
 
     if (token && user) {
-      // Опционально: проверить валидность токена через /auth/me
       apiFetch("/auth/me")
         .then((data) => setUser(data))
         .catch(() => {

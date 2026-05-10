@@ -1,4 +1,3 @@
-// frontend/components/CommentsSection.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -52,33 +51,26 @@ export default function CommentsSection({
       ? JSON.parse(localStorage.getItem("user") || "{}")?.id
       : null;
   const getAvatarUrl = (comment: Comment) => {
-    // Если это комментарий текущего пользователя — берём свежую аватарку из store
     if (comment.user_id === currentUser?.id) {
       return currentUser.avatar_url || "default_cat.jpg";
     }
-    // Иначе — аватарка из данных комментария
     return comment.avatar_url || "default_cat.jpg";
   };
 
   const entityType = lessonId ? "lessons" : "articles";
   const entityId = lessonId || articleId;
 
-  // Загрузка комментариев
   useEffect(() => {
     if (!entityId) return;
     const fetchComments = async () => {
       try {
         const data = await apiFetch(`/${entityType}/${entityId}/comments`);
         setComments(data);
-      } catch (err) {
-        console.error("Failed to fetch comments", err);
-      }
+      } catch (err) {}
     };
     fetchComments();
   }, [entityType, entityId]);
 
-  // Отправка нового комментария
-  // Отправка нового комментария
   const handleSubmit = async (
     e: React.FormEvent,
     parentId: number | null = null,
@@ -91,7 +83,6 @@ export default function CommentsSection({
     try {
       const token = localStorage.getItem("token");
 
-      // ✅ Отправляем lesson_id/article_id в ТЕЛЕ запроса
       const requestBody = {
         content,
         parent_id: parentId,
@@ -100,7 +91,6 @@ export default function CommentsSection({
       };
 
       await apiFetch("/comments", {
-        // ✅ Без query-параметров!
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,22 +99,17 @@ export default function CommentsSection({
         body: JSON.stringify(requestBody),
       });
 
-      // Перезагружаем комментарии
       const data = await apiFetch(`/${entityType}/${entityId}/comments`);
       setComments(data);
       setNewComment("");
       setReplyContent("");
       setReplyingTo(null);
     } catch (err) {
-      console.error("Failed to post comment", err);
-      alert("Не удалось отправить комментарий");
     } finally {
       setLoading(false);
     }
   };
-  // Удаление комментария
   const handleDelete = async (commentId: number) => {
-    if (!confirm("Удалить комментарий?")) return;
     try {
       const token = localStorage.getItem("token");
       await apiFetch(`/comments/${commentId}`, {
@@ -133,9 +118,7 @@ export default function CommentsSection({
       });
       const data = await apiFetch(`/${entityType}/${entityId}/comments`);
       setComments(data);
-    } catch (err) {
-      console.error("Failed to delete comment", err);
-    }
+    } catch (err) {}
   };
   const handleReaction = async (
     commentId: number,
@@ -143,11 +126,9 @@ export default function CommentsSection({
   ) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Войдите, чтобы оценивать комментарии!");
       return;
     }
 
-    // Если кликнул на уже выбранное — снимаем реакцию
     const comment = comments.find((c) => c.id === commentId);
     const currentReaction = comment?.user_reaction;
     const newReaction = currentReaction === type ? "none" : type;
@@ -162,14 +143,10 @@ export default function CommentsSection({
         body: JSON.stringify({ reaction_type: newReaction }),
       });
 
-      // Перезагружаем комментарии для обновления статистики
       const data = await apiFetch(`/${entityType}/${entityId}/comments`);
       setComments(data);
-    } catch (err) {
-      console.error("Failed to react to comment", err);
-    }
+    } catch (err) {}
   };
-  // Редактирование
   const handleEdit = async (commentId: number) => {
     if (!editContent.trim()) return;
     try {
@@ -185,9 +162,7 @@ export default function CommentsSection({
       const data = await apiFetch(`/${entityType}/${entityId}/comments`);
       setComments(data);
       setEditingId(null);
-    } catch (err) {
-      console.error("Failed to edit comment", err);
-    }
+    } catch (err) {}
   };
 
   if (!entityId) return null;
@@ -198,7 +173,6 @@ export default function CommentsSection({
         Обсудите пройденный урок, поделитесь мнением, вопросами. Что было
         непонятно? Что бы вы улучшили?
       </p>
-      {/* Форма нового комментария */}
       <form onSubmit={(e) => handleSubmit(e)} className="mb-8 ord-text">
         <textarea
           value={newComment}
@@ -220,7 +194,6 @@ export default function CommentsSection({
       <div className="space-y-6">
         {comments.map((comment) => (
           <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
-            {/* Шапка комментария */}
             <img
               src={`/avatars/white_cat.jpg`}
               alt={comment.username}
@@ -258,7 +231,6 @@ export default function CommentsSection({
                   )}
                 </div>
 
-                {/* Контент или режим редактирования */}
                 {editingId === comment.id ? (
                   <div className="mt-3">
                     <textarea
@@ -288,7 +260,6 @@ export default function CommentsSection({
                   </p>
                 )}
 
-                {/* Футер: реакции + ответ + время */}
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200">
                   <div className="flex items-center gap-2">
                     <button
@@ -315,13 +286,11 @@ export default function CommentsSection({
                     </button>
                   </div>
 
-                  {/* Время */}
                   <span className="text-xs text-gray-400 ml-auto">
                     {new Date(comment.created_at).toLocaleDateString("ru-RU")}
                   </span>
                 </div>
 
-                {/* Форма ответа (универсальная: и для корневых, и для вложенных) */}
                 {replyingTo === comment.id && (
                   <form
                     onSubmit={(e) => handleSubmit(e, comment.id)}
@@ -353,8 +322,6 @@ export default function CommentsSection({
                   </form>
                 )}
               </div>
-
-              {/* Ответы на комментарий (рекурсивный рендеринг) */}
             </div>
           </div>
         ))}

@@ -1,14 +1,13 @@
-// frontend/components/CopyLinkButton.tsx
 "use client";
 
 import { useState } from "react";
 import { Link, Check, Copy } from "lucide-react";
 
 interface CopyLinkButtonProps {
-  url?: string; // ✅ Опционально: кастомная ссылка
-  label?: string; // ✅ Опционально: текст кнопки
-  variant?: "icon" | "button"; // ✅ Стиль: только иконка или кнопка
-  className?: string; // ✅ Доп. классы
+  url?: string;
+  label?: string;
+  variant?: "icon" | "button";
+  className?: string;
 }
 
 export default function CopyLinkButton({
@@ -21,23 +20,18 @@ export default function CopyLinkButton({
 
   const handleCopy = async () => {
     try {
-      // ✅ Если url не передан — берём текущую страницу
       const linkToCopy = url || window.location.href;
 
       await navigator.clipboard.writeText(linkToCopy);
 
       setCopied(true);
 
-      // ✅ Сбрасываем состояние через 2 секунды
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy link", err);
-      // ✅ Фолбэк для старых браузеров
       fallbackCopy(url || window.location.href);
     }
   };
 
-  // ✅ Фолбэк: если navigator.clipboard не доступен
   const fallbackCopy = (text: string) => {
     const textarea = document.createElement("textarea");
     textarea.value = text;
@@ -52,13 +46,11 @@ export default function CopyLinkButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Fallback copy failed", err);
     } finally {
       document.body.removeChild(textarea);
     }
   };
 
-  // ✅ Вариант: только иконка (для хедера/комментариев)
   if (variant === "icon") {
     return (
       <button
@@ -72,7 +64,6 @@ export default function CopyLinkButton({
       >
         {copied ? <Check className="w-5 h-5" /> : <Link className="w-5 h-5" />}
 
-        {/* Тултип */}
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
           {copied ? "✓ Скопировано!" : "Копировать ссылку"}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
@@ -81,7 +72,6 @@ export default function CopyLinkButton({
     );
   }
 
-  // ✅ Вариант: кнопка с текстом (для статей/уроков)
   return (
     <button
       onClick={handleCopy}

@@ -10,7 +10,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         DEBUG: "false",
-	DATABASE_URL: "sqlite:///./dementia.db",  // ✅ Проверь путь к БД
+        DATABASE_URL: "sqlite:///./dementia.db",
         ALLOWED_ORIGINS: "https://maoschool.ru,http://localhost:3010",
       },
       error_file: "/home/vika/nextproject/logs/api-error.log",

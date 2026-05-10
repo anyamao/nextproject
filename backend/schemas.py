@@ -31,7 +31,7 @@ class UserOut(BaseModel):
     id: int
     email: str
     username: str
-    avatar_url: str | None = "default_cat.jpg"  # ✅ Дефолтное значение
+    avatar_url: str | None = "default_cat.jpg"
     status: str | None = None
     created_at: datetime | None = None
 
@@ -44,11 +44,8 @@ class Token(BaseModel):
 
 class UserUpdate(BaseModel):
     username: str | None = Field(None, min_length=3, max_length=30)
-    avatar_url: str | None = None  # ✅ Может быть null или имя файла
+    avatar_url: str | None = None
     status: str | None = Field(None, max_length=200)
-
-
-# ЕГЭ СХЕМЫ СНИЗУ ege_native ###############"""
 
 
 class EgeSubjectCreate(BaseModel):
@@ -77,27 +74,26 @@ class EgeSubjectList(BaseModel):
 
 
 class EgeLessonCreate(BaseModel):
-    subject_id: int = Field(..., gt=0)  # gt=0 → больше нуля
+    subject_id: int = Field(..., gt=0)
     title: str = Field(..., min_length=3, max_length=200)
     slug: str = Field(
         ..., pattern=r"^[a-z0-9-]+$", description="Только латиница, цифры, дефис"
     )
     description: str | None = Field(None, max_length=500)
     content: str | None = None
-    time_minutes: int | None = Field(None, ge=1, le=300)  # 1-300 минут
+    time_minutes: int | None = Field(None, ge=1, le=300)
     test_id: int | None = None
 
 
 class CourseUnitOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    title: str  # "My Friends and Me"
+    title: str
     unit_number: int  # 1
     description: str | None = None
-    lesson_count: int = 0  # опционально: количество уроков в юните
+    lesson_count: int = 0
 
 
-# 📤 Ответ: урок
 class EgeLessonOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -114,7 +110,6 @@ class EgeLessonOut(BaseModel):
     updated_at: datetime | None = None
 
 
-# 📦 Список уроков для предмета
 class EgeLessonList(BaseModel):
     subject_slug: str
     lessons: list[EgeLessonOut]
@@ -138,7 +133,6 @@ class TestQuestionOut(BaseModel):
     id: int
     question_text: str
     order_index: int
-    # ❌ correct_answer НЕ возвращаем клиенту!
 
 
 class EgeTestOut(BaseModel):
@@ -151,20 +145,19 @@ class EgeTestOut(BaseModel):
 
 
 class TestSubmissionResult(BaseModel):
-    score: float  # Может быть дробным, например 75.5
+    score: float
     passed: bool
     total_questions: int
     correct_count: int
 
 
 class TestSubmission(BaseModel):
-    answers: dict[str, str]  # {question_id: "user_answer"}
+    answers: dict[str, str]
 
 
 class TestResultCreate(BaseModel):
     score: int = Field(..., ge=0, le=100)
     passed: bool
-    # test_id и user_id берём из контекста (не от клиента)
 
 
 class TestResultOut(BaseModel):
@@ -175,7 +168,6 @@ class TestResultOut(BaseModel):
 
 
 class LessonViewCreate(BaseModel):
-    # Пустая схема — всё берём из контекста (токен + URL)
     pass
 
 
@@ -185,16 +177,13 @@ class LessonViewOut(BaseModel):
 
 
 class ReactionCreate(BaseModel):
-    reaction_type: str  # "like" или "dislike" (или "none" чтобы убрать)
+    reaction_type: str
 
 
 class LessonStatsOut(BaseModel):
     likes: int
     dislikes: int
-    user_reaction: str | None = None  # "like", "dislike" или None
-
-
-##########Все для статей
+    user_reaction: str | None = None
 
 
 ARTICLE_TOPICS = Literal["Забота о себе", "Продуктивность", "Наука", "Программирование"]
@@ -222,7 +211,7 @@ class ArticleOut(BaseModel):
 
 
 class ArticleReactionCreate(BaseModel):
-    reaction_type: str  # "like", "dislike", или "none"
+    reaction_type: str
 
 
 class ArticleStatsOut(BaseModel):
@@ -230,12 +219,11 @@ class ArticleStatsOut(BaseModel):
     likes: int
     dislikes: int
     views: int
-    user_reaction: str | None = None  # "like", "dislike", или None
+    user_reaction: str | None = None
 
 
-#########ВСЯ СВЯЗАННОЕ С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
 class CommentReactionCreate(BaseModel):
-    reaction_type: str  # "like", "dislike", или "none"
+    reaction_type: str
 
 
 class CommentWithStatsOut(BaseModel):
@@ -249,33 +237,30 @@ class CommentWithStatsOut(BaseModel):
     parent_id: int | None
     created_at: datetime
     updated_at: datetime | None
-    # Статистика
     likes: int = 0
     dislikes: int = 0
-    user_reaction: str | None = None  # "like", "dislike", или None
-    # Вложенные ответы (рекурсивно)
+    user_reaction: str | None = None
     replies: list["CommentWithStatsOut"] = []
 
 
 class CommentCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
-    parent_id: int | None = None  # для ответов на комментарии
-    lesson_id: int | None = None  # ✅ Добавь это
-    article_id: int | None = None  # ✅ И это
+    parent_id: int | None = None
+    lesson_id: int | None = None
+    article_id: int | None = None
 
 
 class CommentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
-    username: str  # добавим для удобства
+    username: str
     content: str
     parent_id: int | None
     created_at: datetime
-    replies: list["CommentOut"] = []  # для вложенных ответов
+    replies: list["CommentOut"] = []
 
 
-# Для обновления списка на фронте
 class CommentsListOut(BaseModel):
     comments: list[CommentOut]
     total: int
@@ -317,7 +302,6 @@ class FlashcardOut(BaseModel):
     back: str
     hint: str | None = None
     example: str | None = None
-    # Прогресс пользователя (если авторизован)
     user_progress: dict | None = (
         None  # { next_review, interval_days, ease_factor, repetitions }
     )
@@ -330,8 +314,7 @@ class FlashcardDeckOut(BaseModel):
     description: str | None = None
     lesson_id: int
     card_count: int = 0
-    cards: list[FlashcardOut] = []  # Загружается опционально
-    # Статистика для пользователя
+    cards: list[FlashcardOut] = []
     due_count: int = 0  # Сколько карточек нужно повторить сегодня
     new_count: int = 0  # Сколько новых карточек
     mastered_count: int = 0  # Сколько выучено
@@ -342,12 +325,6 @@ class FlashcardAnswer(BaseModel):
     rating: str  # "again" | "hard" | "good" | "easy" (как в Anki)
 
 
-# конец #######################################################
-
-
-#########################
-
-# экспорт не трогать!!!
 __all__ = [
     "UserRegister",
     "UserLogin",

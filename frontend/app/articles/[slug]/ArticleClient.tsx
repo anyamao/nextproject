@@ -1,4 +1,3 @@
-// frontend/app/articles/[slug]/ArticleClient.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,18 +22,15 @@ export default function ArticleClient({ article }: { article: Article }) {
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Для хлебных крошек и "Следующей статьи"
   const [topicTitle, setTopicTitle] = useState<string>("");
   const [nextArticleSlug, setNextArticleSlug] = useState<string | null>(null);
   const [articlesLoaded, setArticlesLoaded] = useState(false);
 
-  // 🔍 Проверка авторизации
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
   }, []);
 
-  // 👁️ Записать просмотр
   useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
@@ -44,15 +40,11 @@ export default function ArticleClient({ article }: { article: Article }) {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("✅ View request sent");
-      } catch (err) {
-        console.log("ℹ️ View not recorded");
-      }
+      } catch (err) {}
     };
     recordView();
   }, [article.slug]);
 
-  // 👁️ Загрузить счётчик просмотров
   useEffect(() => {
     if (!article.id) return;
     const fetchViews = async () => {
@@ -64,18 +56,14 @@ export default function ArticleClient({ article }: { article: Article }) {
           },
         );
         setViewCount(data.view_count);
-      } catch {
-        console.log("ℹ️ Could not fetch view count");
-      }
+      } catch {}
     };
     fetchViews();
   }, [article.id, article.slug]);
 
-  // ✅ Загрузка темы и следующей статьи
   useEffect(() => {
     async function loadTopicAndNextArticle() {
       try {
-        // 1️⃣ Загружаем все статьи для получения названия темы и поиска следующей
         const articles: Array<{
           id: number;
           slug: string;
@@ -83,14 +71,12 @@ export default function ArticleClient({ article }: { article: Article }) {
           title: string;
         }> = await apiFetch("/articles");
 
-        // Находим текущую статью
         const currentArticle = articles.find((a) => a.slug === article.slug);
         if (currentArticle) {
           setTopicTitle(currentArticle.topic);
           document.title = `${currentArticle.topic}: ${article.title} | MaoSchool`;
         }
 
-        // Фильтруем статьи по той же теме и сортируем по id
         const sameTopic = articles
           .filter((a) => a.topic === article.topic)
           .sort((a, b) => a.id - b.id);
@@ -98,15 +84,12 @@ export default function ArticleClient({ article }: { article: Article }) {
         const currentIndex = sameTopic.findIndex((a) => a.id === article.id);
 
         if (currentIndex !== -1 && currentIndex < sameTopic.length - 1) {
-          // ✅ Есть следующая статья в этой теме!
           setNextArticleSlug(sameTopic[currentIndex + 1].slug);
         } else {
-          // ❌ Это последняя статья в теме
           setNextArticleSlug(null);
         }
         setArticlesLoaded(true);
       } catch (err) {
-        console.error("Failed to load topic/next article", err);
         setTopicTitle(article.topic);
         setNextArticleSlug(null);
         setArticlesLoaded(true);
@@ -133,7 +116,6 @@ export default function ArticleClient({ article }: { article: Article }) {
           </Link>
         </div>
 
-        {/* Заголовок + просмотры */}
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
           <div className="w-full ">
             <Link
@@ -154,7 +136,6 @@ export default function ArticleClient({ article }: { article: Article }) {
           </div>
         </div>
 
-        {/* Панель: Поделиться + время */}
         <div className="flex flex-col md:flex-row items-center mb-[40px] w-full mt-[15px] justify-between">
           <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
@@ -171,7 +152,6 @@ export default function ArticleClient({ article }: { article: Article }) {
             )}
           </div>
 
-          {/* Пустой блок для сохранения выравнивания (нет теста) */}
           <div className="h-[50px] mt-[10px] md:mt-[0px] items-center flex flex-row ">
             <span className="px-3 py-1 bg-purple-100 h-[30px] text-purple-700 text-sm rounded-full font-medium">
               {article.topic}
@@ -183,9 +163,6 @@ export default function ArticleClient({ article }: { article: Article }) {
           </div>
         </div>
 
-        {/* Мета-информация */}
-
-        {/* Контент статьи */}
         {article.content ? (
           <article
             className="prose prose-purple max-w-none w-full text-gray-800 lesson-content-root"
@@ -196,7 +173,6 @@ export default function ArticleClient({ article }: { article: Article }) {
         )}
       </div>
 
-      {/* Нижняя панель: реакции + следующая статья */}
       <div className="flex flex-col  w-full flex items-center justify-center">
         <div className="flex flex-row items-center mt-[20px] justify-between">
           {article.id && <ArticleStats slug={article.slug} />}

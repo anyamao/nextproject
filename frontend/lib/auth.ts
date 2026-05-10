@@ -1,6 +1,3 @@
-// frontend/lib/auth.ts
-
-// Тип для payload JWT
 export type JWTPayload = {
   sub?: string;
   username?: string;
@@ -8,16 +5,14 @@ export type JWTPayload = {
   [key: string]: unknown;
 };
 
-// Тип для пользователя приложения
 export type AppUser = {
   id: number;
   email: string;
   username: string;
-  avatar_url?: string; // ✅ Добавь это поле (опциональное)
+  avatar_url?: string;
   status?: string;
 };
 
-// Простая функция для декодирования JWT (без проверки подписи)
 export function decodeJWT(token: string): JWTPayload | null {
   try {
     const base64Url = token.split(".")[1];
@@ -35,7 +30,6 @@ export function decodeJWT(token: string): JWTPayload | null {
   }
 }
 
-// Проверка, истёк ли токен
 export function isTokenExpired(token: string): boolean {
   const payload = decodeJWT(token);
   if (!payload?.exp) return true;
@@ -43,20 +37,18 @@ export function isTokenExpired(token: string): boolean {
   return payload.exp * 10000 < Date.now();
 }
 
-// Получить пользователя из токена
 export function getUserFromToken(token: string): AppUser | null {
   const payload = decodeJWT(token);
   if (!payload || !payload.sub) return null;
   return {
-    id: 0, // ⚠️ JWT обычно не содержит id, лучше получать из /profile
+    id: 0,
     email: payload.sub,
     username: payload.username || "",
-    avatar_url: undefined, // ⚠️ JWT не содержит avatar_url
+    avatar_url: undefined,
     status: undefined,
   };
 }
 
-// Вспомогательные функции для localStorage
 export const authStorage = {
   getToken: () =>
     typeof window !== "undefined" ? localStorage.getItem("token") : null,
@@ -84,7 +76,6 @@ export const authStorage = {
     }
   },
 
-  // Полная очистка при логауте
   clear: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");

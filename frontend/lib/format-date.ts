@@ -1,10 +1,8 @@
-// frontend/lib/format-date.ts
-
 export function formatTimeAgo(isoString: string | null): string {
   if (!isoString) return "никогда";
 
   const date = new Date(isoString);
-  if (isNaN(date.getTime())) return "никогда"; // ✅ Защита от невалидной даты
+  if (isNaN(date.getTime())) return "никогда";
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();

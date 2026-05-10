@@ -36,9 +36,6 @@ class User(Base):
     flashcard_progress = relationship("FlashcardProgress", back_populates="user")
 
 
-##ЭТО МЕСТО ДЛЯ ВСЕГО ЧТО СВЯЗАНО С ege_native ЕГЭ!!!!!!###"""
-
-
 class EgeSubject(Base):
     __tablename__ = "ege_subjects"
 
@@ -54,8 +51,6 @@ class EgeSubject(Base):
     units = relationship(
         "CourseUnit", back_populates="subject", cascade="all, delete-orphan"
     )
-    # ❌ УДАЛИТЕ back_populates, если в EgeLesson нет обратной связи:
-    # ✅ Просто список уроков (без back_populates — безопасно)
     lessons = relationship("EgeLesson", cascade="all, delete-orphan")
 
 
@@ -108,9 +103,6 @@ class FlashcardDeck(Base):
     )
 
 
-# backend/models.py
-
-
 class Flashcard(Base):
     __tablename__ = "flashcards"
 
@@ -123,16 +115,11 @@ class Flashcard(Base):
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now())
 
-    # 🔥 ИСПРАВЛЕНИЕ СВЯЗЕЙ:
     deck = relationship("FlashcardDeck", back_populates="cards")
 
-    # Связь с прогрессом пользователя
     progress = relationship(
         "FlashcardProgress", back_populates="card", cascade="all, delete-orphan"
     )
-
-
-# backend/models.py
 
 
 class FlashcardProgress(Base):
@@ -142,22 +129,17 @@ class FlashcardProgress(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     card_id = Column(Integer, ForeignKey("flashcards.id"), nullable=False)
 
-    # Интервальное повторение
-    next_review = Column(Date)  # ✅ Используем Date из sqlalchemy
+    next_review = Column(Date)
     interval_days = Column(Integer, default=0)
-    ease_factor = Column(Float, default=2.5)  # ✅ Используем Float из sqlalchemy
+    ease_factor = Column(Float, default=2.5)
     repetitions = Column(Integer, default=0)
 
-    # Статистика
     times_seen = Column(Integer, default=0)
     times_correct = Column(Integer, default=0)
     last_answered = Column(DateTime)
 
-    # 🔥 ИСПРАВЛЕНИЕ СВЯЗЕЙ:
-    # Называем связь 'user' и указываем back_populates='flashcard_progress'
     user = relationship("User", back_populates="flashcard_progress")
 
-    # Называем связь 'card' и указываем back_populates='progress'
     card = relationship("Flashcard", back_populates="progress")
 
 
@@ -178,9 +160,6 @@ class CourseUnit(Base):
     lessons = relationship(
         "EgeLesson", back_populates="unit", cascade="all, delete-orphan"
     )
-
-
-# backend/models.py
 
 
 class LanguageSubject(Base):
@@ -328,7 +307,6 @@ class EgeTestQuestion(Base):
     correct_answer = Column(String, nullable=False)
     order_index = Column(Integer, default=0)
     solution = Column(Text, nullable=True)
-    # ✅ Обратная связь на тест (единственная, которая нужна с back_populates)
     test = relationship("EgeTest", back_populates="questions")
 
 
@@ -337,7 +315,6 @@ class LessonView(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 🔗 Связи
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -354,7 +331,6 @@ class LessonReaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 🔗 Связи
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -365,22 +341,16 @@ class LessonReaction(Base):
         index=True,
     )
 
-    # 👍 Реакция (True = Лайк, False = Дизлайк)
     is_like = Column(Boolean, nullable=False)
 
     created_at = Column(DateTime, server_default=func.now())
 
-    # ✅ Ограничение: одна реакция на пользователя на урок
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_reaction"),
     )
-    # 📅 Метаданные
-
-    # 🔗 Relationships
     user = relationship("User")
     lesson = relationship("EgeLesson")
 
-    # ✅ Уникальность: один просмотр на пользователя на урок (навечно)
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_view"),
     )
@@ -392,7 +362,7 @@ class Article(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     slug = Column(String(200), unique=True, nullable=False, index=True)
-    topic = Column(String(50), nullable=False, index=True)  # ✅ Фиксированная тема
+    topic = Column(String(50), nullable=False, index=True)
     content = Column(Text, nullable=True)
     time_minutes = Column(Integer, nullable=True)
     image = Column(String(500), nullable=True)
@@ -450,11 +420,8 @@ class TestResult(Base):
     __tablename__ = "test_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    lesson_id = Column(
-        Integer, ForeignKey("ege_lessons.id"), nullable=True
-    )  # Может быть null, если тест не привязан к уроку
+    lesson_id = Column(Integer, ForeignKey("ege_lessons.id"), nullable=True)
 
-    # 🔗 Связи
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -465,20 +432,14 @@ class TestResult(Base):
         index=True,
     )
 
-    # 📊 Результат
     score = Column(Integer, nullable=False)  # 0-100
     passed = Column(Boolean, nullable=False)
     completed_at = Column(DateTime, server_default=func.now())
 
-    # 🔗 Relationships (опционально, если нужно)
     user = relationship("User")
     test = relationship("EgeTest")
     lesson = relationship("EgeLesson", back_populates="test_results")  # опционально
-    # ✅ Уникальность: один результат на пользователя на тест (последний перезаписывается)
-    __table_args__ = (
-        # Если пользователь проходит тест повторно — обновляем старую запись (UPSERT)
-        # Это реализуется на уровне запроса, не через unique constraint
-    )
+    __table_args__ = ()
 
 
 class UserCompletedLesson(Base):
@@ -494,7 +455,6 @@ class UserCompletedLesson(Base):
     )
 
 
-#######ВСЕ ЧТО СВЯЗАНО С КОММЕНТАРИЯМИ К УРОКАМ СНИЗУ
 class CommentReaction(Base):
     __tablename__ = "comment_reactions"
 
@@ -524,12 +484,10 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 🔗 Автор
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
-    # 🔗 Что комментируем (только одно из двух!)
     lesson_id = Column(
         Integer,
         ForeignKey("ege_lessons.id", ondelete="CASCADE"),
@@ -543,7 +501,6 @@ class Comment(Base):
         index=True,
     )
 
-    # 📝 Контент
     content = Column(Text, nullable=False)
     parent_id = Column(
         Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True
@@ -551,13 +508,11 @@ class Comment(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    # 🔗 Relationships
     user = relationship("User")
     lesson = relationship("EgeLesson")
     article = relationship("Article")
     parent = relationship("Comment", remote_side=[id], backref="replies")
 
-    # ✅ Гарантия: только один тип объекта
     __table_args__ = (
         CheckConstraint(
             "(lesson_id IS NOT NULL AND article_id IS NULL) OR (lesson_id IS NULL AND article_id IS NOT NULL)",

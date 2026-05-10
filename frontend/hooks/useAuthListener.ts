@@ -10,7 +10,6 @@ import {
   AppUser,
 } from "@/lib/auth";
 
-// Расширяем тип Window для нашей функции
 declare global {
   interface Window {
     refreshAuth?: () => void;
@@ -22,19 +21,16 @@ export function useAuthListener() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Функция проверки авторизации
     const checkAuth = () => {
       const token = authStorage.getToken();
 
       if (!token || isTokenExpired(token)) {
-        // Токена нет или он истёк — пользователь не авторизован
         authStorage.clear();
         setUser(null);
         setLoading(false);
         return;
       }
 
-      // Токен валиден — декодируем пользователя
       const userData = getUserFromToken(token);
       if (userData) {
         setUser(userData);
@@ -45,10 +41,8 @@ export function useAuthListener() {
       setLoading(false);
     };
 
-    // Проверяем при монтировании
     checkAuth();
 
-    // 🔔 Слушаем события storage для синхронизации между вкладками
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "token") {
         checkAuth();
@@ -56,7 +50,6 @@ export function useAuthListener() {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // 🔔 Опционально: периодическая проверка истечения токена (каждые 30 сек)
     const interval = setInterval(checkAuth, 30000);
 
     return () => {
@@ -65,7 +58,6 @@ export function useAuthListener() {
     };
   }, []);
 
-  // Функция для принудительного обновления (после логина/регистрации)
   const refreshAuth = () => {
     const token = authStorage.getToken();
     if (token && !isTokenExpired(token)) {
@@ -74,7 +66,6 @@ export function useAuthListener() {
     }
   };
 
-  // Делаем refreshAuth доступным глобально
   useEffect(() => {
     window.refreshAuth = refreshAuth;
     return () => {

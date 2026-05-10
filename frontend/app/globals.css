@@ -1,8 +1,5 @@
 @import "tailwindcss";
 @tailwind utilities;
-/* frontend/styles/lesson-content.css */
-
-/* 🎨 CSS-переменные для темы */
 :root {
   --lesson-bg: #ffffff;
   --lesson-text: #1f2937;
@@ -20,7 +17,6 @@
   --lesson-font-xl: 1.5rem; /* 24px */
 }
 
-/* 📦 Контейнер урока */
 .lesson-block {
   width: 100%;
   max-width: 1000px;
@@ -39,7 +35,6 @@
   }
 }
 
-/* 📝 Типографика */
 .lesson-header {
   font-size: var(--lesson-font-lg);
   font-weight: 600;
@@ -71,7 +66,6 @@
   text-align: center;
 }
 
-/* 🖼️ Изображения */
 .lesson-image-wrapper {
   width: 100%;
   display: flex;
@@ -94,7 +88,6 @@
   }
 }
 
-/* 🔖 Списки, цитаты и т.д. */
 .lesson-list {
   margin: var(--lesson-spacing-sm) 0;
   padding-left: var(--lesson-spacing-lg);

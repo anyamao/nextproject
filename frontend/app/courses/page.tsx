@@ -1,8 +1,8 @@
-// frontend/app/courses/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import {
   Search,
@@ -22,10 +22,9 @@ type Course = {
   slug: string;
   description: string | null;
   image: string | null;
-  category: string | null; // ✅ Новое поле
+  category: string | null;
 };
 
-// 🎨 Категории для фильтрации
 const CATEGORIES = [
   { value: "", label: "Все", icon: Filter },
   { value: "Английский", label: "Английский", icon: Globe },
@@ -36,19 +35,25 @@ const CATEGORIES = [
 ];
 
 export default function CoursesPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const searchQueryFromUrl = searchParams.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(searchQueryFromUrl);
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // 🔍 Состояния для поиска и фильтра
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  // Загрузка курсов
+  useEffect(() => {
+    const newSearchQuery = searchParams.get("search") || "";
+    setSearchQuery(newSearchQuery);
+  }, [searchParams]);
+
   useEffect(() => {
     async function fetchCourses() {
+      setLoading(true);
       try {
-        // ✅ Передаём параметры поиска и категории в бэкенд
         const params = new URLSearchParams();
         if (selectedCategory) params.append("category", selectedCategory);
         if (searchQuery) params.append("search", searchQuery);
@@ -60,15 +65,13 @@ export default function CoursesPage() {
         setCourses(data);
         setFilteredCourses(data);
       } catch (err) {
-        console.error("Failed to fetch courses", err);
       } finally {
         setLoading(false);
       }
     }
     fetchCourses();
-  }, [selectedCategory, searchQuery]); // ✅ Перезагружаем при изменении фильтров
+  }, [selectedCategory, searchQuery]);
 
-  // 🔍 Локальная фильтрация (опционально, если хочешь мгновенный отклик)
   useEffect(() => {
     let result = courses;
 
@@ -87,9 +90,19 @@ export default function CoursesPage() {
     setFilteredCourses(result);
   }, [courses, searchQuery, selectedCategory]);
 
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+    router.push(`/courses?${params.toString()}`, { scroll: false });
+  };
+
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-6xl mx-auto">
-      {/* 🔝 Заголовок */}
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1100px] mx-auto mt-[40px]">
       <div className="w-full mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Курсы</h1>
         <p className="text-gray-600 mt-2">
@@ -97,21 +110,18 @@ export default function CoursesPage() {
         </p>
       </div>
 
-      {/* 🔍 Поиск и фильтры */}
       <div className="w-full mb-8 space-y-4">
-        {/* Поисковая строка */}
         <div className="relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Поиск курсов..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition"
           />
         </div>
 
-        {/* Кнопки категорий */}
         <div className="flex flex-wrap justify-center gap-2">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
@@ -135,7 +145,6 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      {/* 📚 Список курсов */}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
@@ -153,6 +162,7 @@ export default function CoursesPage() {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("");
+                router.push("/courses");
               }}
               className="text-purple-600 hover:underline mt-2"
             >
@@ -168,31 +178,25 @@ export default function CoursesPage() {
               href={`/courses/${course.slug}`}
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all"
             >
-              {/* 🏷️ Бейдж категории */}
               {course.category && (
                 <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 mb-3">
                   {CATEGORIES.find((c) => c.value === course.category)?.label ||
                     course.category}
                 </span>
               )}
-
               <h2 className="text-xl font-semibold text-gray-900 group-hover:text-purple-700">
                 {course.title}
               </h2>
-
               {course.description && (
                 <p className="text-gray-600 mt-2 text-sm line-clamp-2">
                   {course.description}
                 </p>
               )}
-
-              {/* 📊 Статистика (заглушка) */}
             </Link>
           ))}
         </div>
       )}
 
-      {/* 💡 Подсказка */}
       {!loading &&
         filteredCourses.length > 0 &&
         (searchQuery || selectedCategory) && (

@@ -1,4 +1,3 @@
-// frontend/components/AvatarSelector.tsx
 "use client";
 
 import { useState } from "react";
@@ -63,7 +62,6 @@ export default function AvatarSelector({
               {avatar.label}
             </span>
 
-            {/* Галочка при выборе */}
             {selectedAvatar === avatar.name && (
               <div className="absolute top-1 right-1 w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center">
                 <svg

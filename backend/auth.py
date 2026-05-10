@@ -11,7 +11,6 @@ import os
 from database import get_db
 from models import User
 
-# 🔐 Настройки
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
@@ -66,9 +65,6 @@ async def get_current_user(
     return user
 
 
-# backend/auth.py
-
-
 async def get_current_user_optional(
     token: str | None = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User | None:
@@ -88,6 +84,6 @@ async def get_current_user_optional(
         user = await db.execute(select(User).where(User.email == email))
         return user.scalar_one_or_none()
     except JWTError:
-        return None  # ✅ Не кидаем 401, просто возвращаем None
+        return None
     except Exception:
-        return None  # ✅ Любая ошибка = гость, а не 401
+        return None

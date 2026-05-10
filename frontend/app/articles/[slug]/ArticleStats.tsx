@@ -1,4 +1,3 @@
-// frontend/app/articles/[slug]/ArticleStats.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,7 +11,6 @@ export default function ArticleStats({ slug }: { slug: string }) {
   const [myReaction, setMyReaction] = useState<"like" | "dislike" | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Загрузка статистики
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -21,18 +19,14 @@ export default function ArticleStats({ slug }: { slug: string }) {
         setDislikes(data.dislikes);
         setViews(data.views);
         setMyReaction(data.user_reaction);
-      } catch (err) {
-        console.error("Failed to fetch stats");
-      }
+      } catch (err) {}
     };
     fetchStats();
   }, [slug]);
 
-  // Обработчик реакции
   const handleReaction = async (type: "like" | "dislike") => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Войдите, чтобы оценивать статьи!");
       return;
     }
 
@@ -49,13 +43,11 @@ export default function ArticleStats({ slug }: { slug: string }) {
         body: JSON.stringify({ reaction_type: newReaction }),
       });
 
-      // Перезагружаем статистику
       const data = await apiFetch(`/articles/${slug}/stats`);
       setLikes(data.likes);
       setDislikes(data.dislikes);
       setMyReaction(data.user_reaction);
     } catch (err) {
-      console.error("Reaction failed");
     } finally {
       setLoading(false);
     }
@@ -63,7 +55,6 @@ export default function ArticleStats({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-6 border-t border-b border-gray-200 mt-8">
-      {/* 👍👎 Реакции */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => handleReaction("like")}
@@ -92,7 +83,6 @@ export default function ArticleStats({ slug }: { slug: string }) {
         </button>
       </div>
 
-      {/* 👁️ Просмотры */}
       <div className="flex items-center gap-2 text-gray-500">
         <Eye className="w-4 h-4" />
         <span className="text-sm font-medium">

@@ -1,12 +1,9 @@
-// lib/sanitize.ts
 import DOMPurify from "dompurify";
 
-// Check if we're in browser environment
 const isBrowser = typeof window !== "undefined";
 
 export function sanitizeHtml(html: string): string {
   if (!isBrowser) {
-    // Server-side: return as-is or use a different sanitizer
     return html;
   }
 
@@ -39,12 +36,11 @@ export function sanitizeHtml(html: string): string {
       "div",
     ],
     ALLOWED_ATTR: ["src", "alt", "class", "style", "href", "target", "rel"],
-    ADD_TAGS: ["iframe"], // Optional: if you need videos
+    ADD_TAGS: ["iframe"],
     ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling"],
   });
 }
 
-// Optional: Helper to strip all HTML (get plain text)
 export function stripHtml(html: string): string {
   if (!isBrowser) return html;
   const temp = document.createElement("div");

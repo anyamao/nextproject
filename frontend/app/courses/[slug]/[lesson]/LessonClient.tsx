@@ -1,4 +1,3 @@
-// frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
 "use client";
 import useContactStore from "@/store/states";
 import { useEffect, useState } from "react";
@@ -29,7 +28,7 @@ type TestResult = {
 
 interface LessonClientProps {
   lesson: Lesson;
-  subjectSlug: string; // course slug
+  subjectSlug: string;
   lessonSlug: string;
   testId: number | null;
 }
@@ -45,7 +44,6 @@ export default function LessonClient({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
 
-  // ✅ Для хлебных крошек и "Следующего урока"
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [nextLessonSlug, setNextLessonSlug] = useState<string | null>(null);
   const [lessonsLoaded, setLessonsLoaded] = useState(false);
@@ -53,13 +51,11 @@ export default function LessonClient({
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
 
-  // 🔍 Проверка авторизации
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
   }, []);
 
-  // 👁️ Записать просмотр (курсовой эндпоинт!)
   useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
@@ -69,15 +65,11 @@ export default function LessonClient({
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("✅ View request sent");
-      } catch (err) {
-        console.log("ℹ️ View not recorded");
-      }
+      } catch (err) {}
     };
     recordView();
   }, [lesson.id]);
 
-  // 👁️ Загрузить счётчик просмотров (курсовой эндпоинт!)
   useEffect(() => {
     if (!lesson.id) return;
     const fetchViews = async () => {
@@ -89,14 +81,11 @@ export default function LessonClient({
           },
         );
         setViewCount(data.view_count);
-      } catch {
-        console.log("ℹ️ Could not fetch view count");
-      }
+      } catch {}
     };
     fetchViews();
   }, [lesson.id]);
 
-  // 📥 Результат теста (курсовой эндпоинт!)
   useEffect(() => {
     if (!testId) return;
     const fetchResult = async () => {
@@ -116,7 +105,6 @@ export default function LessonClient({
         );
         if (result) setTestResult(result);
       } catch (err) {
-        console.log("ℹ️ No saved result or not authorized");
       } finally {
         setLoadingResult(false);
       }
@@ -132,10 +120,7 @@ export default function LessonClient({
           {},
         );
         setFlashcardStats(stats);
-      } catch (err) {
-        // Карточек нет или ошибка — не страшно
-        console.log("ℹ️ No flashcards for this lesson");
-      }
+      } catch (err) {}
     }
 
     if (lesson.id) {
@@ -143,16 +128,9 @@ export default function LessonClient({
     }
   }, [lesson.id]);
 
-  // ✅ Загрузка названия курса и следующего урока
-  // ✅ Загрузка названия курса и следующего урока
-
-  // frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
-
-  // ✅ Загрузка названия курса и следующего урока
   useEffect(() => {
     async function loadCourseAndNextLesson() {
       try {
-        // 1️⃣ Загружаем все КУРСЫ (предметы), чтобы найти название текущего
         const courses: Array<{ id: number; title: string; slug: string }> =
           await apiFetch("/courses/subjects");
 
@@ -162,43 +140,24 @@ export default function LessonClient({
           document.title = `${currentCourse.title}: ${lesson.title} | MaoSchool`;
         }
 
-        // 2️⃣ 🔥 Загружаем УРОКИ курса — теперь ответ { lessons, units }
         const response = await apiFetch(`/courses/${subjectSlug}`);
 
         // 🔥 ИЗВЛЕКАЕМ массив уроков из объекта!
         const lessons: Array<{ id: number; slug: string }> =
           response.lessons || [];
 
-        console.log(
-          `🔍 [LessonClient] Found ${lessons.length} lessons in course`,
-        );
-        console.log(`🔍 [LessonClient] Current lesson id: ${lesson.id}`);
-
-        // Сортируем и ищем следующий урок
         const sorted = [...lessons].sort((a, b) => a.id - b.id); // 🔥 Копия массива, чтобы не мутировать оригинал
         const currentIndex = sorted.findIndex((l) => l.id === lesson.id);
 
-        console.log(
-          `🔍 [LessonClient] currentIndex: ${currentIndex}, total: ${sorted.length}`,
-        );
-
         if (currentIndex !== -1 && currentIndex < sorted.length - 1) {
           const nextSlug = sorted[currentIndex + 1].slug;
-          console.log(`✅ [LessonClient] Next lesson slug: ${nextSlug}`);
           setNextLessonSlug(nextSlug);
         } else {
-          console.log(
-            `ℹ️ [LessonClient] No next lesson (currentIndex=${currentIndex}, length=${sorted.length})`,
-          );
           setNextLessonSlug(null);
         }
 
         setLessonsLoaded(true);
       } catch (err) {
-        console.error(
-          "❌ [LessonClient] Failed to load course/next lesson",
-          err,
-        );
         setCourseTitle("Курс");
         setNextLessonSlug(null);
         setLessonsLoaded(true);
@@ -211,15 +170,12 @@ export default function LessonClient({
   }, [subjectSlug, lesson?.id]);
 
   const handleStartTest = () => {
-    // ✅ Формируем правильный URL возврата
     const returnTo = `/courses/${subjectSlug}/${lessonSlug}`;
 
     if (testId) {
-      // ✅ Сохраняем через хелпер
       saveTestReturnUrl(testId, returnTo);
     }
 
-    // ✅ Переходим на тест с явным параметром returnTo
     window.location.href = `/tests/${testId}?returnTo=${encodeURIComponent(returnTo)}`;
   };
 
@@ -237,7 +193,6 @@ export default function LessonClient({
           </Link>
         </div>
 
-        {/* Заголовок + просмотры */}
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
           <div className="w-full">
             <Link
@@ -264,7 +219,6 @@ export default function LessonClient({
           </div>
         </div>
 
-        {/* Панель: Поделиться + время + результат теста */}
         <div className="flex md:flex-row flex-col items-center w-full mt-[15px] justify-between">
           <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
@@ -326,14 +280,12 @@ export default function LessonClient({
           )}
         </div>
 
-        {/* Описание урока */}
         {lesson.description && (
           <p className="text-purple-700 mt-[25px] ord-text w-full text-center mb-8 leading-relaxed">
             {lesson.description}
           </p>
         )}
 
-        {/* Контент урока */}
         {lesson.content ? (
           <article
             className="prose prose-purple max-w-none w-full text-gray-800 lesson-content-root"
@@ -344,7 +296,6 @@ export default function LessonClient({
         )}
       </div>
 
-      {/* Нижняя панель: реакции + тест + следующий урок */}
       <div className="flex flex-col text-wrap w-full">
         {testId && (
           <p className="ord-text mb-[10px]">
@@ -377,7 +328,6 @@ export default function LessonClient({
               </button>
             ))}
 
-          {/* ✅ Кнопка "Следующий урок" с умной логикой */}
           <div className="flex flex-row items-center mt-[10px] md:mt-[0px] ">
             <div className="flex flex-row items-center min-w-[90px] mr-[5px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
@@ -476,7 +426,6 @@ export default function LessonClient({
         )}
       </div>
 
-      {/* Комментарии */}
       {lesson.id && <CommentsSection lessonId={lesson.id} />}
     </main>
   );

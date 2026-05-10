@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 function Footer() {
   const pathname = usePathname();
 
-  // Скрываем футер на странице /tutor
   if (pathname === "/tutor") {
     return null;
   }
@@ -32,9 +31,15 @@ function Footer() {
         </div>
         <div className="flex flex-col border-gray-300  border-b-[1px] pt-[10px]  pb-[30px]  md:border-b-[0px]">
           <p className="text-white font-semibold mt-[10px]">Контакты</p>
+          <a
+            href="https://github.com/anyamao/nextproject"
+            className="text-gray-300 hover:underline  mt-[10px]"
+          >
+            Github: anyamao/nextproject
+          </a>
+
           <p className="text-gray-300  mt-[10px]">vk: anyamaoo</p>
-          <p className="text-gray-300  mt-[10px]">tg: anyamaoo</p>
-          <p className="text-gray-300  mt-[10px]">email: anyamaoo@gmail.com</p>
+          <p className="text-gray-300  mt-[10px]">email: maoschool@gmail.com</p>
         </div>
       </div>
     </div>

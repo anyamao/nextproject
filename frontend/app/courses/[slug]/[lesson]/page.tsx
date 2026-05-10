@@ -1,5 +1,4 @@
-// frontend/app/courses/[slug]/[lesson]/page.tsx
-"use client"; // ✅ Превращает в клиентский компонент
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -17,7 +16,6 @@ export default function CourseLessonPage() {
         const data = await apiFetch(`/courses/${params.slug}/${params.lesson}`);
         setLesson(data);
       } catch (err) {
-        console.error("Failed to fetch lesson", err);
       } finally {
         setLoading(false);
       }

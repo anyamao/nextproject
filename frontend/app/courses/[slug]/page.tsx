@@ -1,4 +1,3 @@
-// frontend/app/courses/[slug]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -52,68 +51,36 @@ export default function CourseLessonsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // 🔥 FIX: переменная data с типом CourseResponse
         const data: CourseResponse = await apiFetch(`/courses/${slug}`);
 
         if (!data || !data.lessons) {
-          console.error("❌ [CoursesPage] Invalid response");
           return;
         }
 
         const token = localStorage.getItem("token");
         const processedLessons: Lesson[] = [];
 
-        // 🔥 Обрабатываем каждый урок ПО ОТДЕЛЬНОСТИ
         for (const lesson of data.lessons) {
-          let isCompleted = false; // По умолчанию — НЕ пройден
+          let isCompleted = false;
 
-          // 🔥 Только если есть тест И пользователь авторизован — проверяем результат
           if (token && lesson.test_id) {
             try {
               const result = await apiFetch(`/tests/${lesson.test_id}/result`, {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: "no-store",
               });
-              // 🔥 ЕДИНСТВЕННОЕ условие для is_completed: score >= 75
               if (result?.score !== undefined && result.score >= 75) {
                 isCompleted = true;
-                console.log(
-                  `✅ Lesson ${lesson.id} "${lesson.title}": score=${result.score} → COMPLETED`,
-                );
               } else {
-                console.log(
-                  `⚠️ Lesson ${lesson.id} "${lesson.title}": score=${result?.score ?? "N/A"} → NOT completed`,
-                );
               }
             } catch (err) {
-              console.warn(
-                `⚠️ Could not fetch test result for lesson ${lesson.id}`,
-              );
               isCompleted = false;
             }
-          } else if (!lesson.test_id) {
-            // 🔥 Урок без теста — НИКОГДА не считается пройденным
-            console.log(
-              `ℹ️ Lesson ${lesson.id} "${lesson.title}": no test → NOT completed`,
-            );
           }
 
-          // 🔥 Явно создаём новый объект с правильным is_completed
           processedLessons.push({ ...lesson, is_completed: isCompleted });
         }
 
-        // 🔥 Лог ПЕРЕД рендером — показывает РЕАЛЬНЫЕ значения
-        console.log(
-          "🎨 [CoursesPage] Final lessons (REAL values):",
-          processedLessons.map((l) => ({
-            id: l.id,
-            title: l.title,
-            test_id: l.test_id,
-            is_completed: l.is_completed,
-          })),
-        );
-
-        // Создаём виртуальные юниты для уроков без unit
         const rawUnits = data.units || [];
         const virtualUnits: CourseUnit[] = [];
 
@@ -136,7 +103,6 @@ export default function CourseLessonsPage() {
         setLessons(finalLessons);
         setUnits([...rawUnits, ...virtualUnits]);
 
-        // Название курса
         const subjects = await apiFetch("/courses/subjects");
         const current = subjects.find((s: any) => s.slug === slug);
         if (current) {
@@ -144,7 +110,6 @@ export default function CourseLessonsPage() {
           document.title = `${current.title} — Курсы | MaoSchool`;
         }
       } catch (err) {
-        console.error("❌ [CoursesPage] Fetch failed:", err);
       } finally {
         setLoading(false);
       }

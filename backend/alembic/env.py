@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 from alembic import context
 
 load_dotenv()
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -17,10 +15,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 from models import (
     User,
     Article,
@@ -31,14 +25,9 @@ from models import (
     TestResult,
     Base,
     LessonView,
-)  # ✅ Все модели
+)
 
 target_metadata = Base.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:
@@ -65,9 +54,6 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-# backend/alembic/env.py — в run_migrations_online()
-
-
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
@@ -77,7 +63,6 @@ def run_migrations_online() -> None:
 
     load_dotenv()
 
-    # 🔁 Alembic всегда использует СИНХРОННЫЙ движок
     DATABASE_URL = os.getenv("DATABASE_URL")
 
     if not DATABASE_URL or DATABASE_URL.startswith("sqlite"):
@@ -88,7 +73,6 @@ def run_migrations_online() -> None:
             sync_url = "sqlite:///./dementia.db"
         print(f"⚙️  Alembic using sync SQLite: {sync_url}")
     else:
-        # Для PostgreSQL: убираем +asyncpg
         sync_url = DATABASE_URL.replace("postgresql+asyncpg", "postgresql")
         print(f"⚙️  Alembic using sync PostgreSQL: {sync_url}")
 
@@ -105,7 +89,7 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=Base.metadata,  # ✅ Импортируй Base из models, не из database.py
+            target_metadata=Base.metadata,
             render_as_batch=True,
             compare_type=True,
         )
