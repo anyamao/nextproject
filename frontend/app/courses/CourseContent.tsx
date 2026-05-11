@@ -176,7 +176,7 @@ export default function CoursesContent() {
           {filteredCourses.map((course) => (
             <Link
               key={course.id}
-              href={`/courses/${course.slug}`}
+              href={`/courses/promo/${course.slug}`}
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all"
             >
               {course.image && (
@@ -186,11 +186,10 @@ export default function CoursesContent() {
                     alt={course.title}
                     className="w-full h-auto object-cover  object-top transition-transform duration-300 group-hover:scale-105"
                     style={{
-                      height: "calc(100%  )", // Увеличиваем высоту на 40px
-                      marginBottom: "-100px", // Сдвигаем вверх, обрезая низ
+                      height: "calc(100%  )",
+                      marginBottom: "-100px",
                     }}
                     onError={(e) => {
-                      // Если картинка не загрузилась — скрываем блок
                       (
                         e.target as HTMLImageElement
                       ).parentElement?.classList.add("hidden");
