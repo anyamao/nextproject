@@ -1,4 +1,3 @@
-// frontend/store/states.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -111,18 +110,29 @@ const useContactStore = create<ContactState>()(
 
       user: null,
       isAuthenticated: false,
-
       setUser: (userData) => {
+        if (
+          userData &&
+          (!userData.id || userData.id === 0 || !userData.username)
+        ) {
+          return;
+        }
+
         if (userData) {
+          const newUser = {
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            avatar_url:
+              userData.avatar_url === undefined
+                ? "default_cat.jpg"
+                : userData.avatar_url,
+            status: userData.status,
+            created_at: userData.created_at,
+          };
+
           set({
-            user: {
-              id: userData.id,
-              email: userData.email,
-              username: userData.username,
-              avatar_url: userData.avatar_url || "default_cat.jpg",
-              status: userData.status,
-              created_at: userData.created_at,
-            },
+            user: newUser,
             isAuthenticated: true,
           });
         } else {
@@ -132,7 +142,6 @@ const useContactStore = create<ContactState>()(
           });
         }
       },
-
       logout: () => {
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
@@ -174,6 +183,19 @@ const useContactStore = create<ContactState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          return;
+        }
+
+        if (state?.user) {
+          if (!state.user.avatar_url) {
+            state.user.avatar_url = "default_cat.jpg";
+          }
+
+          state.isAuthenticated = true;
+        }
+      },
     },
   ),
 );

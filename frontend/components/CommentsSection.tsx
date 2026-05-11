@@ -195,13 +195,19 @@ export default function CommentsSection({
         {comments.map((comment) => (
           <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
             <img
-              src={`/avatars/white_cat.jpg`}
+              key={`${comment.user_id}-${currentUser?.avatar_url}`}
+              src={`/avatars/${getAvatarUrl(comment)}`}
               alt={comment.username}
-              className="w-[30px] h-[30px] rounded-full object-cover"
+              className="w-[30px] h-[30px] rounded-full object-cover transition-transform duration-200 hover:scale-110"
               onError={(e) => {
+                console.error(
+                  "❌ Failed to load avatar for comment:",
+                  comment.username,
+                );
                 (e.target as HTMLImageElement).src = "/avatars/default_cat.jpg";
               }}
             />
+
             <div className="flex flex-col w-full">
               <div className="flex flex-col ml-[10px]  w-full">
                 <div className="flex items-start justify-between">

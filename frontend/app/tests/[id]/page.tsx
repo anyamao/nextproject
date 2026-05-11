@@ -1,7 +1,7 @@
 import TestClient from "./TestClient";
 import { notFound } from "next/navigation";
 import { apiFetch } from "@/lib/api";
-
+import Link from "next/link";
 type Test = {
   id: number;
   title: string;
@@ -79,12 +79,12 @@ export default async function TestPage({
             2,
           )}
         </pre>
-        <a
-          href="/ege/math-profile"
+        <Link
+          href="/courses"
           className="text-purple-600 hover:underline mt-4 inline-block"
         >
           ← Вернуться к урокам
-        </a>
+        </Link>
       </div>
     );
   }

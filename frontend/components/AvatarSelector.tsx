@@ -2,24 +2,19 @@
 
 import { useState } from "react";
 
-type AvatarOption = {
-  name: string;
-  label: string;
-};
-
-const AVATARS: AvatarOption[] = [
-  { name: "default_cat.jpg", label: "Котик по умолчанию" },
-  { name: "orange_cat.jpg", label: "Рыжий котик" },
-  { name: "black_cat.jpg", label: "Чёрный котик" },
-  { name: "gray_cat.jpg", label: "Серый котик" },
-  { name: "brown_cat.jpg", label: "Коричневый котик" },
-  { name: "light_gray_cat.jpg", label: "Светло-серый котик" },
-  { name: "white_cat.jpg", label: "Белый котик" },
+const AVATARS = [
+  "default_cat.jpg",
+  "orange_cat.jpg",
+  "black_cat.jpg",
+  "gray_cat.jpg",
+  "brown_cat.jpg",
+  "light_gray_cat.jpg",
+  "white_cat.jpg",
 ];
 
 interface AvatarSelectorProps {
   currentAvatar: string;
-  onAvatarSelect: (avatarName: string) => void;
+  onAvatarSelect: (avatar: string) => void;
 }
 
 export default function AvatarSelector({
@@ -28,50 +23,46 @@ export default function AvatarSelector({
 }: AvatarSelectorProps) {
   const [selectedAvatar, setSelectedAvatar] = useState(currentAvatar);
 
-  const handleSelect = (avatarName: string) => {
-    setSelectedAvatar(avatarName);
-    onAvatarSelect(avatarName);
+  const handleSelect = (avatar: string) => {
+    setSelectedAvatar(avatar);
+    onAvatarSelect(avatar);
   };
 
   return (
-    <div className="space-y-4">
-      <label className="block text-sm font-medium text-gray-700">
-        Выберите аватарку
-      </label>
+    <div className="w-full">
+      <h3 className="text-sm font-medium text-gray-700 mb-3">
+        Выберите аватар:
+      </h3>
 
-      <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
         {AVATARS.map((avatar) => (
           <button
-            key={avatar.name}
+            key={avatar}
             type="button"
-            onClick={() => handleSelect(avatar.name)}
-            className={`relative group flex flex-col items-center gap-2 p-2 rounded-lg transition ${
-              selectedAvatar === avatar.name
-                ? "ring-2 ring-purple-500 bg-purple-50"
-                : "hover:bg-gray-50"
+            onClick={() => handleSelect(avatar)}
+            className={`relative group aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+              selectedAvatar === avatar
+                ? "border-purple-600 ring-2 ring-purple-200 scale-105"
+                : "border-gray-200 hover:border-purple-300 hover:scale-105"
             }`}
+            title={avatar.replace(".jpg", "").replace("_", " ")}
           >
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
-              <img
-                src={`/avatars/${avatar.name}`}
-                alt={avatar.label}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <span className="text-xs text-gray-600 text-center">
-              {avatar.label}
-            </span>
+            <img
+              src={`/avatars/${avatar}`}
+              alt={avatar.replace(".jpg", "")}
+              className="w-full h-full object-cover"
+            />
 
-            {selectedAvatar === avatar.name && (
-              <div className="absolute top-1 right-1 w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center">
+            {selectedAvatar === avatar && (
+              <div className="absolute inset-0 bg-purple-600/20 flex items-center justify-center">
                 <svg
-                  className="w-3 h-3"
+                  className="w-6 h-6 text-purple-600"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
                   <path
                     fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                     clipRule="evenodd"
                   />
                 </svg>
@@ -79,6 +70,20 @@ export default function AvatarSelector({
             )}
           </button>
         ))}
+      </div>
+
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300">
+          <img
+            src={`/avatars/${selectedAvatar}`}
+            alt="Selected"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-900">Выбран аватар:</p>
+          <p className="text-xs text-gray-500">{selectedAvatar}</p>
+        </div>
       </div>
     </div>
   );

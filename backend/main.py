@@ -180,6 +180,18 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     )
 
 
+@app.delete("/profile/delete")
+async def delete_account(
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    """Удаляет аккаунт текущего пользователя со всеми данными"""
+
+    await db.delete(current_user)
+    await db.commit()
+
+    return {"message": "Account deleted successfully"}
+
+
 @app.get("/auth/me", response_model=UserOut)
 async def read_me(current_user: User = Depends(get_current_user)):
     return UserOut(
@@ -189,11 +201,15 @@ async def read_me(current_user: User = Depends(get_current_user)):
 
 @app.get("/profile", response_model=UserOut)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
+    print(
+        f"🔍 [DEBUG] get_my_profile: user_id={current_user.id}, avatar_url={current_user.avatar_url}"
+    )
+
     return UserOut(
         id=current_user.id,
         email=current_user.email,
         username=current_user.username,
-        avatar_url=current_user.avatar_url or "gray_cat.jpg",
+        avatar_url=current_user.avatar_url or "default_cat.jpg",
         status=current_user.status,
         created_at=current_user.created_at,
     )

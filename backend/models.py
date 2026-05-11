@@ -19,21 +19,83 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import DeclarativeBase, relationship, backref
 
 
+# backend/models.py — в классе User
+
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
-    avatar_url = Column(
-        String, nullable=True, default="default_cat.jpg"
-    )  # ✅ По умолчанию
+    avatar_url = Column(String, nullable=True, default="default_cat.jpg")
     status = Column(String(200), nullable=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
-    flashcard_progress = relationship("FlashcardProgress", back_populates="user")
+
+    # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
+
+    # FlashcardProgress (уже есть, проверяем back_populates)
+    flashcard_progress = relationship(
+        "FlashcardProgress", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 TestResult
+    test_results = relationship(
+        "TestResult", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 LessonView
+    lesson_views = relationship(
+        "LessonView", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 LessonReaction
+    lesson_reactions = relationship(
+        "LessonReaction", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 Comment
+    comments = relationship(
+        "Comment", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 CommentReaction
+    comment_reactions = relationship(
+        "CommentReaction", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 ArticleView
+    article_views = relationship(
+        "ArticleView", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 ArticleReaction
+    article_reactions = relationship(
+        "ArticleReaction", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 UserCompletedLesson
+    completed_lessons = relationship(
+        "UserCompletedLesson", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 LanguageComment
+    language_comments = relationship(
+        "LanguageComment", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 LanguageCommentReaction
+    language_comment_reactions = relationship(
+        "LanguageCommentReaction", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # 🔥 LanguageLessonView
+    language_lesson_views = relationship(
+        "LanguageLessonView", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class EgeSubject(Base):
@@ -126,7 +188,9 @@ class FlashcardProgress(Base):
     __tablename__ = "flashcard_progress"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     card_id = Column(Integer, ForeignKey("flashcards.id"), nullable=False)
 
     next_review = Column(Date)
@@ -234,14 +298,16 @@ class LanguageComment(Base):
     __tablename__ = "language_comments"
     id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("language_lessons.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     content = Column(Text, nullable=False)
     parent_id = Column(Integer, ForeignKey("language_comments.id"))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
     lesson = relationship("LanguageLesson", back_populates="comments")
-    user = relationship("User")
+    user = relationship("User", back_populates="language_comments")
     replies = relationship(
         "LanguageComment", backref=backref("parent", remote_side=[id])
     )
@@ -256,24 +322,26 @@ class LanguageCommentReaction(Base):
     __tablename__ = "language_comment_reactions"
     id = Column(Integer, primary_key=True, index=True)
     comment_id = Column(Integer, ForeignKey("language_comments.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     is_like = Column(Boolean, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     comment = relationship("LanguageComment", back_populates="reactions")
-    user = relationship("User")
+    user = relationship("User", back_populates="language_comment_reactions")
 
 
 class LanguageLessonView(Base):
     __tablename__ = "language_lesson_views"
     id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("language_lessons.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     viewed_at = Column(DateTime, server_default=func.now())
     ip_address = Column(String(45))
 
     lesson = relationship("LanguageLesson", back_populates="views")
-    user = relationship("User")
+    user = relationship("User", back_populates="language_lesson_views")
 
 
 class EgeTest(Base):
@@ -324,6 +392,8 @@ class LessonView(Base):
         nullable=False,
         index=True,
     )
+    user = relationship("User", back_populates="lesson_views")
+    lesson = relationship("EgeLesson")
 
 
 class LessonReaction(Base):
@@ -348,7 +418,7 @@ class LessonReaction(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_reaction"),
     )
-    user = relationship("User")
+    user = relationship("User", back_populates="lesson_reactions")
     lesson = relationship("EgeLesson")
 
     __table_args__ = (
@@ -383,8 +453,7 @@ class ArticleView(Base):
         index=True,
     )
     viewed_at = Column(DateTime, server_default=func.now())
-
-    user = relationship("User")
+    user = relationship("User", back_populates="article_views")
     article = relationship("Article")
 
     __table_args__ = (
@@ -407,8 +476,7 @@ class ArticleReaction(Base):
     )
     is_like = Column(Boolean, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
-    user = relationship("User")
+    user = relationship("User", back_populates="article_reactions")
     article = relationship("Article")
 
     __table_args__ = (
@@ -436,7 +504,7 @@ class TestResult(Base):
     passed = Column(Boolean, nullable=False)
     completed_at = Column(DateTime, server_default=func.now())
 
-    user = relationship("User")
+    user = relationship("User", back_populates="test_results")
     test = relationship("EgeTest")
     lesson = relationship("EgeLesson", back_populates="test_results")  # опционально
     __table_args__ = ()
@@ -446,10 +514,13 @@ class UserCompletedLesson(Base):
     __tablename__ = "user_completed_lessons"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     lesson_id = Column(Integer, ForeignKey("ege_lessons.id"), nullable=False)
     completed_at = Column(DateTime, server_default=func.now())
-
+    user = relationship("User", back_populates="completed_lessons")
+    lesson = relationship("EgeLesson")
     __table_args__ = (
         UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_completed"),
     )
@@ -470,8 +541,7 @@ class CommentReaction(Base):
     )
     is_like = Column(Boolean, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
-    user = relationship("User")
+    user = relationship("User", back_populates="comment_reactions")
     comment = relationship("Comment")
 
     __table_args__ = (
@@ -507,8 +577,7 @@ class Comment(Base):
     )  # для ответов
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
-
-    user = relationship("User")
+    user = relationship("User", back_populates="comments")
     lesson = relationship("EgeLesson")
     article = relationship("Article")
     parent = relationship("Comment", remote_side=[id], backref="replies")

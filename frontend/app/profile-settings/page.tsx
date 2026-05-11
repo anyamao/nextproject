@@ -1,11 +1,12 @@
 // frontend/app/profile-settings/page.tsx
 "use client";
-import useContactStore from "@/store/states";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, MessageCircle, User } from "lucide-react";
+import { ArrowLeft, Save, Trash2, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import AvatarSelector from "@/components/AvatarSelector"; // ✅ Импортируй
+import useContactStore from "@/store/states";
+import AvatarSelector from "@/components/AvatarSelector"; // ✅ Импортируем
 
 type UserProfile = {
   id: number;
@@ -17,84 +18,70 @@ type UserProfile = {
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
+  const { setUser, toggleLogin } = useContactStore();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [username, setUsername] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("default_cat.jpg");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const {
-    registerState,
-    openLogin,
-    toggleRegister,
-    passwordState,
-    togglePassword,
-    setUser,
-  } = useContactStore();
-  // Форма
-  const [username, setUsername] = useState("");
-  const [status, setStatus] = useState("");
-  const [selectedAvatar, setSelectedAvatar] =
-    useState<string>("default_cat.jpg");
-
-  // Загрузка профиля
+  // 🔹 1️⃣ Загрузка профиля при маунте
   useEffect(() => {
     const fetchProfile = async () => {
-      // frontend/app/profile-settings/page.tsx (внутри handleSubmit)
-
       try {
         const token = localStorage.getItem("token");
-        const updated = await apiFetch("/profile/settings", {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: username.trim() || undefined,
-            avatar_url: selectedAvatar,
-            status: status.trim() || null,
-          }),
+        if (!token) {
+          router.push("/auth/login");
+          return;
+        }
+
+        const data = await apiFetch("/profile", {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        setProfile(updated);
-        setSuccess(true);
-
-        // ✅ ВАЖНО: Обновляем store И localStorage
-        const newUser = {
-          id: updated.id,
-          email: updated.email,
-          username: updated.username,
-          avatar_url: updated.avatar_url || "default_cat.jpg",
-          status: updated.status,
-          created_at: updated.created_at,
-        };
-
-        localStorage.setItem("user", JSON.stringify(newUser));
-        setUser(newUser); // ✅ Это триггерит перерисовку всех компонентов!
-
-        console.log(
-          "✅ [ProfileSettings] Store updated with new avatar:",
-          newUser.avatar_url,
-        );
-
-        setTimeout(() => setSuccess(false), 3000);
+        setProfile(data);
+        setUsername(data.username);
+        setSelectedAvatar(data.avatar_url || "default_cat.jpg");
       } catch (err: any) {
-        setError(err.message || "Ошибка при сохранении");
+        console.error("❌ Failed to load profile:", err);
+        setError("Не удалось загрузить профиль");
+        if (err?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.push("/auth/login");
+        }
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchProfile();
   }, [router]);
 
-  // Сохранение
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 🔹 2️⃣ Сохранение изменений (имя + аватар)
+  // 🔹 2️⃣ Сохранение изменений (имя + аватар)
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim() || username.length < 3) {
+      setError("Имя должно содержать минимум 3 символа");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setSuccess(false);
 
     try {
       const token = localStorage.getItem("token");
+
+      console.log("🔵 [ProfileSettings] Sending avatar:", selectedAvatar);
+
       const updated = await apiFetch("/profile/settings", {
         method: "PATCH",
         headers: {
@@ -102,34 +89,75 @@ export default function ProfileSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: username.trim() || undefined,
+          username: username.trim(),
           avatar_url: selectedAvatar,
-          status: status.trim() || null,
         }),
       });
+
+      console.log("🟢 [ProfileSettings] Response from server:", updated);
+      console.log(
+        "🟢 [ProfileSettings] updated.avatar_url:",
+        updated.avatar_url,
+      );
 
       setProfile(updated);
       setSuccess(true);
 
-      // Обновляем localStorage
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          username: updated.username,
-          avatar_url: updated.avatar_url,
-        }),
-      );
+      // ✅ Обновляем localStorage и store
+      const newUser = {
+        id: updated.id,
+        email: updated.email,
+        username: updated.username,
+        avatar_url: updated.avatar_url || selectedAvatar, // 🔥 ФОЛЛБЭК на selectedAvatar
+        status: updated.status,
+      };
+
+      console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      setUser(newUser);
 
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
+      console.error("❌ [ProfileSettings] Error:", err);
       setError(err.message || "Ошибка при сохранении");
     } finally {
       setSaving(false);
     }
   };
+  // 🔹 3️⃣ Удаление аккаунта
+  const handleDeleteAccount = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
 
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await apiFetch("/profile/delete", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // ✅ Полная очистка и редирект
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+      toggleLogin();
+
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err.message || "Ошибка при удалении аккаунта");
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // 🔹 Лоадер
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
@@ -152,94 +180,134 @@ export default function ProfileSettingsPage() {
         </h1>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full space-y-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"
-      >
+      <form onSubmit={handleSaveProfile} className="w-full space-y-6">
         {/* ✅ Выбор аватара */}
-        <AvatarSelector
-          currentAvatar={selectedAvatar}
-          onAvatarSelect={setSelectedAvatar}
-        />
-
-        {/* Предпросмотр текущей аватарки */}
-        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300">
-            <img
-              src={`/avatars/${selectedAvatar}`}
-              alt="Selected avatar"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">Текущая аватарка</p>
-            <p className="text-sm text-gray-500">{selectedAvatar}</p>
-          </div>
-        </div>
-
-        {/* Юзернейм */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <User className="w-4 h-4" /> Имя пользователя
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            minLength={3}
-            maxLength={30}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-            placeholder="Ваше уникальное имя"
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <AvatarSelector
+            currentAvatar={selectedAvatar}
+            onAvatarSelect={setSelectedAvatar}
           />
         </div>
 
-        {/* Статус */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <MessageCircle className="w-4 h-4" /> Статус
-          </label>
-          <textarea
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            maxLength={200}
-            rows={3}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-            placeholder="Расскажите о себе..."
-          />
-          <p className="text-xs text-gray-500 mt-1 text-right">
-            {status.length}/200
-          </p>
+        {/* ✅ Карточка: Имя пользователя */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Имя пользователя
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Новое имя
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                minLength={3}
+                maxLength={30}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
+                placeholder="Введите новое имя"
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Минимум 3 символа, максимум 30
+              </p>
+            </div>
+
+            {error && !error.includes("удалении") && (
+              <p className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                {error}
+              </p>
+            )}
+
+            {success && (
+              <p className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">
+                ✅ Профиль обновлён!
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={saving || !username.trim() || username.length < 3}
+              className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                  Сохранение...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" /> Сохранить изменения
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Сообщения */}
-        {error && (
-          <p className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">
-            ✅ Профиль обновлён!
-          </p>
-        )}
+        {/* 🔴 Карточка: Удаление аккаунта */}
+        <div className="bg-white p-6 rounded-2xl border border-red-200 shadow-sm">
+          <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">
+            <Trash2 className="w-5 h-5" />
+            Опасная зона
+          </h2>
 
-        {/* Кнопка */}
-        <button
-          type="submit"
-          disabled={saving || !username.trim()}
-          className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {saving ? (
+          {!showDeleteConfirm ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-              Сохранение...
+              <p className="text-sm text-gray-600 mb-4">
+                Удаление аккаунта необратимо. Все ваши данные, прогресс и
+                настройки будут безвозвратно удалены.
+              </p>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="w-full py-3 bg-red-50 text-red-700 border-2 border-red-200 rounded-xl font-semibold hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" /> Удалить аккаунт
+              </button>
             </>
           ) : (
-            <>
-              <Save className="w-5 h-5" /> Сохранить изменения
-            </>
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">
+                  <strong>Вы уверены?</strong> Это действие нельзя отменить. Все
+                  ваши данные будут удалены навсегда.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition disabled:opacity-50"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                      Удаление...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-5 h-5" /> Да, удалить
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           )}
-        </button>
+        </div>
       </form>
     </main>
   );

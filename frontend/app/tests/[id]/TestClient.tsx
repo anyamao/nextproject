@@ -200,191 +200,196 @@ export default function TestClient({
   }
 
   return (
-    <div className=" w-full max-w-[1100px] py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-5">
-          <Link
-            href={`/courses/${subjectSlug}/${lessonSlug}`}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Вернуться к уроку</span>
-          </Link>
+    <div className="flex w-full items-center justify-center">
+      <div className=" w-full max-w-[1100px] py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-5">
+            <Link
+              href={`/courses/${subjectSlug}/${lessonSlug}`}
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Вернуться к уроку</span>
+            </Link>
 
-          <div className="flex items-center flex-col md:flex-row justify-between mb-2">
-            <div className="w-full">
-              <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
+            <div className="flex items-center flex-col md:flex-row justify-between mb-2">
+              <div className="w-full">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {test.title}
+                </h1>
+              </div>
+              <div className="w-full flex justify-end h-[30px] ">
+                <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
+                  {currentIndex + 1} / {questions.length}
+                </span>
+              </div>
             </div>
-            <div className="w-full flex justify-end h-[30px] ">
-              <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
-                {currentIndex + 1} / {questions.length}
-              </span>
-            </div>
-          </div>
 
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-purple-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="my-3 text-center text-sm text-gray-500">
-          Правильных:{" "}
-          <span className="">
-            {questions.filter((q) => q.is_correct).length}
-          </span>{" "}
-          / {questions.length}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
-            <div className="flex flex-col md:flex-row  items-start gap-3">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
-                {currentIndex + 1}
-              </span>
-
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
-                dangerouslySetInnerHTML={{
-                  __html: currentQuestion?.question_text || "",
-                }}
+                className="h-full bg-purple-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          <div className="p-6 space-y-4 w-full">
-            <div className="relative">
-              <input
-                type="text"
-                value={currentAnswer}
-                onChange={(e) => setCurrentAnswer(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && !feedback && handleAnswerSubmit()
-                }
-                placeholder="Введите ваш ответ..."
-                disabled={!!feedback}
-                className={`w-full whitespace-nowrap overflow-x-auto  p-4 pr-12 border-2 rounded-xl text-lg outline-none transition ${
-                  feedback
-                    ? feedback.correct
-                      ? "border-green-300 bg-green-50"
-                      : "border-red-300 bg-red-50"
-                    : "border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
-                }`}
-              />
-              {feedback && (
+          <div className="my-3 text-center text-sm text-gray-500">
+            Правильных:{" "}
+            <span className="">
+              {questions.filter((q) => q.is_correct).length}
+            </span>{" "}
+            / {questions.length}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
+              <div className="flex flex-col md:flex-row  items-start gap-3">
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
+                  {currentIndex + 1}
+                </span>
+
                 <div
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 ${
-                    feedback.correct ? "text-green-500" : "text-red-500"
+                  className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                  dangerouslySetInnerHTML={{
+                    __html: currentQuestion?.question_text || "",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4 w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={currentAnswer}
+                  onChange={(e) => setCurrentAnswer(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !feedback && handleAnswerSubmit()
+                  }
+                  placeholder="Введите ваш ответ..."
+                  disabled={!!feedback}
+                  className={`w-full whitespace-nowrap overflow-x-auto  p-4 pr-12 border-2 rounded-xl text-lg outline-none transition ${
+                    feedback
+                      ? feedback.correct
+                        ? "border-green-300 bg-green-50"
+                        : "border-red-300 bg-red-50"
+                      : "border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
                   }`}
-                >
-                  {feedback.correct ? (
-                    <Check className="w-6 h-6" />
-                  ) : (
-                    <X className="w-6 h-6" />
-                  )}
+                />
+                {feedback && (
+                  <div
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 ${
+                      feedback.correct ? "text-green-500" : "text-red-500"
+                    }`}
+                  >
+                    {feedback.correct ? (
+                      <Check className="w-6 h-6" />
+                    ) : (
+                      <X className="w-6 h-6" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {feedback && (
+                <div className="flex flex-col">
+                  <div
+                    className={`p-4 rounded-xl border-2 ${
+                      feedback.correct
+                        ? "bg-green-50 border-green-200"
+                        : "bg-red-50 border-red-200"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          feedback.correct
+                            ? "bg-green-100 text-green-600"
+                            : "bg-red-100 text-red-600"
+                        }`}
+                      >
+                        {feedback.correct ? (
+                          <Check className="w-5 h-5" />
+                        ) : (
+                          <X className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p
+                          className={`font-semibold ${
+                            feedback.correct ? "text-green-800" : "text-red-800"
+                          }`}
+                        >
+                          {feedback.correct ? "✅ Правильно!" : "❌ Неверно"}
+                        </p>
+                        {!feedback.correct && feedback.expected && (
+                          <p className="text-sm text-gray-700 mt-1">
+                            Правильный ответ:{" "}
+                            <span className="font-mono font-medium">
+                              {feedback.expected}
+                            </span>
+                          </p>
+                        )}
+                        {!feedback.correct && (
+                          <button
+                            onClick={handleRetry}
+                            className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1"
+                          >
+                            <RefreshCw className="w-3 h-3" /> Попробовать ещё
+                            раз
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {feedback && (
-              <div className="flex flex-col">
-                <div
-                  className={`p-4 rounded-xl border-2 ${
-                    feedback.correct
-                      ? "bg-green-50 border-green-200"
-                      : "bg-red-50 border-red-200"
-                  }`}
+            <div className="px-6 py-2  flex items-center justify-between">
+              <button
+                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                disabled={currentIndex === 0}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-40 transition font-medium inline-flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" /> Назад
+              </button>
+
+              {!feedback ? (
+                <button
+                  onClick={handleAnswerSubmit}
+                  disabled={!currentAnswer.trim() || isChecking}
+                  className="px-6 py-3 bg-purple-500 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        feedback.correct
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {feedback.correct ? (
-                        <Check className="w-5 h-5" />
-                      ) : (
-                        <X className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p
-                        className={`font-semibold ${
-                          feedback.correct ? "text-green-800" : "text-red-800"
-                        }`}
-                      >
-                        {feedback.correct ? "✅ Правильно!" : "❌ Неверно"}
-                      </p>
-                      {!feedback.correct && feedback.expected && (
-                        <p className="text-sm text-gray-700 mt-1">
-                          Правильный ответ:{" "}
-                          <span className="font-mono font-medium">
-                            {feedback.expected}
-                          </span>
-                        </p>
-                      )}
-                      {!feedback.correct && (
-                        <button
-                          onClick={handleRetry}
-                          className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1"
-                        >
-                          <RefreshCw className="w-3 h-3" /> Попробовать ещё раз
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  {isChecking ? "Проверяем..." : "Проверить ответ"}
+                </button>
+              ) : feedback.correct ? (
+                <button
+                  onClick={handleNext}
+                  className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition shadow-md inline-flex items-center gap-2"
+                >
+                  {isLastQuestion ? (
+                    <>Завершить тест</>
+                  ) : (
+                    <>
+                      Далее <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition inline-flex items-center gap-2"
+                >
+                  Пропустить <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {feedback && feedback.solution && (
+              <SolutionBlock solution={feedback.solution} />
             )}
           </div>
-
-          <div className="px-6 py-2  flex items-center justify-between">
-            <button
-              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-              disabled={currentIndex === 0}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-40 transition font-medium inline-flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Назад
-            </button>
-
-            {!feedback ? (
-              <button
-                onClick={handleAnswerSubmit}
-                disabled={!currentAnswer.trim() || isChecking}
-                className="px-6 py-3 bg-purple-500 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isChecking ? "Проверяем..." : "Проверить ответ"}
-              </button>
-            ) : feedback.correct ? (
-              <button
-                onClick={handleNext}
-                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition shadow-md inline-flex items-center gap-2"
-              >
-                {isLastQuestion ? (
-                  <>Завершить тест</>
-                ) : (
-                  <>
-                    Далее <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            ) : (
-              <button
-                onClick={handleNext}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition inline-flex items-center gap-2"
-              >
-                Пропустить <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {feedback && feedback.solution && (
-            <SolutionBlock solution={feedback.solution} />
-          )}
         </div>
       </div>
     </div>
