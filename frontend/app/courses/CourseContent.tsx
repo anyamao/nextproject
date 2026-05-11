@@ -179,6 +179,26 @@ export default function CoursesContent() {
               href={`/courses/${course.slug}`}
               className="group block p-6 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all"
             >
+              {course.image && (
+                <div className="mb-4 h-40 -mx-6 -mt-6 rounded-t-2xl min-h-[250px] overflow-hidden bg-gray-100">
+                  <img
+                    src={`/${course.image}` || `/placeholder.jpg`}
+                    alt={course.title}
+                    className="w-full h-auto object-cover  object-top transition-transform duration-300 group-hover:scale-105"
+                    style={{
+                      height: "calc(100%  )", // Увеличиваем высоту на 40px
+                      marginBottom: "-100px", // Сдвигаем вверх, обрезая низ
+                    }}
+                    onError={(e) => {
+                      // Если картинка не загрузилась — скрываем блок
+                      (
+                        e.target as HTMLImageElement
+                      ).parentElement?.classList.add("hidden");
+                    }}
+                  />
+                </div>
+              )}
+
               {course.category && (
                 <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 mb-3">
                   {CATEGORIES.find((c) => c.value === course.category)?.label ||
