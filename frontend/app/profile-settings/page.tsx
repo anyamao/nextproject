@@ -14,6 +14,8 @@ type UserProfile = {
   email: string;
   avatar_url: string;
   first_name: string | null; // 🔥 Добавь
+  about_me: string | null; // 🔥 Добавь
+  created_at?: string;
   last_name: string | null;
   status: string | null;
 };
@@ -28,6 +30,10 @@ export default function ProfileSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // В начале компонента:
+  const [aboutMe, setAboutMe] = useState("");
+
+  const [status, setStatus] = useState("");
 
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("default_cat.jpg");
@@ -35,7 +41,6 @@ export default function ProfileSettingsPage() {
   const [success, setSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // 🔹 1️⃣ Загрузка профиля при маунте
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -49,11 +54,30 @@ export default function ProfileSettingsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // 🔥 ОТЛАДКА: смотрим, что реально приходит
+        console.log("🔍 [ProfileSettings] Raw profile data:", {
+          about_me: data.about_me,
+          about_me_type: typeof data.about_me,
+          about_me_is_null: data.about_me === null,
+          about_me_is_undefined: data.about_me === undefined,
+          status: data.status,
+        });
+
         setProfile(data);
         setUsername(data.username);
-        setFirstName(data.first_name || "");
-        setLastName(data.last_name || "");
-        setSelectedAvatar(data.avatar_url || "default_cat.jpg");
+
+        // 🔥 ИСПОЛЬЗУЕМ ?? ВМЕСТО || (проверяет только null/undefined)
+        setFirstName(data.first_name ?? "");
+        setLastName(data.last_name ?? "");
+        setStatus(data.status ?? "");
+        setAboutMe(data.about_me ?? ""); // 🔥 Ключевое изменение!
+        setSelectedAvatar(data.avatar_url ?? "default_cat.jpg");
+
+        // 🔥 Проверяем, установились ли значения
+        console.log("🔍 [ProfileSettings] After setState:", {
+          aboutMe_after: data.about_me ?? "",
+          status_after: data.status ?? "",
+        });
       } catch (err: any) {
         console.error("❌ Failed to load profile:", err);
         setError("Не удалось загрузить профиль");
@@ -69,7 +93,10 @@ export default function ProfileSettingsPage() {
 
     fetchProfile();
   }, [router]);
-
+  useEffect(() => {
+    console.log("🔍 [Render] aboutMe state:", aboutMe);
+    console.log("🔍 [Render] status state:", status);
+  }, [aboutMe, status]);
   // 🔹 2️⃣ Сохранение изменений (имя + аватар)
   // 🔹 2️⃣ Сохранение изменений (имя + аватар)
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -98,6 +125,8 @@ export default function ProfileSettingsPage() {
           username: username.trim(),
           first_name: firstName.trim() || null, // 🔥 Добавь
           last_name: lastName.trim() || null, // 🔥 Добавь
+          status: status.trim() || null, // 🔥 Добавь
+          about_me: aboutMe.trim() || null, //
           avatar_url: selectedAvatar,
         }),
       });
@@ -110,25 +139,23 @@ export default function ProfileSettingsPage() {
 
       setProfile(updated);
       // ✅ Обновляем localStorage и store
+
+      // ✅ Обновляем localStorage и store
       const newUser = {
         id: updated.id,
         email: updated.email,
         username: updated.username,
-        avatar_url: updated.avatar_url || selectedAvatar,
-        status: updated.status,
-        first_name: updated.first_name || firstName, // 🔥 Добавь
-        last_name: updated.last_name || lastName, // 🔥 Добавь
+        avatar_url: updated.avatar_url ?? selectedAvatar,
+        status: updated.status ?? status, // 🔥 ?? вместо ||
+        first_name: updated.first_name ?? firstName,
+        last_name: updated.last_name ?? lastName,
+        about_me: updated.about_me ?? aboutMe, // 🔥 ?? вместо ||
       };
 
       console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       setUser(newUser);
       setSuccess(true);
-
-      console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-      setUser(newUser);
-
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error("❌ [ProfileSettings] Error:", err);
@@ -256,6 +283,52 @@ export default function ProfileSettingsPage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
+        {/* ✅ Карточка: Статус и О себе */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Информация о себе
+          </h2>
+
+          <div className="space-y-4">
+            {/* Статус */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Статус
+              </label>
+              <input
+                type="text"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                maxLength={200}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
+                placeholder="Например: 🎓 Студент | 💻 Разработчик"
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Короткая строка о себе (до 200 символов)
+              </p>
+            </div>
+
+            {/* О себе */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                О себе
+              </label>
+              <textarea
+                value={aboutMe}
+                onChange={(e) => setAboutMe(e.target.value)}
+                maxLength={2000}
+                rows={4}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition resize-none"
+                placeholder="Расскажите немного о себе, ваших интересах и целях..."
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500 mt-1 text-right">
+                {aboutMe.length}/2000
+              </p>
+            </div>
           </div>
         </div>
         {/* ✅ Карточка: ФИО для сертификата */}

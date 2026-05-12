@@ -37,6 +37,7 @@ class UserOut(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     token_balance: int = 0
+    about_me: str | None = None
 
 
 class Token(BaseModel):
@@ -58,6 +59,7 @@ class UserUpdate(BaseModel):
     status: str | None = Field(None, max_length=200)
     first_name: str | None = Field(None, max_length=100)
     last_name: str | None = Field(None, max_length=100)
+    about_me: str | None = Field(None, max_length=2000)
 
 
 class EgeSubjectCreate(BaseModel):
@@ -349,6 +351,22 @@ class CommentReactionCreate(BaseModel):
     reaction_type: str
 
 
+class PublicProfileOut(BaseModel):
+    """Публичный профиль"""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    avatar_url: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    status: str | None = None
+    about_me: str | None = None
+    created_at: str | None = None  # 🔥 Добавляем дату регистрации
+    token_balance: int = 0
+    completed_courses: list[dict] = []
+
+
 class CommentWithStatsOut(BaseModel):
     """Комментарий + статистика реакций"""
 
@@ -466,6 +484,7 @@ class FlashcardAnswer(BaseModel):
 
 __all__ = [
     "TokenReward",
+    "PublicProfileOut",
     "PromoCourseOut",
     "ReviewOut",
     "ReviewStatsOut",

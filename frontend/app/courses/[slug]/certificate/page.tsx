@@ -232,88 +232,172 @@ export default function CertificatePage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8 w-full bg-gray-50">
+    <main className="flex-1 flex flex-col   pt-[30px] h-full items-center z-20  bg-gray-50">
       <div className="w-full max-w-4xl mb-6">
         <Link
-          href={`/courses/${slug}`}
+          href={`/courses/promo/${slug}`}
           className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2"
         >
           <ArrowLeft className="w-5 h-5" /> Вернуться к курсу
         </Link>
       </div>
-
-      {/* 🔹 Сам сертификат */}
-      {/* 🔹 Сам сертификат */}
       <div
         ref={certificateRef}
-        className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border-8 border-yellow-500 p-8 sm:p-12 relative overflow-hidden"
+        className="w-full max-w-3xl bg-gradient-to-br from-amber-50 via-white to-amber-50 rounded-2xl shadow-2xl border-8 border-amber-500 p-8 sm:p-12 relative overflow-hidden"
         style={{
-          // 🔥 Простые цвета вместо градиентов
-          backgroundImage: "none",
-          backgroundColor: "#ffffff",
+          background:
+            "linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fffbeb 100%)",
         }}
       >
-        {/* Декоративные элементы - упрощённые */}
-        <div className="absolute top-0 left-0 w-full h-3 bg-yellow-500" />
-        <div className="absolute bottom-0 left-0 w-full h-3 bg-yellow-500" />
+        {/* Фоновый узор из лавровых ветвей */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 text-6xl">🏆</div>
+          <div className="absolute bottom-10 right-10 text-6xl">🏆</div>
+          <div className="absolute top-1/2 left-5 text-4xl transform -translate-y-1/2">
+            ✨
+          </div>
+          <div className="absolute top-1/2 right-5 text-4xl transform -translate-y-1/2">
+            ✨
+          </div>
+        </div>
 
-        {/* Угловые орнаменты - простые рамки */}
-        <div className="absolute top-4 left-4 w-20 h-20 border-t-4 border-l-4 border-yellow-500" />
-        <div className="absolute top-4 right-4 w-20 h-20 border-t-4 border-r-4 border-yellow-500" />
-        <div className="absolute bottom-4 left-4 w-20 h-20 border-b-4 border-l-4 border-yellow-500" />
-        <div className="absolute bottom-4 right-4 w-20 h-20 border-b-4 border-r-4 border-yellow-500" />
+        {/* Золотая рамка с градиентом */}
+        <div className="absolute inset-4 border-2 border-amber-400/50 rounded-xl pointer-events-none" />
+
+        {/* Верхняя декоративная полоса */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
+        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
+
+        {/* Угловые орнаменты - улучшенные */}
+        <div className="absolute top-6 left-6 w-24 h-24">
+          <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-amber-500 rounded-tl-xl" />
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-amber-300 rounded-tl-lg" />
+        </div>
+        <div className="absolute top-6 right-6 w-24 h-24">
+          <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-amber-500 rounded-tr-xl" />
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-amber-300 rounded-tr-lg" />
+        </div>
+        <div className="absolute bottom-6 left-6 w-24 h-24">
+          <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-amber-500 rounded-bl-xl" />
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-amber-300 rounded-bl-lg" />
+        </div>
+        <div className="absolute bottom-6 right-6 w-24 h-24">
+          <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-amber-500 rounded-br-xl" />
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-amber-300 rounded-br-lg" />
+        </div>
 
         {/* Контент сертификата */}
         <div className="text-center relative z-10">
-          {/* Логотип / иконка */}
+          {/* Золотая медаль/логотип */}
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center">
-              <Award className="w-10 h-10 text-yellow-600" />
+            <div className="relative">
+              <div className="w-24 h-24 bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
+                  <Award className="w-12 h-12 text-amber-500" />
+                </div>
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-xs animate-pulse">
+                ✨
+              </div>
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-            СЕРТИФИКАТ
+          {/* Заголовок с золотым градиентом */}
+          <h1 className="text-4xl sm:text-5xl font-bold mb-2 bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-600 bg-clip-text text-transparent">
+            СВИДЕТЕЛЬСТВО
           </h1>
-          <p className="text-lg text-gray-600 mb-8">об окончании курса</p>
 
-          {/* Имя получателя */}
-          <p className="text-sm text-gray-500 mb-2">
-            Настоящим подтверждается, что
-          </p>
-          <div className="border-b-2 border-yellow-400 pb-4 mb-6">
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {certificate.user_full_name}
-            </p>
+          {/* Декоративная линия под заголовком */}
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <div className="w-12 h-px bg-gradient-to-r from-transparent to-amber-400" />
+            <div className="w-2 h-2 bg-amber-400 rounded-full" />
+            <div className="w-12 h-px bg-gradient-to-l from-transparent to-amber-400" />
           </div>
 
-          {/* Название курса */}
-          <p className="text-sm text-gray-500 mb-2">успешно завершил(а) курс</p>
-          <div className="bg-purple-50 rounded-lg p-4 mb-6">
+          <p className="text-lg text-gray-600 mb-8 italic">
+            об окончании курса
+          </p>
+
+          {/* Имя получателя с золотым подчеркиванием */}
+          <p className="text-sm text-gray-500 mb-2 uppercase tracking-wide">
+            Настоящим подтверждается, что
+          </p>
+          <div className="relative inline-block mb-6">
+            <p className="text-3xl sm:text-4xl font-bold text-gray-800 px-4">
+              {certificate.user_full_name}
+            </p>
+            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full" />
+          </div>
+
+          {/* Название курса с красивым фоном */}
+          <p className="text-sm text-gray-500 mb-2 uppercase tracking-wide">
+            успешно завершил(а) курс
+          </p>
+          <div className="inline-block bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 rounded-xl p-4 px-8 mb-6 shadow-inner">
             <p className="text-xl sm:text-2xl font-semibold text-purple-700">
               «{certificate.course_title}»
             </p>
           </div>
 
-          {/* Процент завершения */}
-          <div className="flex justify-center items-center gap-3 mb-8">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-              <span className="text-2xl font-bold text-green-700">
-                {certificate.completion_percent}%
-              </span>
+          {/* Прогресс с круговой диаграммой */}
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <div className="relative">
+              <svg className="w-20 h-20 transform -rotate-90">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  stroke="#e5e7eb"
+                  strokeWidth="6"
+                  fill="none"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  stroke="#10b981"
+                  strokeWidth="6"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 34}`}
+                  strokeDashoffset={`${2 * Math.PI * 34 * (1 - certificate.completion_percent / 100)}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xl font-bold text-green-600">
+                  {certificate.completion_percent}%
+                </span>
+              </div>
             </div>
-            <p className="text-sm text-gray-600">прогресс прохождения</p>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-gray-700">
+                прогресс прохождения
+              </p>
+              <p className="text-xs text-gray-500">отлично!</p>
+            </div>
           </div>
 
-          {/* Дата и номер */}
-          <div className="flex justify-between items-end text-sm text-gray-500 pt-6 border-t border-gray-200">
-            <div>
-              <p>Дата выдачи: {certificate.completion_date}</p>
+          {/* Нижняя часть с датой и подписями */}
+          <div className="flex justify-between items-end text-sm pt-6 border-t-2 border-amber-200">
+            <div className="text-left">
+              <p className="text-xs text-gray-500 mb-1">Дата выдачи</p>
+              <p className="font-semibold text-gray-700">
+                {certificate.completion_date}
+              </p>
             </div>
+
             <div className="text-right">
-              <p className="font-mono">{certificate.certificate_id}</p>
-              <p className="text-xs mt-1">MaoSchool.ru</p>
+              <p className="text-xs text-gray-500 mb-1">Номер сертификата</p>
+              <p className="font-mono text-sm font-medium text-gray-700">
+                {certificate.certificate_id}
+              </p>
+              <p className="text-xs text-amber-600 mt-1">MaoSchool.ru</p>
             </div>
+          </div>
+
+          {/* Водяной знак */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
+            <Award className="w-64 h-64 text-amber-800" />
           </div>
         </div>
       </div>
@@ -337,7 +421,7 @@ export default function CertificatePage() {
           )}
         </button>
         <Link
-          href={`/courses/${slug}`}
+          href={`/courses/promo/${slug}`}
           className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
         >
           Назад к курсу

@@ -235,6 +235,8 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
         status=current_user.status,
         first_name=current_user.first_name,  # 🔥 Добавь это!
         last_name=current_user.last_name,
+        token_balance=current_user.token_balance,
+        about_me=current_user.about_me,  # 🔥 ДОБАВЬ ЭТО!
         created_at=current_user.created_at,
     )
 
@@ -312,6 +314,8 @@ async def update_profile_settings(
         if data.avatar_url not in ALLOWED_AVATARS:
             raise HTTPException(status_code=400, detail="Invalid avatar")
         current_user.avatar_url = data.avatar_url
+    if data.about_me is not None:
+        current_user.about_me = data.about_me.strip() if data.about_me.strip() else None
 
     if data.status is not None:
         current_user.status = data.status
@@ -334,7 +338,11 @@ async def update_profile_settings(
         id=current_user.id,
         email=current_user.email,
         username=current_user.username,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
         avatar_url=current_user.avatar_url,
+        token_balance=current_user.token_balance,
+        about_me=current_user.about_me,
         status=current_user.status,
         created_at=current_user.created_at,
     )
@@ -808,7 +816,9 @@ async def create_course_review(
 # backend/main.py
 
 
-@app.get("/profile/public/{user_id}", response_model=PublicProfileOut)
+@app.get(
+    "/profile/public/{user_id}",
+)
 async def get_public_profile(
     user_id: int,
     current_user: User | None = Depends(get_current_user_optional),
@@ -863,15 +873,26 @@ async def get_public_profile(
                     }
                 )
 
-    return PublicProfileOut(
-        id=user.id,
-        username=user.username,
-        avatar_url=user.avatar_url,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        token_balance=user.token_balance,
-        completed_courses=completed_courses,
-    )
+    # 🔥 ОТЛАДКА: смотрим, что реально возвращается
+    print(f"🔍 [DEBUG] Returning profile for user {user_id}:")
+    print(f"   status={user.status!r}")
+    print(f"   about_me={user.about_me!r}")
+    print(f"   created_at={user.created_at.isoformat() if user.created_at else None!r}")
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "avatar_url": user.avatar_url,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "status": user.status,  # 🔥 Прямо из модели
+        "about_me": user.about_me,  # 🔥 Прямо из модели
+        "created_at": user.created_at.isoformat()
+        if user.created_at
+        else None,  # 🔥 ISO-строка
+        "token_balance": user.token_balance,
+        "completed_courses": completed_courses,
+    }
 
 
 @app.put("/reviews/{review_id}", response_model=ReviewOut)

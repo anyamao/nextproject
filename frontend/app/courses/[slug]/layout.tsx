@@ -23,6 +23,7 @@ export default function RootLayout({
   const router = useRouter();
   const pathname = usePathname();
   const slug = params.slug as string;
+  const isCertificatePage = pathname?.includes("/certificate");
 
   const [meta, setMeta] = useState<CourseMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +66,9 @@ export default function RootLayout({
   return (
     <div className="flex flex-col w-full h-full max-w-[1200px]">
       {/* 🔹 Верхняя панель */}
-      <div className="flex flex-row items-center mt-[30px] justify-between">
+      <div
+        className={` flex-row items-center mt-[30px] justify-between ${isCertificatePage ? "hidden" : "flex"} `}
+      >
         <div
           className="flex flex-row items-center text-purple-600 font-semibold text-sm cursor-pointer hover:text-purple-700 transition"
           onClick={() => router.push(`/courses/promo/${slug}`)}
@@ -105,7 +108,9 @@ export default function RootLayout({
       </div>
 
       {/* 🔹 Карточка курса с прогрессом */}
-      <div className="bg-white rounded-lg w-full h-[70px] my-[20px] p-[10px] flex flex-row">
+      <div
+        className={`bg-white rounded-lg w-full h-[70px] my-[20px] p-[10px]    ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
+      >
         <div className="flex flex-col">
           <p className="text-lg font-bold truncate">{meta.title}</p>
           <p className="text-gray-500 text-xs">

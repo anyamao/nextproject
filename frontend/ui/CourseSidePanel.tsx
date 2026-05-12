@@ -254,6 +254,7 @@ export default function CourseSidePanel() {
     if (lessonsWithTests.length === 0) return false;
     return lessonsWithTests.every((l) => l.is_completed === true);
   }).length;
+  const isCertificatePage = pathname?.includes("/certificate");
 
   const unitProgressPercent =
     totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
@@ -271,7 +272,7 @@ export default function CourseSidePanel() {
     return (
       <button
         onClick={togglecourseNavigation}
-        className="w-[40px] h-[40px] items-center justify-center flex rounded-lg bg-gray-200 text-gray-500 absolute top-0 left-0 z-50 hover:bg-gray-300 transition-colors"
+        className={`w-[40px] h-[40px] items-center justify-center ${isCertificatePage ? "hidden" : "flex"} rounded-lg bg-gray-200 text-gray-500 absolute top-0 left-0 z-50 hover:bg-gray-300 transition-colors`}
       >
         <ChevronRight />
       </button>
@@ -280,7 +281,7 @@ export default function CourseSidePanel() {
 
   return (
     <div
-      className={`h-full rounded-lg flex-1 bg-white rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
+      className={`h-full rounded-lg flex-1 bg-white ${isCertificatePage ? "hidden" : "flex"} rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
         isAnimatingOut
           ? "-translate-x-full"
           : isAnimatingIn

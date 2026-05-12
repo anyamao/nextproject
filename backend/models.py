@@ -35,6 +35,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     first_name = Column(String(100), nullable=True)
+    about_me = Column(Text, nullable=True)  # Подробное "о себе"
     last_name = Column(String(100), nullable=True)
     # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
     token_balance = Column(Integer, default=0, nullable=False)
