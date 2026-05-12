@@ -28,6 +28,7 @@ type PromoCourse = {
   certificate_available: boolean;
   enrolled_count?: number;
   rating?: number | null;
+  completion_percent?: number | null;
 };
 
 type Review = {
@@ -421,6 +422,25 @@ export default function CoursePromoPage() {
         </div>
       </div>
 
+      {/* 🔹 Бейдж завершения курса */}
+      {course.completion_percent != null && course.completion_percent >= 90 && (
+        <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
+          <svg
+            className="w-5 h-5 text-green-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-green-800">
+            Курс завершён! 🎉 {course.completion_percent}%
+          </span>
+        </div>
+      )}
       {/* 🔹 Отзывы */}
       <div className="w-full mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -429,45 +449,67 @@ export default function CoursePromoPage() {
         </h2>
 
         {/* Форма отзыва */}
+        {/* 🔹 Форма отзыва — с проверкой прогресса */}
         {!reviewStats?.user_review && (
-          <form
-            onSubmit={handleSubmitReview}
-            className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200"
-          >
-            <p className="text-sm text-purple-800 mb-3 font-medium">
-              Оцените курс:
-            </p>
-            <div className="mb-3">
-              {renderStars(newReview.rating, true, (r) =>
-                setNewReview((prev) => ({ ...prev, rating: r })),
-              )}
-            </div>
-            <textarea
-              value={newReview.comment}
-              onChange={(e) =>
-                setNewReview((prev) => ({ ...prev, comment: e.target.value }))
-              }
-              placeholder="Напишите ваш отзыв (минимум 50 слов)..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-              rows={4}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <p
-                className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
-              >
-                {commentError || `${wordCount}/50 слов`}
-              </p>
-              <button
-                type="submit"
-                disabled={submittingReview || wordCount < 50 || !course?.id}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
-              >
-                {submittingReview ? "Отправка..." : "Оставить отзыв"}
-              </button>
-            </div>
-          </form>
+          <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
+            {/* Проверка: можно ли оставить отзыв? */}
+            {course.completion_percent != null &&
+            course.completion_percent < 75 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  📚 Чтобы оставить отзыв, завершите минимум 75% курса
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-purple-500 h-2 rounded-full transition-all"
+                    style={{ width: `${course.completion_percent}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Ваш прогресс: {course.completion_percent}%
+                </p>
+              </div>
+            ) : (
+              // 🔥 Форма доступна
+              <form onSubmit={handleSubmitReview}>
+                <p className="text-sm text-purple-800 mb-3 font-medium">
+                  Оцените курс:
+                </p>
+                <div className="mb-3">
+                  {renderStars(newReview.rating, true, (r) =>
+                    setNewReview((prev) => ({ ...prev, rating: r })),
+                  )}
+                </div>
+                <textarea
+                  value={newReview.comment}
+                  onChange={(e) =>
+                    setNewReview((prev) => ({
+                      ...prev,
+                      comment: e.target.value,
+                    }))
+                  }
+                  placeholder="Напишите ваш отзыв (минимум 50 слов)..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                  rows={4}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <p
+                    className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
+                  >
+                    {commentError || `${wordCount}/50 слов`}
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={submittingReview || wordCount < 50 || !course?.id}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                  >
+                    {submittingReview ? "Отправка..." : "Оставить отзыв"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
-
         {/* Если уже оставил отзыв */}
         {reviewStats?.user_review && (
           <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-200">

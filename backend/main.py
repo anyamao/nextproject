@@ -354,6 +354,82 @@ async def remove_from_favorites(
 
 
 # backend/main.py
+# backend/main.py — в начало файла, после импортов
+
+
+async def get_course_completion_percent(
+    user_id: int,
+    course_id: int,
+    db: AsyncSession,
+) -> float:
+    """
+    Возвращает процент прохождения курса:
+    - Если есть юниты: (пройдено юнитов / всего юнитов) * 100
+    - Если нет юнитов: (пройдено уроков / всего уроков) * 100
+    """
+    # Считаем всего юнитов в курсе
+    total_units = await db.execute(
+        select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == course_id)
+    )
+    total_units = total_units.scalar() or 0
+
+    if total_units > 0:
+        # 🔹 Есть юниты: считаем пройденные юниты
+        # Юнит считается пройденным, если ВСЕ уроки в нём завершены
+        units = await db.execute(
+            select(CourseUnit.id).where(CourseUnit.subject_id == course_id)
+        )
+        unit_ids = [row[0] for row in units.all()]
+
+        completed_units = 0
+        for uid in unit_ids:
+            # Считаем уроки в юните
+            lessons_in_unit = await db.execute(
+                select(func.count(EgeLesson.id)).where(EgeLesson.unit_id == uid)
+            )
+            total_lessons = lessons_in_unit.scalar() or 0
+
+            if total_lessons == 0:
+                continue  # Пустой юнит не считаем
+
+            # Считаем завершённые уроки в юните
+            completed = await db.execute(
+                select(func.count(UserCompletedLesson.id)).where(
+                    UserCompletedLesson.user_id == user_id,
+                    UserCompletedLesson.lesson_id.in_(
+                        select(EgeLesson.id).where(EgeLesson.unit_id == uid)
+                    ),
+                )
+            )
+            completed_count = completed.scalar() or 0
+
+            # Юнит пройден, если все уроки завершены
+            if completed_count >= total_lessons:
+                completed_units += 1
+
+        return (completed_units / total_units) * 100
+
+    else:
+        # 🔹 Нет юнитов: считаем по урокам напрямую
+        total_lessons = await db.execute(
+            select(func.count(EgeLesson.id)).where(EgeLesson.subject_id == course_id)
+        )
+        total_lessons = total_lessons.scalar() or 0
+
+        if total_lessons == 0:
+            return 0.0
+
+        completed = await db.execute(
+            select(func.count(UserCompletedLesson.id)).where(
+                UserCompletedLesson.user_id == user_id,
+                UserCompletedLesson.lesson_id.in_(
+                    select(EgeLesson.id).where(EgeLesson.subject_id == course_id)
+                ),
+            )
+        )
+        completed_count = completed.scalar() or 0
+
+        return (completed_count / total_lessons) * 100
 
 
 @app.get("/courses/promo/{slug}", response_model=PromoCourseOut)
@@ -406,6 +482,11 @@ async def get_course_promo(
             )
         )
         is_enrolled = enrollment.scalar_one_or_none() is not None
+    completion_percent = 0.0
+    if current_user:
+        completion_percent = await get_course_completion_percent(
+            current_user.id, course.id, db
+        )
 
     # 6. Возвращаем данные
     return PromoCourseOut(
@@ -420,6 +501,7 @@ async def get_course_promo(
         enrolled_count=enrolled_count,
         rating=rating,
         is_favorite=is_favorite,
+        completion_percent=round(completion_percent, 1),
         is_enrolled=is_enrolled,
     )
 
@@ -495,6 +577,9 @@ async def get_course_reviews(
     )
 
 
+# backend/main.py — в create_course_review
+
+
 @app.post(
     "/courses/{course_id}/reviews", response_model=CourseReviewOut, status_code=201
 )
@@ -508,6 +593,15 @@ async def create_course_review(
     if not course:
         raise HTTPException(404, "Course not found")
 
+    # 🔥 ПРОВЕРКА: прошёл ли пользователь ≥75% курса?
+    completion = await get_course_completion_percent(current_user.id, course_id, db)
+    if completion < 75:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Complete at least 75% of the course to leave a review. Your progress: {completion:.1f}%",
+        )
+
+    # Проверка: уже есть отзыв
     existing = await db.execute(
         select(CourseReview).where(
             CourseReview.user_id == current_user.id,
@@ -517,6 +611,7 @@ async def create_course_review(
     if existing.scalar_one_or_none():
         raise HTTPException(400, "You already reviewed this course")
 
+    # Создаём отзыв
     new_review = CourseReview(
         user_id=current_user.id,
         course_id=course_id,
@@ -1408,6 +1503,11 @@ async def get_course_lessons(
         )
     )
     all_lessons = lessons_result.scalars().all()
+    completion_percent = 0.0
+    if current_user:
+        completion_percent = await get_course_completion_percent(
+            current_user.id, subject.id, db
+        )
 
     # 5. 🔥 ВРУЧНУЮ ДОБАВЛЯЕМ is_locked 🔥
     lessons_out = []
@@ -1426,6 +1526,7 @@ async def get_course_lessons(
                 "unit": lesson.unit,
                 "created_at": lesson.created_at,
                 "updated_at": lesson.updated_at,
+                "completion_percent": round(completion_percent, 1),
                 "is_locked": not is_enrolled
                 and i > 0,  # ✅ Первый открыт, остальные закрыты если не записан
             }
@@ -1535,142 +1636,40 @@ async def get_articles(
     return result.scalars().all()
 
 
-async def mark_lesson_completed_if_needed(
-    user_id: int,
-    lesson_id: int,
-    score: float,
-    db: AsyncSession,
-    threshold: float = 75.0,
-) -> bool:
-    """
-    Если score >= threshold — помечаем урок как пройденный (если ещё не помечен).
-    Возвращает True, если урок был отмечен как пройденный в этом вызове.
-    """
-    if score < threshold:
-        return False
+# backend/main.py
 
+
+# backend/main.py
+
+
+@app.post("/lessons/{lesson_id}/complete")
+async def mark_lesson_complete(
+    lesson_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Отметить урок как завершённый (вызывается при прохождении теста или просмотре)"""
+
+    # Проверка: существует ли урок
+    lesson = await db.get(EgeLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(404, "Lesson not found")
+
+    # Проверка: не отмечен ли уже
     existing = await db.execute(
         select(UserCompletedLesson).where(
-            UserCompletedLesson.user_id == user_id,
+            UserCompletedLesson.user_id == current_user.id,
             UserCompletedLesson.lesson_id == lesson_id,
         )
     )
     if existing.scalar_one_or_none():
-        return True
+        return {"message": "Already completed", "completed": True}
 
-    completed = UserCompletedLesson(user_id=user_id, lesson_id=lesson_id)
-    db.add(completed)
+    # Создаём запись
+    db.add(UserCompletedLesson(user_id=current_user.id, lesson_id=lesson_id))
     await db.commit()
-    return True
 
-
-@app.post("/articles/{slug}/view", status_code=status.HTTP_201_CREATED)
-async def record_article_view(
-    slug: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    article_result = await db.execute(select(Article).where(Article.slug == slug))
-    article = article_result.scalar_one_or_none()
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-    stmt = insert(ArticleView).values(user_id=current_user.id, article_id=article.id)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["user_id", "article_id"])
-    await db.execute(stmt)
-    await db.commit()
-    return {"message": "View recorded"}
-
-
-@app.post("/articles/{slug}/reaction", status_code=status.HTTP_200_OK)
-async def set_article_reaction(
-    slug: str,
-    data: ArticleReactionCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    article_result = await db.execute(select(Article).where(Article.slug == slug))
-    article = article_result.scalar_one_or_none()
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-    if data.reaction_type == "none":
-        new_is_like = None
-    else:
-        new_is_like = data.reaction_type == "like"
-    existing_stmt = select(ArticleReaction).where(
-        ArticleReaction.user_id == current_user.id,
-        ArticleReaction.article_id == article.id,
-    )
-    res = await db.execute(existing_stmt)
-    existing_reaction = res.scalar_one_or_none()
-    if new_is_like is None:
-        if existing_reaction:
-            await db.delete(existing_reaction)
-            await db.commit()
-        return {"message": "Reaction removed"}
-    else:
-        if existing_reaction:
-            existing_reaction.is_like = new_is_like
-        else:
-            db.add(
-                ArticleReaction(
-                    user_id=current_user.id, article_id=article.id, is_like=new_is_like
-                )
-            )
-        await db.commit()
-        return {"message": f"Reaction set to {data.reaction_type}"}
-
-
-@app.get("/articles/{slug}/stats", response_model=ArticleStatsOut)
-async def get_article_stats(
-    slug: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User | None = Depends(get_current_user_optional),
-):
-    article_result = await db.execute(select(Article).where(Article.slug == slug))
-    article = article_result.scalar_one_or_none()
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-    likes = (
-        await db.scalar(
-            select(func.count(ArticleReaction.id)).where(
-                ArticleReaction.article_id == article.id,
-                ArticleReaction.is_like == True,
-            )
-        )
-        or 0
-    )
-    dislikes = (
-        await db.scalar(
-            select(func.count(ArticleReaction.id)).where(
-                ArticleReaction.article_id == article.id,
-                ArticleReaction.is_like == False,
-            )
-        )
-        or 0
-    )
-    views = (
-        await db.scalar(
-            select(func.count(ArticleView.id)).where(
-                ArticleView.article_id == article.id
-            )
-        )
-        or 0
-    )
-    user_reaction = None
-    if current_user:
-        stmt = select(ArticleReaction.is_like).where(
-            ArticleReaction.user_id == current_user.id,
-            ArticleReaction.article_id == article.id,
-        )
-        res = await db.execute(stmt)
-        val = res.scalar_one_or_none()
-        if val is True:
-            user_reaction = "like"
-        elif val is False:
-            user_reaction = "dislike"
-    return ArticleStatsOut(
-        likes=likes, dislikes=dislikes, views=views, user_reaction=user_reaction
-    )
+    return {"message": "Lesson marked as completed", "completed": True}
 
 
 @app.get("/lessons/{lesson_id}")  # ← Убрали response_model!

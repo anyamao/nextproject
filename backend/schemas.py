@@ -69,6 +69,7 @@ class EgeSubjectOut(BaseModel):
     image: str | None
     category: str | None = None
     created_at: datetime
+    completion_percent: float | None = None
 
     # 🔥 Новые поля:
     certificate_available: bool = False
@@ -120,7 +121,7 @@ class PromoCourseOut(BaseModel):
     """Данные для промо-страницы курса"""
 
     model_config = ConfigDict(from_attributes=True)
-
+    completion_percent: float | None = None
     id: int
     title: str
     slug: str

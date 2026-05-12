@@ -38,6 +38,7 @@ type Lesson = {
 type CourseResponse = {
   lessons: Lesson[];
   units: CourseUnit[];
+  completion_percent: number | null;
   is_enrolled: boolean;
 };
 
@@ -47,7 +48,9 @@ export default function CourseLessonsPage() {
 
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-
+  const [completionPercent, setCompletionPercent] = useState<number | null>(
+    null,
+  );
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [units, setUnits] = useState<CourseUnit[]>([]);
   const [courseTitle, setCourseTitle] = useState<string>("");
@@ -88,8 +91,21 @@ export default function CourseLessonsPage() {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: "no-store",
               });
+              if (data.completion_percent !== undefined) {
+                setCompletionPercent(data.completion_percent);
+              }
+
               if (result?.score !== undefined && result.score >= 75) {
                 isCompleted = true;
+
+                // 🔥 Если урок пройден, но ещё не отмечен на бэкенде — отмечаем
+                const token = localStorage.getItem("token");
+                if (token && lesson.id) {
+                  apiFetch(`/lessons/${lesson.id}/complete`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                  }).catch(() => {}); // Игнорируем ошибки, чтобы не блокировать интерфейс
+                }
               } else {
               }
             } catch (err) {
@@ -279,6 +295,25 @@ export default function CourseLessonsPage() {
                   </div>
                 )}
 
+                {/* 🔹 Бейдж завершения */}
+                {completionPercent != null && completionPercent >= 90 && (
+                  <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
+                    <svg
+                      className="w-5 h-5 text-green-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-sm font-semibold text-green-800">
+                      Курс завершён! 🎉 {completionPercent}%
+                    </span>
+                  </div>
+                )}
                 <button
                   onClick={() => toggleUnit(unit.id)}
                   className="w-full flex items-center justify-between p-5 px-[20px] hover:bg-gray-50 transition"
