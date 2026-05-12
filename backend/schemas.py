@@ -36,12 +36,20 @@ class UserOut(BaseModel):
     created_at: datetime | None = None
     first_name: str | None = None
     last_name: str | None = None
+    token_balance: int = 0
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class TokenReward(BaseModel):
+    """Начисление токенов"""
+
+    amount: int = Field(..., ge=1, le=1000)
+    reason: str = Field(..., max_length=200)  # Например: "first_course_enrolled"
 
 
 class UserUpdate(BaseModel):
@@ -457,6 +465,7 @@ class FlashcardAnswer(BaseModel):
 
 
 __all__ = [
+    "TokenReward",
     "PromoCourseOut",
     "ReviewOut",
     "ReviewStatsOut",

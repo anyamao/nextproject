@@ -37,6 +37,7 @@ from typing import Any, Dict, Literal, Optional
 import asyncpg
 from models import (
     User,
+    PublicProfileOut,
     EgeSubject,
     EgeLesson,
     EgeTest,
@@ -70,6 +71,7 @@ from models import (
     ReviewReaction,
 )
 from schemas import (
+    TokenReward,
     UserRegister,
     TeacherOut,
     PromoCourseOut,
@@ -797,6 +799,78 @@ async def create_course_review(
         likes=0,
         dislikes=0,
         user_reaction=None,
+    )
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+@app.get("/profile/public/{user_id}", response_model=PublicProfileOut)
+async def get_public_profile(
+    user_id: int,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Получить публичный профиль пользователя"""
+
+    # Находим пользователя
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # 🔥 Находим пройденные курсы (≥90% completion)
+    # Получаем все курсы, на которые записан пользователь
+    enrolled_courses = await db.execute(
+        select(
+            EgeSubject.id,
+            EgeSubject.title,
+            EgeSubject.slug,
+            EgeSubject.image,
+            func.count(UserCompletedLesson.id).label("completed_lessons"),
+        )
+        .join(UserCourseEnrollment, UserCourseEnrollment.course_id == EgeSubject.id)
+        .join(EgeLesson, EgeLesson.subject_id == EgeSubject.id)
+        .outerjoin(
+            UserCompletedLesson,
+            (UserCompletedLesson.lesson_id == EgeLesson.id)
+            & (UserCompletedLesson.user_id == user_id),
+        )
+        .where(UserCourseEnrollment.user_id == user_id)
+        .group_by(EgeSubject.id, EgeSubject.title, EgeSubject.slug, EgeSubject.image)
+    )
+
+    completed_courses = []
+    for row in enrolled_courses.all():
+        # Считаем всего уроков в курсе
+        total_lessons = await db.execute(
+            select(func.count(EgeLesson.id)).where(EgeLesson.subject_id == row.id)
+        )
+        total = total_lessons.scalar() or 0
+
+        if total > 0:
+            completion_percent = (row.completed_lessons / total) * 100
+            if completion_percent >= 90:
+                completed_courses.append(
+                    {
+                        "id": row.id,
+                        "title": row.title,
+                        "slug": row.slug,
+                        "image": row.image,
+                        "completion_percent": round(completion_percent, 1),
+                    }
+                )
+
+    return PublicProfileOut(
+        id=user.id,
+        username=user.username,
+        avatar_url=user.avatar_url,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        token_balance=user.token_balance,
+        completed_courses=completed_courses,
     )
 
 
@@ -1693,6 +1767,56 @@ async def get_lesson_views(
 
 
 # backend/main.py
+# backend/main.py
+
+# ============================================================================
+# 🔥 ТОКЕНЫ: ЭНДПОИНТЫ
+# ============================================================================
+
+
+@app.get("/profile/balance", response_model=dict)
+async def get_balance(
+    current_user: User = Depends(get_current_user),
+):
+    """Получить текущий баланс токенов"""
+    return {"token_balance": current_user.token_balance}
+
+
+@app.post("/profile/balance/reward", response_model=dict)
+async def add_token_reward(
+    reward: TokenReward,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Начислить токены пользователю (внутренний эндпоинт)"""
+
+    # 🔥 Защита: только сервер может начислять токены
+    # (в реальном проекте добавь проверку API-ключа или роли)
+
+    current_user.token_balance += reward.amount
+    await db.commit()
+
+    return {
+        "token_balance": current_user.token_balance,
+        "rewarded": reward.amount,
+        "reason": reward.reason,
+    }
+
+
+# 🔹 Хелпер для начисления токенов
+async def reward_user(
+    user_id: int,
+    amount: int,
+    reason: str,
+    db: AsyncSession,
+):
+    """Внутренняя функция для начисления токенов"""
+    user = await db.get(User, user_id)
+    if user:
+        user.token_balance += amount
+        await db.commit()
+        return user.token_balance
+    return None
 
 
 # backend/main.py
@@ -1750,7 +1874,43 @@ async def get_course_subjects(
             )
         )
         enrolled_course_ids = {row[0] for row in enrolled.all()}
+    completion_dict: dict[int, float] = {}
 
+    if current_user:
+        # Получаем все завершённые уроки пользователя
+        completed_lessons_result = await db.execute(
+            select(
+                EgeLesson.subject_id,
+                func.count(UserCompletedLesson.id).label("completed_count"),
+            )
+            .join(UserCompletedLesson, UserCompletedLesson.lesson_id == EgeLesson.id)
+            .where(UserCompletedLesson.user_id == current_user.id)
+            .group_by(EgeLesson.subject_id)
+        )
+        completed_lessons = completed_lessons_result.all()  # 🔥 Сохраняем результат
+
+        # Считаем всего уроков по каждому курсу
+        total_lessons_result = await db.execute(
+            select(
+                EgeLesson.subject_id, func.count(EgeLesson.id).label("total_count")
+            ).group_by(EgeLesson.subject_id)
+        )
+        total_lessons = total_lessons_result.all()  # 🔥 Сохраняем результат
+
+        # Создаём словари
+        completed_dict_temp = {
+            row.subject_id: row.completed_count for row in completed_lessons
+        }
+        total_dict = {row.subject_id: row.total_count for row in total_lessons}
+
+        # Вычисляем проценты
+        for course_id, total in total_dict.items():
+            completed = completed_dict_temp.get(course_id, 0)
+            completion_dict[course_id] = (
+                round((completed / total) * 100, 1) if total > 0 else 0.0
+            )
+
+    # 5. 🔥 Верни курсы с новыми полями
     # 5. 🔥 Верни курсы с новыми полями
     return [
         EgeSubjectOut(
@@ -1765,6 +1925,7 @@ async def get_course_subjects(
             duration_minutes=s.duration_minutes,
             is_enrolled=(s.id in enrolled_course_ids) if current_user else False,
             enrolled_count=enrolled_dict.get(s.id, 0),
+            completion_percent=completion_dict.get(s.id) if current_user else None,
             rating=round(ratings_dict.get(s.id, 0), 1)
             if ratings_dict.get(s.id)
             else None,

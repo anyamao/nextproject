@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
   Send,
@@ -194,19 +194,22 @@ export default function CommentsSection({
       <div className="space-y-6">
         {comments.map((comment) => (
           <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
-            <img
-              key={`${comment.user_id}-${currentUser?.avatar_url}`}
-              src={`/avatars/${getAvatarUrl(comment)}`}
-              alt={comment.username}
-              className="w-[30px] h-[30px] rounded-full object-cover transition-transform duration-200 hover:scale-110"
-              onError={(e) => {
-                console.error(
-                  "❌ Failed to load avatar for comment:",
-                  comment.username,
-                );
-                (e.target as HTMLImageElement).src = "/avatars/default_cat.jpg";
-              }}
-            />
+            <Link href={`/profile/${comment.user_id}`}>
+              <img
+                key={`${comment.user_id}-${currentUser?.avatar_url}`}
+                src={`/avatars/${getAvatarUrl(comment)}`}
+                alt={comment.username}
+                className="w-[30px] h-[30px] rounded-full object-cover transition-transform duration-200 hover:scale-110"
+                onError={(e) => {
+                  console.error(
+                    "❌ Failed to load avatar for comment:",
+                    comment.username,
+                  );
+                  (e.target as HTMLImageElement).src =
+                    "/avatars/default_cat.jpg";
+                }}
+              />
+            </Link>
 
             <div className="flex flex-col w-full">
               <div className="flex flex-col ml-[10px]  w-full">

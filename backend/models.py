@@ -13,7 +13,7 @@ from sqlalchemy import (
     Date,
 )
 from database import Base
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 import os
 from dotenv import load_dotenv
 from sqlalchemy.orm import DeclarativeBase, relationship, backref
@@ -37,7 +37,7 @@ class User(Base):
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
     # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
-
+    token_balance = Column(Integer, default=0, nullable=False)
     # FlashcardProgress (уже есть, проверяем back_populates)
     flashcard_progress = relationship(
         "FlashcardProgress", back_populates="user", cascade="all, delete-orphan"
@@ -189,6 +189,19 @@ class CourseReview(Base):
 
 
 # backend/models.py
+
+
+class PublicProfileOut(BaseModel):
+    """Публичный профиль пользователя"""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    avatar_url: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    token_balance: int = 0
+    completed_courses: list[dict] = []  # Список пройденных курсов
 
 
 class EgeSubject(Base):

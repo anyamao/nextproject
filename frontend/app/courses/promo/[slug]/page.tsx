@@ -428,7 +428,7 @@ export default function CoursePromoPage() {
     .filter((w) => w).length;
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-4xl mx-auto">
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto">
       <div className="w-full mb-6">
         <Link
           href="/courses"
@@ -438,15 +438,16 @@ export default function CoursePromoPage() {
         </Link>
       </div>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden w-full">
+
+      <div className="bg-white rounded-lg  shadow-xs overflow-hidden w-full">
         {/* 🔹 Обложка + избранное */}
-        <div className="relative">
+        <div className="relative flex flex-row p-[20px]">
           {course.image && (
-            <div className="h-64 sm:h-80 bg-gray-100 overflow-hidden">
+            <div className="h-64 w-[370px] bg-gray-100 overflow-hidden">
               <img
                 src={`/${course.image}`}
                 alt={course.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full rounded-lg object-cover"
                 onError={(e) =>
                   (e.target as HTMLImageElement).parentElement?.classList.add(
                     "hidden",
@@ -455,9 +456,92 @@ export default function CoursePromoPage() {
               />
             </div>
           )}
+
+          <div className=" ml-[30px]">
+            <div className="flex items-start justify-between mb-4">
+              {course.category && (
+                <span className="inline-block px-3 py-1 text-xs font-medium rounded-lg bg-purple-100 text-purple-700">
+                  {course.category}
+                </span>
+              )}
+              {course.certificate_available && (
+                <span className="inline-flex items-center gap-1 mr-[60px] px-3 py-1 text-xs font-medium rounded-lg bg-yellow-100 text-yellow-800">
+                  <Award className="w-3 h-3" /> Сертификат
+                </span>
+              )}
+            </div>
+
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {course.title}
+            </h1>
+            {course.description && (
+              <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-wrap">
+                {course.description}
+              </p>
+            )}
+
+            {/* 🔹 Мета-информация */}
+            <div className="flex flex-wrap items-center gap-4 py-4 border-y border-gray-100 mb-6">
+              {course.duration_minutes && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span>{formatDuration(course.duration_minutes)}</span>
+                </div>
+              )}
+              {course.enrolled_count !== undefined && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Users className="w-4 h-4" />
+                  <span>{course.enrolled_count}+ студентов</span>
+                </div>
+              )}
+              {reviewStats?.average_rating != null && (
+                <div className="flex items-center gap-2">
+                  {renderStars(Number(reviewStats.average_rating))}
+                  <span className="text-sm text-gray-600">
+                    {/* 🔥 Преобразуем в число и проверяем */}
+                    {Number(reviewStats.average_rating).toFixed(1)} (
+                    {reviewStats.total_reviews || 0})
+                  </span>
+                </div>
+              )}
+              <p className="text-sm text-gray-500">
+                {isEnrolled ? "Вы уже записаны" : "Запишитесь"}
+              </p>
+            </div>
+
+            {/* 🔹 Кнопка записи — используем slug */}
+            <div className="flex flex-row ">
+              {isEnrolled ? (
+                <Link
+                  href={`/courses/${slug}`}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition "
+                >
+                  Продолжить обучение
+                </Link>
+              ) : (
+                <div className="flex flew-row w-full">
+                  <button
+                    onClick={handleEnroll}
+                    disabled={enrolling || !course?.slug}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4  bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition disabled:opacity-50"
+                  >
+                    {enrolling ? "Записываем..." : "Записаться на курс"}
+                  </button>
+
+                  <Link
+                    href={`/courses/${slug}`}
+                    className="w-full sm:w-auto ml-[20px] flex items-center justify-center gap-2 px-8 py-4  bg-white border-[1px] border-purple-700 text-purple-700 hover:bg-purple-100 cursor-pointer  rounded-lg font-semibold transition disabled:opacity-50"
+                  >
+                    {enrolling ? "Направляем..." : "Посмотреть"}
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
           <button
             onClick={toggleFavorite}
-            className={`absolute top-4 right-4 z-10 p-3 rounded-full transition shadow-lg ${course.is_favorite ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
+            className={`absolute top-4 right-4 z-10 p-2 rounded-full transition  ${course.is_favorite ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
             title={
               course.is_favorite
                 ? "Убрать из избранного"
@@ -465,7 +549,7 @@ export default function CoursePromoPage() {
             }
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5"
               viewBox="0 0 24 24"
               fill={course.is_favorite ? "currentColor" : "none"}
               stroke="currentColor"
@@ -479,15 +563,6 @@ export default function CoursePromoPage() {
             </svg>
           </button>
         </div>
-        {course.completion_percent != null &&
-          course.completion_percent >= 90 && (
-            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-semibold text-green-800">
-                Курс завершён! 🎉 {course.completion_percent}%
-              </span>
-            </div>
-          )}
 
         {/* 🔹 Бейдж: можно оставить отзыв */}
         {canWriteReview && !reviewStats?.user_review && (
@@ -499,126 +574,46 @@ export default function CoursePromoPage() {
             </span>
           </div>
         )}
-        {/* 🔹 Кнопка сертификата */}
+      </div>
+
+      <div className="bg-white w-full my-[30px] p-[20px]  rounded-lg shadow-xs">
+        {course.completion_percent != null &&
+          course.completion_percent >= 90 && (
+            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-200 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-900" />
+              <span className="text-sm font-semibold text-green-950">
+                Курс завершён! {course.completion_percent}%
+              </span>
+            </div>
+          )}
+
         {course.is_enrolled && course.completion_percent >= 90 && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl">
-            <div className="flex items-center justify-between">
+          <div className="mt-6 bg-amber-200 p-[30px] py-[40px] my-[20px] mx-[30px] rounded-lg rotate-3 ">
+            <div className="flex rounded-lg items-center bg-amber-500 justify-between p-[10px] -rotate-3">
               <div>
-                <p className="text-sm font-semibold text-yellow-800">
+                <p className="text-lg font-bold text-yellow-950">
                   🎓 Поздравляем! Вы прошли курс на {course.completion_percent}%
                 </p>
-                <p className="text-xs text-yellow-700">
-                  Получите сертификат об окончании
+                <p className="text-sm text-yellow-900">
+                  Получите сертификат об окончании и отправьте его друзьям!
+                </p>
+                <p className="text-yellow-950 text-sm">
+                  {" "}
+                  Это бесплатно, за отправку сертификата +40px
                 </p>
               </div>
               <Link
                 href={`/courses/${slug}/certificate`}
-                className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition whitespace-nowrap"
+                className="px-4 py-2 bg-amber-400 text-white rounded-lg font-semibold hover:bg-amber-600 transition whitespace-nowrap"
               >
                 Получить сертификат
               </Link>
             </div>
           </div>
         )}
-        {/* 🔹 Контент */}
-        <div className="p-6 sm:p-8">
-          <div className="flex items-start justify-between mb-4">
-            {course.category && (
-              <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
-                {course.category}
-              </span>
-            )}
-            {course.certificate_available && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                <Award className="w-3 h-3" /> Сертификат
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            {course.title}
-          </h1>
-          {course.description && (
-            <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-wrap">
-              {course.description}
-            </p>
-          )}
-
-          {/* 🔹 Мета-информация */}
-          <div className="flex flex-wrap items-center gap-4 py-4 border-y border-gray-100 mb-6">
-            {course.duration_minutes && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span>{formatDuration(course.duration_minutes)}</span>
-              </div>
-            )}
-            {course.enrolled_count !== undefined && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users className="w-4 h-4" />
-                <span>{course.enrolled_count}+ студентов</span>
-              </div>
-            )}
-            {reviewStats?.average_rating != null && (
-              <div className="flex items-center gap-2">
-                {renderStars(Number(reviewStats.average_rating))}
-                <span className="text-sm text-gray-600">
-                  {/* 🔥 Преобразуем в число и проверяем */}
-                  {Number(reviewStats.average_rating).toFixed(1)} (
-                  {reviewStats.total_reviews || 0})
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* 🔹 Кнопка записи — используем slug */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
-            {isEnrolled ? (
-              <Link
-                href={`/courses/${slug}`}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition shadow-md"
-              >
-                <CheckCircle className="w-5 h-5" /> Продолжить обучение
-              </Link>
-            ) : (
-              <button
-                onClick={handleEnroll}
-                disabled={enrolling || !course?.slug}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-md disabled:opacity-50"
-              >
-                <BookOpen className="w-5 h-5" />
-                {enrolling ? "Записываем..." : "Записаться на курс"}
-              </button>
-            )}
-            <p className="text-sm text-gray-500">
-              {isEnrolled ? "Вы уже записаны" : "Бесплатно • Доступ навсегда"}
-            </p>
-          </div>
-        </div>
       </div>
-      <div className="w-full bg-red-500 p-[10px]">
-        {/* 🔹 Бейдж завершения курса */}
-        {course.completion_percent != null &&
-          course.completion_percent >= 30 && (
-            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
-              <svg
-                className="w-5 h-5 text-green-600"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-sm font-semibold text-green-800">
-                Курс завершён! 🎉 {course.completion_percent}%
-              </span>
-            </div>
-          )}
-      </div>
-      {/* 🔹 О курсе */}
-      <div className="mb-8">
+
+      <div className="mb-[20px] w-full bg-white p-[20px] rounded-lg shadow-xs">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
         {course.about ? (
           <div
@@ -635,14 +630,14 @@ export default function CoursePromoPage() {
       {/* 🔹 Преподаватели */}
       {course.teachers && course.teachers.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Преподаватели курса
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {course.teachers.map((teacher) => (
               <div
                 key={teacher.id}
-                className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition"
+                className="p-4 bg-white  rounded-lg shadow-xs transition"
               >
                 <div className="flex items-start gap-4">
                   {teacher.image ? (
