@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Trophy,
+  Lock,
 } from "lucide-react";
 
 type CourseUnit = {
@@ -31,16 +32,21 @@ type Lesson = {
   test_id?: number | null;
   unit: CourseUnit | null;
   is_completed?: boolean;
+  is_locked?: boolean; //
 };
 
 type CourseResponse = {
   lessons: Lesson[];
   units: CourseUnit[];
+  is_enrolled: boolean;
 };
 
 export default function CourseLessonsPage() {
   const params = useParams();
   const slug = params.slug as string;
+
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [units, setUnits] = useState<CourseUnit[]>([]);
@@ -52,6 +58,19 @@ export default function CourseLessonsPage() {
     async function fetchData() {
       try {
         const data: CourseResponse = await apiFetch(`/courses/${slug}`);
+        console.log("🔍 [Frontend] Received course ", {
+          is_enrolled: data.is_enrolled,
+          lessonsCount: data.lessons.length,
+          lockedLessons: data.lessons.filter((l: any) => l.is_locked).length,
+        });
+
+        console.log(
+          "🔍 [Frontend] Lessons:",
+          data.lessons.map((l: any) => ({
+            title: l.title,
+            is_locked: l.is_locked,
+          })),
+        );
 
         if (!data || !data.lessons) {
           return;
@@ -305,52 +324,80 @@ export default function CourseLessonsPage() {
                     )}
                   </div>
                 </button>
-
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-4">
-                    {unitLessons.map((lesson) => (
-                      <Link
-                        key={lesson.id}
-                        href={`/courses/${slug}/${lesson.slug}`}
-                        className="group block p-4 bg-white shadow-xs relative rounded-xl  border border-gray-200 hover:border-purple-300 hover:shadow-sm hover:bg-white transition-all"
-                      >
-                        {lesson.is_completed === true && (
-                          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300 z-10">
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>Пройдено</span>
-                          </div>
-                        )}
-
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-700">
-                              {lesson.title}
-                            </h3>
-                            {lesson.description && (
-                              <p className="text-gray-600 mt-1 text-sm line-clamp-2">
-                                {lesson.description}
-                              </p>
-                            )}
+                    {unitLessons.map((lesson) =>
+                      lesson.is_locked ? (
+                        // 🔒 Заблокированный урок
+                        <div
+                          key={lesson.id}
+                          className="group flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 opacity-60 cursor-not-allowed"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <h3 className="text-base font-semibold text-gray-500 truncate">
+                                {lesson.title}
+                              </h3>
+                              {lesson.description && (
+                                <p className="text-gray-400 mt-1 text-sm line-clamp-2">
+                                  {lesson.description}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           {lesson.time_minutes && (
-                            <div className="flex items-center gap-1 text-gray-500 text-sm whitespace-nowrap">
+                            <div className="flex items-center gap-1 text-gray-400 text-sm whitespace-nowrap flex-shrink-0">
                               <Clock className="w-4 h-4" />
                               <span>{lesson.time_minutes} мин</span>
                             </div>
                           )}
                         </div>
-                      </Link>
-                    ))}
+                      ) : (
+                        // ✅ Открытый урок (твой оригинальный код)
+                        <Link
+                          key={lesson.id}
+                          href={`/courses/${slug}/${lesson.slug}`}
+                          className="group block p-4 bg-white shadow-xs relative rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm hover:bg-white transition-all"
+                        >
+                          {lesson.is_completed === true && (
+                            <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300 z-10">
+                              <svg
+                                className="w-3 h-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              <span>Пройдено</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-700">
+                                {lesson.title}
+                              </h3>
+                              {lesson.description && (
+                                <p className="text-gray-600 mt-1 text-sm line-clamp-2">
+                                  {lesson.description}
+                                </p>
+                              )}
+                            </div>
+                            {lesson.time_minutes && (
+                              <div className="flex items-center gap-1 text-gray-500 text-sm whitespace-nowrap">
+                                <Clock className="w-4 h-4" />
+                                <span>{lesson.time_minutes} мин</span>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      ),
+                    )}
                   </div>
                 )}
               </div>

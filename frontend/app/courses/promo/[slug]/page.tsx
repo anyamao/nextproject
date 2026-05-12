@@ -2,25 +2,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Clock, Award } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Award, CheckCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 export default function CoursePromoPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchData = async () => {
       try {
-        // 🔹 Берём данные из уже рабочего эндпоинта
+        // 1️⃣ Загружаем список курсов для базовой инфо
         const courses = await apiFetch("/courses/subjects");
         const found = courses.find((c: any) => c.slug === slug);
-        setCourse(found);
+
+        if (found) {
+          setCourse(found);
+
+          // 2️⃣ Проверяем, записан ли пользователь
+          const token = localStorage.getItem("token");
+          if (token) {
+            try {
+              const courseData = await apiFetch(`/courses/${slug}`);
+              setIsEnrolled(courseData.is_enrolled || false);
+            } catch (err) {
+              // Если не авторизован — is_enrolled остаётся false
+            }
+          }
+        }
       } catch (err) {
         console.error("❌ Failed to load course promo:", err);
       } finally {
@@ -28,8 +45,36 @@ export default function CoursePromoPage() {
       }
     };
 
-    if (slug) fetchCourse();
+    if (slug) fetchData();
   }, [slug]);
+
+  const handleEnroll = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      await apiFetch(`/courses/${slug}/enroll`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setIsEnrolled(true);
+
+      // Через 1 секунду редирект на курс
+      setTimeout(() => {
+        router.push(`/courses/${slug}`);
+      }, 1000);
+    } catch (err) {
+      console.error("❌ Failed to enroll:", err);
+      alert("Ошибка при записи на курс. Попробуйте ещё раз.");
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,15 +145,30 @@ export default function CoursePromoPage() {
           )}
 
           <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-gray-100">
-            <Link
-              href={`/courses/${slug}`}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-md"
-            >
-              <BookOpen className="w-5 h-5" /> Начать обучение
-            </Link>
+            {isEnrolled ? (
+              // ✅ Уже записан
+              <Link
+                href={`/courses/${slug}`}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition shadow-md"
+              >
+                <CheckCircle className="w-5 h-5" /> Продолжить обучение
+              </Link>
+            ) : (
+              // 🔘 Кнопка записаться
+              <button
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <BookOpen className="w-5 h-5" />
+                {enrolling ? "Записываем..." : "Записаться на курс"}
+              </button>
+            )}
 
             <p className="text-sm text-gray-500">
-              Перейти к списку уроков и прогрессу
+              {isEnrolled
+                ? "Вы уже записаны на этот курс"
+                : "Бесплатно • Доступ навсегда после записи"}
             </p>
           </div>
         </div>

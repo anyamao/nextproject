@@ -41,6 +41,8 @@ interface ContactState {
   englishnavigationState: boolean;
   toggleenglishNavigation: () => void;
 
+  coursenavigationState: boolean;
+  togglecourseNavigation: () => void;
   forgotpasswordState: boolean;
   toggleforgotpassword: () => void;
   registerState: boolean;
@@ -94,6 +96,12 @@ const useContactStore = create<ContactState>()(
       toggleenglishNavigation: () =>
         set((state) => ({
           englishnavigationState: !state.englishnavigationState,
+        })),
+
+      coursenavigationState: true,
+      togglecourseNavigation: () =>
+        set((state) => ({
+          coursenavigationState: !state.coursenavigationState,
         })),
 
       forgotpasswordState: false,

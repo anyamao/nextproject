@@ -108,6 +108,7 @@ class EgeLessonOut(BaseModel):
     unit: CourseUnitOut | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    is_locked: bool = False  # 🔥 Добавили поле с дефолтом
 
 
 class EgeLessonList(BaseModel):
@@ -119,6 +120,13 @@ class TestQuestionCreate(BaseModel):
     question_text: str
     correct_answer: str
     order_index: int = 0
+
+
+class CourseLessonsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    lessons: list[EgeLessonOut]
+    units: list[CourseUnitOut]
+    is_enrolled: bool
 
 
 class EgeTestCreate(BaseModel):
@@ -333,6 +341,7 @@ __all__ = [
     "EgeSubjectCreate",
     "EgeSubjectOut",
     "EgeLessonCreate",
+    "COurseLessonsResponse",
     "EgeLessonOut",
     "EgeLessonList",
     "TestQuestionCreate",

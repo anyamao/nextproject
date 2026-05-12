@@ -31,6 +31,7 @@ interface LessonClientProps {
   subjectSlug: string;
   lessonSlug: string;
   testId: number | null;
+  isLocked?: boolean; // 🔥 Новое поле
 }
 
 export default function LessonClient({
@@ -38,6 +39,7 @@ export default function LessonClient({
   subjectSlug,
   lessonSlug,
   testId,
+  isLocked = false,
 }: LessonClientProps) {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loadingResult, setLoadingResult] = useState(false);
@@ -59,7 +61,8 @@ export default function LessonClient({
   useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
-      if (!token || !lesson.id) return;
+      // 🔥 Защита: если lesson===null — ничего не делаем
+      if (!token || !lesson?.id) return;
       try {
         await apiFetch(`/lessons/${lesson.id}/view`, {
           method: "POST",
@@ -68,10 +71,10 @@ export default function LessonClient({
       } catch (err) {}
     };
     recordView();
-  }, [lesson.id]);
+  }, [lesson?.id]); // 🔥 Опциональная цепочка в зависимостях
 
   useEffect(() => {
-    if (!lesson.id) return;
+    if (!lesson?.id) return;
     const fetchViews = async () => {
       try {
         const data = await apiFetch(
@@ -84,7 +87,7 @@ export default function LessonClient({
       } catch {}
     };
     fetchViews();
-  }, [lesson.id]);
+  }, [lesson?.id]);
 
   useEffect(() => {
     if (!testId) return;
@@ -123,10 +126,10 @@ export default function LessonClient({
       } catch (err) {}
     }
 
-    if (lesson.id) {
+    if (lesson?.id) {
       fetchFlashcardStats();
     }
-  }, [lesson.id]);
+  }, [lesson?.id]);
 
   useEffect(() => {
     async function loadCourseAndNextLesson() {
@@ -147,7 +150,7 @@ export default function LessonClient({
           response.lessons || [];
 
         const sorted = [...lessons].sort((a, b) => a.id - b.id); // 🔥 Копия массива, чтобы не мутировать оригинал
-        const currentIndex = sorted.findIndex((l) => l.id === lesson.id);
+        const currentIndex = sorted.findIndex((l) => l.id === lesson?.id);
 
         if (currentIndex !== -1 && currentIndex < sorted.length - 1) {
           const nextSlug = sorted[currentIndex + 1].slug;
@@ -178,10 +181,62 @@ export default function LessonClient({
 
     window.location.href = `/tests/${testId}?returnTo=${encodeURIComponent(returnTo)}`;
   };
+  useEffect(() => {
+    console.log("🔍 [LessonClient] Props:", { isLocked, lessonId: lesson?.id });
+  }, [isLocked, lesson?.id]);
 
-  //
+  if (isLocked) {
+    console.log("🔒 [LessonClient] Rendering LOCKED overlay");
+  }
+  if (isLocked) {
+    return (
+      <>
+        <div className="fixed inset-0 z-50 bg-gray-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl border border-gray-200">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
+              Урок заблокирован 🔒
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Этот урок доступен только после записи на курс.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href={`/courses/${subjectSlug}`}
+                className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition"
+              >
+                Записаться на курс
+              </Link>
+              <button
+                onClick={() => window.history.back()}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
+              >
+                Назад
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="fixed inset-0 z-40 bg-black/50 pointer-events-none" />
+      </>
+    );
+  }
+  if (!lesson) {
+    return (
+      <div className="p-10 text-center text-red-600">Ошибка загрузки урока</div>
+    );
+  }
+  console.log("✅ [LessonClient] Rendering normal lesson content");
+
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
+      <>
+        {/* 🔒 Полноэкранный блокирующий оверлей */}
+
+        {/* 🔥 Затемнённый фон под оверлеем (контент страницы) */}
+      </>
+
       <div className="flex-1 w-full items-center justify-center">
         <div className="flex flex-row items-center text-gray-500 max-w-[400px] whitespace-nowrap overflow-x-auto smaller-text mb-[15px] font-semibold">
           <Link className="hover:underline  " href={`/courses`}>
@@ -309,7 +364,7 @@ export default function LessonClient({
         </p>
 
         <div className="flex flex-col md:flex-row items-center mt-[20px] justify-between">
-          {lesson.id && <LessonReactions lessonId={lesson.id} />}
+          {lesson?.id && <LessonReactions lessonId={lesson?.id} />}
 
           {testId &&
             (isAuthenticated ? (
@@ -357,7 +412,7 @@ export default function LessonClient({
       <div className="flex md:flex-row flex-col w-full  items-center">
         {showFlashcards && (
           <FlashcardSession
-            lessonId={lesson.id}
+            lessonId={lesson?.id}
             onClose={() => setShowFlashcards(false)}
           />
         )}
@@ -426,7 +481,7 @@ export default function LessonClient({
         )}
       </div>
 
-      {lesson.id && <CommentsSection lessonId={lesson.id} />}
+      {lesson?.id && <CommentsSection lessonId={lesson?.id} />}
     </main>
   );
 }

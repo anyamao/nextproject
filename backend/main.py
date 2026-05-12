@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
-
+from fastapi.responses import Response
 from sqlalchemy import (
     Column,
     Integer,
@@ -26,7 +26,7 @@ from sqlalchemy import (
 
 import os
 from sqlalchemy.dialects.postgresql import insert
-
+import json
 
 from dotenv import load_dotenv
 from datetime import datetime, timezone, date, timedelta
@@ -50,6 +50,7 @@ from models import (
     UserCompletedLesson,
     LanguageSubject,
     LanguageLevel,
+    CourseEnrollment,
     LanguageCategory,
     LanguageLesson,
     LanguageComment,
@@ -63,6 +64,7 @@ from models import (
 from schemas import (
     UserRegister,
     LanguageLessonOut,
+    CourseLessonsResponse,
     LanguageCommentOut,
     UserLogin,
     Token,
@@ -365,6 +367,32 @@ async def answer_flashcard(
         "repetitions": progress.repetitions,
         "message": "Answer saved",
     }
+
+
+@app.post("/courses/{slug}/enroll")
+async def enroll_course(
+    slug: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    course = course.scalar_one_or_none()
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    # Проверка: уже записан?
+    existing = await db.execute(
+        select(CourseEnrollment).where(
+            CourseEnrollment.user_id == current_user.id,
+            CourseEnrollment.course_id == course.id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return {"message": "Already enrolled"}
+
+    db.add(CourseEnrollment(user_id=current_user.id, course_id=course.id))
+    await db.commit()
+    return {"message": "Enrolled successfully"}
 
 
 @app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
@@ -989,14 +1017,30 @@ async def get_course_subjects(
     return result.scalars().all()
 
 
-@app.get("/courses/{slug}")
-async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
-
+@app.get("/courses/{slug}")  # ← УБЕРИ response_model=..., если есть
+async def get_course_lessons(
+    slug: str,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    # 1. Ищем курс
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
+    # 2. Проверяем запись
+    is_enrolled = False
+    if current_user:
+        enrollment = await db.execute(
+            select(CourseEnrollment).where(
+                CourseEnrollment.user_id == current_user.id,
+                CourseEnrollment.course_id == subject.id,
+            )
+        )
+        is_enrolled = enrollment.scalar_one_or_none() is not None
+
+    # 3. Загружаем юниты
     units_result = await db.execute(
         select(CourseUnit, func.count(EgeLesson.id).label("lesson_count"))
         .outerjoin(EgeLesson, EgeLesson.unit_id == CourseUnit.id)
@@ -1004,18 +1048,18 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
         .group_by(CourseUnit.id)
         .order_by(CourseUnit.unit_number)
     )
-
     units_with_counts = [
         {
-            "id": unit.id,
-            "title": unit.title,
-            "unit_number": unit.unit_number,
-            "description": unit.description,
-            "lesson_count": count,
+            "id": u.id,
+            "title": u.title,
+            "unit_number": u.unit_number,
+            "description": u.description,
+            "lesson_count": c,
         }
-        for unit, count in units_result.all()
+        for u, c in units_result.all()
     ]
 
+    # 4. Загружаем уроки
     lessons_result = await db.execute(
         select(EgeLesson)
         .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)
@@ -1027,31 +1071,104 @@ async def get_course_lessons(slug: str, db: AsyncSession = Depends(get_db)):
             EgeLesson.created_at.asc(),
         )
     )
-    lessons = lessons_result.scalars().all()
+    all_lessons = lessons_result.scalars().all()
 
-    return {"lessons": lessons, "units": units_with_counts}
+    # 5. 🔥 ВРУЧНУЮ ДОБАВЛЯЕМ is_locked 🔥
+    lessons_out = []
+    for i, lesson in enumerate(all_lessons):
+        lessons_out.append(
+            {
+                "id": lesson.id,
+                "subject_id": lesson.subject_id,
+                "title": lesson.title,
+                "slug": lesson.slug,
+                "description": lesson.description,
+                "content": lesson.content,
+                "time_minutes": lesson.time_minutes,
+                "is_completed": False,
+                "test_id": lesson.test_id,
+                "unit": lesson.unit,
+                "created_at": lesson.created_at,
+                "updated_at": lesson.updated_at,
+                "is_locked": not is_enrolled
+                and i > 0,  # ✅ Первый открыт, остальные закрыты если не записан
+            }
+        )
+
+    # 6. Возвращаем обычный словарь (без Pydantic-валидации)
+    return {
+        "lessons": lessons_out,
+        "units": units_with_counts,
+        "is_enrolled": is_enrolled,
+    }
 
 
-@app.get("/courses/{slug}/{lesson_slug}", response_model=EgeLessonOut)
+# backend/main.py
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+@app.get("/courses/{slug}/{lesson_slug}")  # ← БЕЗ response_model!
 async def get_course_lesson_detail(
-    slug: str, lesson_slug: str, db: AsyncSession = Depends(get_db)
+    slug: str,
+    lesson_slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
-    subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
-    subject = subject_result.scalar_one_or_none()
+    # 1. Находим курс
+    subject = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    subject = subject.scalar_one_or_none()
     if not subject:
-        raise HTTPException(status_code=404, detail="Subject not found")
+        raise HTTPException(404, "Course not found")
 
-    result = await db.execute(
-        select(EgeLesson)
-        .where(EgeLesson.subject_id == subject.id, EgeLesson.slug == lesson_slug)
-        .options(selectinload(EgeLesson.unit))
+    # 2. Находим урок
+    lesson = await db.execute(
+        select(EgeLesson).where(
+            EgeLesson.subject_id == subject.id, EgeLesson.slug == lesson_slug
+        )
     )
-
-    lesson = result.scalar_one_or_none()
+    lesson = lesson.scalar_one_or_none()
     if not lesson:
-        raise HTTPException(status_code=404, detail="Lesson not found")
+        raise HTTPException(404, "Lesson not found")
 
-    return lesson
+    # 3. Проверяем запись
+    is_enrolled = False
+    if current_user:
+        check = await db.execute(
+            select(CourseEnrollment).where(
+                CourseEnrollment.user_id == current_user.id,
+                CourseEnrollment.course_id == subject.id,
+            )
+        )
+        is_enrolled = check.scalar_one_or_none() is not None
+
+    # 4. Индекс урока для блокировки
+    all_ids = await db.execute(
+        select(EgeLesson.id)
+        .where(EgeLesson.subject_id == subject.id)
+        .order_by(EgeLesson.created_at)
+    )
+    ids = [r[0] for r in all_ids.all()]
+    idx = ids.index(lesson.id) if lesson.id in ids else 0
+    is_locked = not is_enrolled and idx > 0
+
+    # 5. 🔥 ВОЗВРАЩАЕМ ТОЛЬКО ПРИМИТИВЫ — БЕЗ unit, БЕЗ моделей!
+    return {
+        "id": lesson.id,
+        "title": lesson.title,
+        "slug": lesson.slug,
+        "description": lesson.description,
+        "content": lesson.content,
+        "time_minutes": lesson.time_minutes,
+        "test_id": lesson.test_id,
+        # "unit": ...,  # ← УБРАЛИ! Не возвращаем nested-объекты
+        "created_at": lesson.created_at.isoformat() if lesson.created_at else None,
+        "is_locked": is_locked,  # 🔥 Главное поле для блокировки
+    }
 
 
 ARTICLE_TOPICS_LIST = [
@@ -1220,12 +1337,27 @@ async def get_article_stats(
     )
 
 
-@app.get("/lessons/{lesson_id}", response_model=EgeLessonOut)
-async def get_lesson_by_id(lesson_id: int, db: AsyncSession = Depends(get_db)):
+@app.get("/lessons/{lesson_id}")  # ← Убрали response_model!
+async def get_lesson_by_id(
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+):
     lesson = await db.get(EgeLesson, lesson_id)
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    return lesson
+
+    # 🔥 Вручную собираем ответ — только примитивы, БЕЗ unit!
+    return {
+        "id": lesson.id,
+        "title": lesson.title,
+        "slug": lesson.slug,
+        "description": lesson.description,
+        "content": lesson.content,
+        "time_minutes": lesson.time_minutes,
+        "test_id": lesson.test_id,
+        # "unit": ...,  # ← НЕ возвращаем nested-объекты!
+        "created_at": lesson.created_at.isoformat() if lesson.created_at else None,
+    }
 
 
 @app.post("/lessons/{lesson_id}/view", status_code=status.HTTP_201_CREATED)

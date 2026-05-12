@@ -15,7 +15,7 @@ import { useEffect } from "react";
 import useContactStore from "@/store/states";
 // import { apiFetch } from "@/lib/api";
 import { AuthSync } from "@/components/AuthSync";
-
+import CourseSidePanel from "../ui/CourseSidePanel";
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -43,6 +43,7 @@ export default function RootLayout({
             <Signup />
             <ContactForm />
             <NavigationPanel />
+            <CourseSidePanel></CourseSidePanel>
             <div className="w-full px-[10px] md:px-[20px]">{children}</div>
           </div>
           <Footer />

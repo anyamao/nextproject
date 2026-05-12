@@ -207,6 +207,19 @@ class FlashcardProgress(Base):
     card = relationship("Flashcard", back_populates="progress")
 
 
+class CourseEnrollment(Base):
+    __tablename__ = "course_enrollments"
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    course_id = Column(
+        Integer, ForeignKey("ege_subjects.id", ondelete="CASCADE"), primary_key=True
+    )
+    enrolled_at = Column(DateTime, server_default=func.now())
+    user = relationship("User")
+    course = relationship("EgeSubject")
+
+
 class CourseUnit(Base):
     """Именованный юнит курса (например, "My Friends and Me")"""
 
