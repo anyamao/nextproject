@@ -1,6 +1,7 @@
 // frontend/app/courses/promo/[slug]/page.tsx
 "use client";
-
+import Toast from "@/components/Toast";
+import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -82,8 +83,13 @@ export default function CoursePromoPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
+  const { rewardTokens } = useTokens();
+  const [toast, setToast] = useState<string | null>(null);
 
   // frontend/app/courses/promo/[slug]/page.tsx
+  const showToast = (message: string) => {
+    setToast(message);
+  };
 
   // frontend/app/courses/promo/[slug]/page.tsx
 
@@ -170,20 +176,20 @@ export default function CoursePromoPage() {
       return;
     }
 
-    // 🔥 Используем slug для enroll (как в других эндпоинтах)
-    if (!course?.slug) {
-      console.error("❌ Course slug is missing");
-      return;
-    }
+    if (!course?.slug) return;
 
     setEnrolling(true);
     try {
-      console.log("🔍 [Enroll] POST /courses/${course.slug}/enroll");
       await apiFetch(`/courses/${course.slug}/enroll`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       setIsEnrolled(true);
+
+      // 🔥 Начисляем токены за первую запись на курс
+      // (в реальном проекте проверяй, первый ли это курс)
+      await rewardTokens(20, "first_course_enrolled");
+      setToast("+20 токенов!"); // Показываем уведомление
       setTimeout(() => router.push(`/courses/${slug}`), 1000);
     } catch (err: any) {
       console.error("❌ Failed to enroll:", err);
@@ -192,7 +198,6 @@ export default function CoursePromoPage() {
       setEnrolling(false);
     }
   };
-
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -432,7 +437,7 @@ export default function CoursePromoPage() {
           <ArrowLeft className="w-5 h-5" /> Все курсы
         </Link>
       </div>
-
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden w-full">
         {/* 🔹 Обложка + избранное */}
         <div className="relative">

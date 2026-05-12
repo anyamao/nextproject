@@ -19,6 +19,9 @@ interface ContactFormData {
 }
 
 interface ContactState {
+  tokenBalance: number;
+  setTokenBalance: (balance: number) => void;
+  addTokens: (amount: number) => void;
   contactState: boolean;
   setContactState: (state: boolean) => void;
   toggleContact: () => void;
@@ -65,6 +68,11 @@ interface ContactState {
 const useContactStore = create<ContactState>()(
   persist(
     (set) => ({
+      tokenBalance: 0,
+      setTokenBalance: (balance) => set({ tokenBalance: balance }),
+      addTokens: (amount) =>
+        set((state) => ({ tokenBalance: state.tokenBalance + amount })),
+
       contactState: false,
       setContactState: (state) => set({ contactState: state }),
       toggleContact: () =>
@@ -188,6 +196,7 @@ const useContactStore = create<ContactState>()(
     {
       name: "maoschool-storage", // ключ в localStorage
       partialize: (state) => ({
+        tokenBalance: state.tokenBalance,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),

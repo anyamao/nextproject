@@ -4,16 +4,18 @@ import Register from "./register";
 import MainNavigation from "./mainnavigation";
 import useContactStore from "@/store/states";
 import Link from "next/link";
-import { Flame, Search } from "lucide-react";
+import { Flame, PawPrint, Cat, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTokens } from "@/hooks/useTokens";
+import { Tooltip } from "react-tooltip";
 
 function Mainnav() {
   const { navigationState, closeEverything, toggleNavigation } =
     useContactStore();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-
+  const { balance, loading } = useTokens();
   const handleSearch = () => {
     if (searchQuery.trim()) {
       // Перенаправляем на страницу курсов с поисковым запросом
@@ -24,6 +26,7 @@ function Mainnav() {
       router.push("/courses");
     }
   };
+  const tokenBalance = useContactStore((state) => state.tokenBalance);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -79,9 +82,18 @@ function Mainnav() {
           </div>
           <div className="flex flex-row justify-between items-center pr-[10px]">
             <Contact />
-            <div className="flex hidden sm:block items-center justify-center p-[7px] bg-orange-100 rounded-full mr-[13px]">
-              <Flame className="text-orange-400 w-[20px] h-[20px]" />
+
+            <div className="relative group">
+              <div className="flex hidden sm:block items-center justify-center p-[7px] bg-yellow-500 rounded-full mr-[13px] ">
+                <span className="text-xs font-bold text-white flex items-center gap-1">
+                  <PawPrint className="w-4 h-4" />
+                  {tokenBalance}
+                </span>
+              </div>
+
+              {/* 🔹 Подсказка при наведении - показываем СНИЗУ */}
             </div>
+
             <Register />
           </div>
         </div>

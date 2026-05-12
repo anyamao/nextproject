@@ -11,6 +11,8 @@ import CopyLinkButton from "@/components/LinkButton";
 import { saveTestReturnUrl } from "@/lib/test-return";
 import FlashcardSession from "@/components/FlashcardSession";
 import { BookOpen } from "lucide-react";
+import Toast from "@/components/Toast";
+import { useTokens } from "@/hooks/useTokens";
 import { formatTimeAgo } from "@/lib/format-date";
 type Lesson = {
   id: number;
@@ -49,6 +51,8 @@ export default function LessonClient({
   const [loadingResult, setLoadingResult] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
+  const { rewardTokens } = useTokens();
+  const [toast, setToast] = useState<string | null>(null);
 
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [nextLessonSlug, setNextLessonSlug] = useState<string | null>(null);
@@ -56,6 +60,8 @@ export default function LessonClient({
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
+  const showToast = (message: string) => setToast(message);
+
   const [unitLessons, setUnitLessons] = useState<
     Array<{
       id: number;
@@ -184,6 +190,7 @@ export default function LessonClient({
 
   useEffect(() => {
     if (!testId) return;
+
     const fetchResult = async () => {
       setLoadingResult(true);
       try {
@@ -199,7 +206,15 @@ export default function LessonClient({
             cache: "no-store",
           },
         );
-        if (result) setTestResult(result);
+        if (result) {
+          setTestResult(result);
+
+          // 🔥 Начисляем токены за первый пройденный тест
+          if (result.passed && result.score >= 75) {
+            // Проверяем, первый ли это тест (можно добавить флаг в БД)
+            await rewardTokens(20, "first_test_passed", showToast);
+          }
+        }
       } catch (err) {
       } finally {
         setLoadingResult(false);
@@ -207,7 +222,6 @@ export default function LessonClient({
     };
     fetchResult();
   }, [testId]);
-
   useEffect(() => {
     async function fetchFlashcardStats() {
       try {
@@ -326,6 +340,7 @@ export default function LessonClient({
       <div className="flex-1 w-full items-center justify-center">
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
           <div className="flex flex-row">
+            {toast && <Toast message={toast} onClose={() => setToast(null)} />}
             {/* 🔹 Динамические квадраты уроков юнита */}
             {unitLessons.length > 0 && ( // 🔥 Проверяем unitLessons, а не lesson.unit!
               <div className="flex flex-row items-center">

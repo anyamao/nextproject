@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import {
   Search,
+  Check,
   BookOpen,
   Code,
   Globe,
@@ -30,6 +31,7 @@ type Course = {
   enrolled_count?: number;
   rating?: number | null; // 1-5, или null если нет оценок
   is_favorite?: boolean; // Для отображения сердца
+  completion_percent?: number | null;
   is_enrolled?: boolean; // 🔥 Добавь это поле
 };
 
@@ -274,7 +276,15 @@ export default function CoursesContent() {
                 href={`/courses/promo/${course.slug}`}
                 className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
               >
-                {/* 🔹 Кнопка "В избранное" (поверх карточки) */}
+                {/* 🔹 Бейдж "Пройдено" — показываем только если прогресс ≥90% */}
+                {course.is_enrolled &&
+                  (course.completion_percent ?? 0) >= 90 && (
+                    <div className="absolute flex flex-row items-center top-48 right-3 bg-green-500 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
+                      <p>Пройдено</p>
+                      <Check className="ml-[5px] w-4 h-4"></Check>
+                    </div>
+                  )}
+
                 <button
                   onClick={(e) => toggleFavorite(e, course.id)}
                   className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${
