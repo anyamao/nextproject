@@ -40,6 +40,9 @@ from models import (
     EgeTest,
     EgeTestQuestion,
     TestResult,
+    UserCourseEnrollment,
+    UserFavoriteCourse,
+    CourseReview,
     LessonView,
     LessonReaction,
     Article,
@@ -63,6 +66,11 @@ from models import (
 )
 from schemas import (
     UserRegister,
+    PromoCourseOut,
+    FavoriteCourseItem,
+    CourseReviewCreate,
+    CourseReviewOut,
+    CourseReviewsResponse,
     LanguageLessonOut,
     CourseLessonsResponse,
     LanguageCommentOut,
@@ -263,6 +271,273 @@ async def update_profile_settings(
     )
 
 
+# backend/main.py — ДОБАВЬ ЭТИ ЭНДПОИНТЫ
+
+
+# 🔹 Получить список избранного
+@app.get("/courses/favorites", response_model=list[FavoriteCourseItem])
+async def get_user_favorites(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(
+            UserFavoriteCourse.id,
+            UserFavoriteCourse.course_id,
+            EgeSubject.title.label("course_title"),
+            EgeSubject.slug.label("course_slug"),
+            EgeSubject.cover_image.label("course_cover"),
+            UserFavoriteCourse.created_at,
+        )
+        .join(EgeSubject, EgeSubject.id == UserFavoriteCourse.course_id)
+        .where(UserFavoriteCourse.user_id == current_user.id)
+        .order_by(UserFavoriteCourse.created_at.desc())
+    )
+    return [
+        FavoriteCourseItem(
+            id=row[0],
+            course_id=row[1],
+            course_title=row[2],
+            course_slug=row[3],
+            course_cover=row[4],
+            created_at=row[5],
+        )
+        for row in result.all()
+    ]
+
+
+# 🔹 Добавить в избранное
+@app.post("/courses/{course_id}/favorite")
+async def add_to_favorites(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    course = await db.get(EgeSubject, course_id)
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    existing = await db.execute(
+        select(UserFavoriteCourse).where(
+            UserFavoriteCourse.user_id == current_user.id,
+            UserFavoriteCourse.course_id == course_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return {"message": "Already in favorites"}
+
+    db.add(UserFavoriteCourse(user_id=current_user.id, course_id=course_id))
+    await db.commit()
+    return {"message": "Added to favorites"}
+
+
+# 🔹 Убрать из избранного
+@app.delete("/courses/{course_id}/favorite")
+async def remove_from_favorites(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    fav = await db.execute(
+        select(UserFavoriteCourse).where(
+            UserFavoriteCourse.user_id == current_user.id,
+            UserFavoriteCourse.course_id == course_id,
+        )
+    )
+    item = fav.scalar_one_or_none()
+    if not item:
+        raise HTTPException(404, "Not in favorites")
+
+    await db.delete(item)
+    await db.commit()
+    return {"message": "Removed from favorites"}
+
+
+# backend/main.py
+
+
+@app.get("/courses/promo/{slug}", response_model=PromoCourseOut)
+async def get_course_promo(
+    slug: str,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Возвращает полную информацию о курсе для промо-страницы"""
+
+    # 1. Находим курс по slug
+    course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    course = course.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # 2. Считаем количество записанных студентов
+    enrolled_count = await db.execute(
+        select(func.count(UserCourseEnrollment.user_id)).where(
+            UserCourseEnrollment.course_id == course.id
+        )
+    )
+    enrolled_count = enrolled_count.scalar() or 0
+
+    # 3. Считаем средний рейтинг
+    avg_rating = await db.execute(
+        select(func.avg(CourseReview.rating)).where(CourseReview.course_id == course.id)
+    )
+    rating = avg_rating.scalar()
+    rating = round(rating, 1) if rating else None
+
+    # 4. Проверяем, в избранном ли курс (если пользователь авторизован)
+    is_favorite = False
+    if current_user:
+        fav = await db.execute(
+            select(UserFavoriteCourse).where(
+                UserFavoriteCourse.user_id == current_user.id,
+                UserFavoriteCourse.course_id == course.id,
+            )
+        )
+        is_favorite = fav.scalar_one_or_none() is not None
+
+    # 5. Проверяем, записан ли пользователь на курс
+    is_enrolled = False
+    if current_user:
+        enrollment = await db.execute(
+            select(UserCourseEnrollment).where(
+                UserCourseEnrollment.user_id == current_user.id,
+                UserCourseEnrollment.course_id == course.id,
+            )
+        )
+        is_enrolled = enrollment.scalar_one_or_none() is not None
+
+    # 6. Возвращаем данные
+    return PromoCourseOut(
+        id=course.id,
+        title=course.title,
+        slug=course.slug,
+        description=course.description,
+        image=course.image,
+        category=course.category,
+        duration_minutes=course.duration_minutes,
+        certificate_available=course.certificate_available or False,
+        enrolled_count=enrolled_count,
+        rating=rating,
+        is_favorite=is_favorite,
+        is_enrolled=is_enrolled,
+    )
+
+
+@app.get("/courses/{course_id}/reviews", response_model=CourseReviewsResponse)
+async def get_course_reviews(
+    course_id: int,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    # Загружаем отзывы
+    reviews_result = await db.execute(
+        select(CourseReview, User.username, User.avatar_url)
+        .join(User, User.id == CourseReview.user_id)
+        .where(CourseReview.course_id == course_id)
+        .order_by(CourseReview.created_at.desc())
+    )
+
+    reviews_out = [
+        CourseReviewOut(
+            id=r[0].id,
+            user_id=r[0].user_id,
+            username=r[1],
+            avatar_url=r[2],
+            rating=r[0].rating,
+            comment=r[0].comment,
+            created_at=r[0].created_at,
+        )
+        for r in reviews_result.all()
+    ]
+
+    # Статистика
+    avg = await db.execute(
+        select(func.avg(CourseReview.rating)).where(CourseReview.course_id == course_id)
+    )
+    total = await db.execute(
+        select(func.count(CourseReview.id)).where(CourseReview.course_id == course_id)
+    )
+
+    avg_rating = avg.scalar() or 0
+    total_reviews = total.scalar() or 0
+
+    # Отзыв текущего пользователя
+    user_review = None
+    if current_user:
+        ur = await db.execute(
+            select(CourseReview, User.username, User.avatar_url)
+            .join(User, User.id == CourseReview.user_id)
+            .where(
+                CourseReview.course_id == course_id,
+                CourseReview.user_id == current_user.id,
+            )
+        )
+        row = ur.first()
+        if row:
+            user_review = CourseReviewOut(
+                id=row[0].id,
+                user_id=row[0].user_id,
+                username=row[1],
+                avatar_url=row[2],
+                rating=row[0].rating,
+                comment=row[0].comment,
+                created_at=row[0].created_at,
+            )
+
+    return CourseReviewsResponse(
+        reviews=reviews_out,
+        stats={
+            "average_rating": round(avg_rating, 1),
+            "total_reviews": total_reviews,
+            "user_review": user_review,
+        },
+    )
+
+
+@app.post(
+    "/courses/{course_id}/reviews", response_model=CourseReviewOut, status_code=201
+)
+async def create_course_review(
+    course_id: int,
+    review_data: CourseReviewCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    course = await db.get(EgeSubject, course_id)
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    existing = await db.execute(
+        select(CourseReview).where(
+            CourseReview.user_id == current_user.id,
+            CourseReview.course_id == course_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(400, "You already reviewed this course")
+
+    new_review = CourseReview(
+        user_id=current_user.id,
+        course_id=course_id,
+        rating=review_data.rating,
+        comment=review_data.comment.strip(),
+    )
+    db.add(new_review)
+    await db.commit()
+    await db.refresh(new_review)
+
+    return CourseReviewOut(
+        id=new_review.id,
+        user_id=new_review.user_id,
+        username=current_user.username,
+        avatar_url=current_user.avatar_url,
+        rating=new_review.rating,
+        comment=new_review.comment,
+        created_at=new_review.created_at,
+    )
+
+
 @app.post("/flashcards/{card_id}/answer", response_model=dict)
 async def answer_flashcard(
     card_id: int,
@@ -369,30 +644,38 @@ async def answer_flashcard(
     }
 
 
+# backend/main.py
+
+
+# 🔹 Записаться на курс (по slug, а не по id!)
 @app.post("/courses/{slug}/enroll")
-async def enroll_course(
-    slug: str,
+async def enroll_in_course(
+    slug: str,  # ← Принимаем slug!
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Находим курс по slug
     course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     course = course.scalar_one_or_none()
     if not course:
         raise HTTPException(404, "Course not found")
 
-    # Проверка: уже записан?
+    # Проверка: не записан ли уже
     existing = await db.execute(
-        select(CourseEnrollment).where(
-            CourseEnrollment.user_id == current_user.id,
-            CourseEnrollment.course_id == course.id,
+        select(UserCourseEnrollment).where(
+            UserCourseEnrollment.user_id == current_user.id,
+            UserCourseEnrollment.course_id == course.id,
         )
     )
     if existing.scalar_one_or_none():
         return {"message": "Already enrolled"}
 
-    db.add(CourseEnrollment(user_id=current_user.id, course_id=course.id))
+    db.add(UserCourseEnrollment(user_id=current_user.id, course_id=course.id))
     await db.commit()
     return {"message": "Enrolled successfully"}
+
+
+# backend/main.py
 
 
 @app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
@@ -997,24 +1280,77 @@ async def get_lesson_views(
     return {"view_count": count or 0}
 
 
+# backend/main.py
+
+
+# backend/main.py
+
+
 @app.get("/courses/subjects", response_model=list[EgeSubjectOut])
 async def get_course_subjects(
     category: str | None = None,
     search: str | None = None,
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
+    # 1. Базовый запрос
     query = select(EgeSubject)
-
     if category:
         query = query.where(EgeSubject.category == category)
-
     if search:
         query = query.where(EgeSubject.title.ilike(f"%{search}%"))
-
     query = query.order_by(EgeSubject.title)
 
     result = await db.execute(query)
-    return result.scalars().all()
+    subjects = result.scalars().all()
+
+    # 2. 🔥 Собери счётчики записей
+    enrolled_counts = await db.execute(
+        select(
+            UserCourseEnrollment.course_id,
+            func.count(UserCourseEnrollment.user_id).label("count"),
+        ).group_by(UserCourseEnrollment.course_id)
+    )
+    enrolled_dict = {row.course_id: row.count for row in enrolled_counts.all()}
+
+    # 3. 🔥 Собери средние рейтинги
+    avg_ratings = await db.execute(
+        select(
+            CourseReview.course_id, func.avg(CourseReview.rating).label("avg_rating")
+        ).group_by(CourseReview.course_id)
+    )
+    ratings_dict = {row.course_id: row.avg_rating for row in avg_ratings.all()}
+
+    # 4. 🔥 Если пользователь авторизован — загрузи избранное
+    fav_ids = set()
+    if current_user:
+        favs = await db.execute(
+            select(UserFavoriteCourse.course_id).where(
+                UserFavoriteCourse.user_id == current_user.id
+            )
+        )
+        fav_ids = {row[0] for row in favs.all()}
+
+    # 5. 🔥 Верни курсы с новыми полями
+    return [
+        EgeSubjectOut(
+            id=s.id,
+            title=s.title,
+            slug=s.slug,
+            description=s.description,
+            image=s.image,
+            category=s.category,
+            created_at=s.created_at,
+            certificate_available=s.certificate_available or False,
+            duration_minutes=s.duration_minutes,
+            enrolled_count=enrolled_dict.get(s.id, 0),
+            rating=round(ratings_dict.get(s.id, 0), 1)
+            if ratings_dict.get(s.id)
+            else None,
+            is_favorite=(s.id in fav_ids) if current_user else None,
+        )
+        for s in subjects
+    ]
 
 
 @app.get("/courses/{slug}")  # ← УБЕРИ response_model=..., если есть
@@ -1033,9 +1369,9 @@ async def get_course_lessons(
     is_enrolled = False
     if current_user:
         enrollment = await db.execute(
-            select(CourseEnrollment).where(
-                CourseEnrollment.user_id == current_user.id,
-                CourseEnrollment.course_id == subject.id,
+            select(UserCourseEnrollment).where(
+                UserCourseEnrollment.user_id == current_user.id,
+                UserCourseEnrollment.course_id == subject.id,
             )
         )
         is_enrolled = enrollment.scalar_one_or_none() is not None
@@ -1139,9 +1475,9 @@ async def get_course_lesson_detail(
     is_enrolled = False
     if current_user:
         check = await db.execute(
-            select(CourseEnrollment).where(
-                CourseEnrollment.user_id == current_user.id,
-                CourseEnrollment.course_id == subject.id,
+            select(UserCourseEnrollment).where(
+                UserCourseEnrollment.user_id == current_user.id,
+                UserCourseEnrollment.course_id == subject.id,
             )
         )
         is_enrolled = check.scalar_one_or_none() is not None

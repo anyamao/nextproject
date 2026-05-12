@@ -57,6 +57,9 @@ class EgeSubjectCreate(BaseModel):
     image: str | None = None
 
 
+# backend/schemas.py
+
+
 class EgeSubjectOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -67,10 +70,12 @@ class EgeSubjectOut(BaseModel):
     category: str | None = None
     created_at: datetime
 
-
-class EgeSubjectList(BaseModel):
-    subjects: list[EgeSubjectOut]
-    total: int
+    # 🔥 Новые поля:
+    certificate_available: bool = False
+    duration_minutes: int | None = None
+    enrolled_count: int | None = None
+    rating: float | None = None
+    is_favorite: bool | None = None
 
 
 class EgeLessonCreate(BaseModel):
@@ -109,6 +114,51 @@ class EgeLessonOut(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
     is_locked: bool = False  # 🔥 Добавили поле с дефолтом
+
+
+class PromoCourseOut(BaseModel):
+    """Данные для промо-страницы курса"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    slug: str
+    description: str | None
+    image: str | None
+    category: str | None
+    duration_minutes: int | None
+    certificate_available: bool
+    enrolled_count: int = 0
+    rating: float | None = None
+    is_favorite: bool = False
+    is_enrolled: bool = False
+
+
+# backend/schemas.py
+
+
+class CourseReviewCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = Field(
+        ..., min_length=50, max_length=2000
+    )  # 🔥 Минимум 50 символов (не слов, но можно увеличить)
+
+
+class CourseReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    username: str
+    avatar_url: str | None = None
+    rating: int
+    comment: str
+    created_at: datetime
+
+
+class CourseReviewsResponse(BaseModel):
+    reviews: list[CourseReviewOut]
+    stats: dict  # { average_rating, total_reviews, user_review }
 
 
 class EgeLessonList(BaseModel):
@@ -315,6 +365,22 @@ class FlashcardOut(BaseModel):
     )
 
 
+# backend/schemas.py
+
+
+class FavoriteCourseItem(BaseModel):
+    """Элемент избранного курса"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    course_id: int
+    course_title: str
+    course_slug: str
+    course_cover: str | None = None
+    created_at: datetime
+
+
 class FlashcardDeckOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -334,10 +400,15 @@ class FlashcardAnswer(BaseModel):
 
 
 __all__ = [
+    "PromoCourseOut",
     "UserRegister",
     "UserLogin",
     "UserOut",
+    "FavoriteCourseItem",
     "Token",
+    "CourseReviewCreate",
+    "CourseReviewOut",
+    "CourseReviewsResponse",
     "EgeSubjectCreate",
     "EgeSubjectOut",
     "EgeLessonCreate",

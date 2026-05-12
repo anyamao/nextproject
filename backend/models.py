@@ -96,6 +96,95 @@ class User(Base):
     language_lesson_views = relationship(
         "LanguageLessonView", back_populates="user", cascade="all, delete-orphan"
     )
+    course_enrollments = relationship(
+        "UserCourseEnrollment", back_populates="user", cascade="all, delete-orphan"
+    )
+    favorite_courses = relationship(
+        "UserFavoriteCourse", back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+# backend/models.py
+
+
+class UserCourseEnrollment(Base):
+    __tablename__ = "user_course_enrollments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    course_id = Column(
+        Integer,
+        ForeignKey("ege_subjects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    enrolled_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_enrollment"),
+    )
+
+    user = relationship("User", back_populates="course_enrollments")
+    course = relationship("EgeSubject", back_populates="enrollments")
+
+
+class UserFavoriteCourse(Base):
+    """Избранные курсы пользователей"""
+
+    __tablename__ = "user_favorite_courses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    course_id = Column(
+        Integer,
+        ForeignKey("ege_subjects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_favorite_course"),
+    )
+
+    user = relationship("User", back_populates="favorite_courses")
+    course = relationship("EgeSubject", back_populates="favorites")
+
+
+class CourseReview(Base):
+    """Отзывы на курсы"""
+
+    __tablename__ = "course_reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    course_id = Column(
+        Integer,
+        ForeignKey("ege_subjects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rating = Column(Integer, nullable=False)  # 1-5
+    comment = Column(Text, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_review"),
+        CheckConstraint("rating >= 1 AND rating <= 5", name="check_rating_range"),
+    )
+
+    user = relationship("User")
+    course = relationship("EgeSubject", back_populates="reviews")
+
+
+# backend/models.py
 
 
 class EgeSubject(Base):
@@ -107,13 +196,29 @@ class EgeSubject(Base):
     description = Column(String, nullable=True)
     image = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
-    category = Column(
-        String(50), nullable=True
-    )  # "english", "programming", "math", etc.
+    category = Column(String(50), nullable=True)
+
+    # 🔥 ДОБАВЬ ЭТИ ПОЛЯ:
+    cover_image = Column(String(500), nullable=True)  # Обложка курса
+    duration_minutes = Column(Integer, nullable=True)  # Время прохождения в минутах
+    certificate_available = Column(Boolean, default=False, nullable=False)  # Сертификат
+
+    # Отношения
     units = relationship(
         "CourseUnit", back_populates="subject", cascade="all, delete-orphan"
     )
     lessons = relationship("EgeLesson", cascade="all, delete-orphan")
+
+    # 🔥 НОВЫЕ отношения (для избранного, записей, отзывов):
+    enrollments = relationship(
+        "UserCourseEnrollment", back_populates="course", cascade="all, delete-orphan"
+    )
+    favorites = relationship(
+        "UserFavoriteCourse", back_populates="course", cascade="all, delete-orphan"
+    )
+    reviews = relationship(
+        "CourseReview", back_populates="course", cascade="all, delete-orphan"
+    )
 
 
 class EgeLesson(Base):
