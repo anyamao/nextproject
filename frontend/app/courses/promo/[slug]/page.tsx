@@ -6,10 +6,15 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ThumbsUp,
+  ThumbsDown,
   BookOpen,
   Clock,
   Award,
   CheckCircle,
+  Edit2,
+  Trash2,
+  X,
   Star,
   Users,
   MessageSquare,
@@ -30,14 +35,18 @@ type PromoCourse = {
   rating?: number | null;
   completion_percent?: number | null;
 };
-
 type Review = {
   id: number;
+  user_id: number;
   username: string;
   avatar_url: string | null;
   rating: number;
   comment: string;
   created_at: string;
+  updated_at: string | null;
+  likes: number;
+  dislikes: number;
+  user_reaction: "like" | "dislike" | null;
 };
 
 type ReviewStats = {
@@ -58,51 +67,76 @@ export default function CoursePromoPage() {
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
+  const [isEditing, setIsEditing] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
+
+  // frontend/app/courses/promo/[slug]/page.tsx
+
+  // frontend/app/courses/promo/[slug]/page.tsx
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("🔍 [Promo] Fetching course data for slug:", slug);
+        console.log("🔍 [Promo] Fetching data for slug:", slug);
 
-        // 1️⃣ Загружаем список курсов
+        // 1️⃣ Загружаем базовую инфо о курсе
         const courses = await apiFetch("/courses/subjects");
         const found = courses.find((c: any) => c.slug === slug);
 
-        console.log(
-          "🔍 [Promo] Found course:",
-          found ? { id: found.id, title: found.title } : "NOT FOUND",
-        );
+        if (!found) {
+          console.error("❌ Course not found in /courses/subjects");
+          setLoading(false);
+          return;
+        }
 
-        if (found) {
-          setCourse(found);
+        console.log("✅ Found course:", { id: found.id, title: found.title });
 
-          // 2️⃣ Проверяем запись (используем slug для enroll, id для reviews)
-          const token = localStorage.getItem("token");
-          if (token) {
-            try {
-              const courseData = await apiFetch(`/courses/${slug}`);
-              setIsEnrolled(courseData.is_enrolled || false);
-            } catch (err) {
-              console.warn("⚠️ Could not check enrollment:", err);
-            }
-          }
+        // 2️⃣ Инициализируем course с базовыми данными
+        setCourse(found);
 
-          // 3️⃣ Загружаем отзывы — ТОЛЬКО если id определён
-          if (found.id) {
-            try {
-              const reviewsData = await apiFetch(
-                `/courses/${found.id}/reviews`,
+        // 3️⃣ Загружаем детали: is_enrolled + completion_percent
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const courseDetails = await apiFetch(`/courses/${slug}`);
+            console.log("✅ Course details:", {
+              is_enrolled: courseDetails.is_enrolled,
+              completion_percent: courseDetails.completion_percent,
+            });
+
+            setIsEnrolled(courseDetails.is_enrolled || false);
+
+            // 🔥 КРИТИЧЕСКИ ВАЖНО: обновляем course с completion_percent
+            setCourse((prevCourse) => {
+              const updated = {
+                ...prevCourse,
+                completion_percent: courseDetails.completion_percent,
+              };
+              console.log(
+                "✅ Updated course with completion_percent:",
+                updated.completion_percent,
               );
-              setReviews(reviewsData.reviews || []);
-              setReviewStats(reviewsData.stats || null);
-            } catch (err) {
-              console.warn("⚠️ Could not load reviews:", err);
-            }
+              return updated;
+            });
+          } catch (err) {
+            console.warn("⚠️ Could not load course details:", err);
           }
+        }
+
+        // 4️⃣ Загружаем отзывы
+        try {
+          const reviewsData = await apiFetch(`/courses/${found.id}/reviews`);
+          console.log("✅ Reviews loaded:", {
+            total: reviewsData.stats?.total_reviews,
+            user_review: reviewsData.stats?.user_review ? "exists" : "null",
+          });
+          setReviews(reviewsData.reviews || []);
+          setReviewStats(reviewsData.stats || null);
+        } catch (err) {
+          console.error("❌ Could not load reviews:", err);
         }
       } catch (err) {
         console.error("❌ Failed to load promo:", err);
@@ -146,61 +180,141 @@ export default function CoursePromoPage() {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token || !course?.id) return;
 
+    // Валидация: минимум 50 слов
+    const words = newReview.comment
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w);
+    if (words.length < 50) {
+      setCommentError(`Минимум 50 слов. Сейчас: ${words.length}`);
+      return;
+    }
+    setCommentError(null);
+    setSubmittingReview(true);
+
+    try {
+      if (isEditing && reviewStats?.user_review?.id) {
+        // 🔥 Редактирование
+        await apiFetch(`/reviews/${reviewStats.user_review.id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rating: newReview.rating,
+            comment: newReview.comment.trim(),
+          }),
+        });
+      } else {
+        // 🔥 Создание нового
+        await apiFetch(`/courses/${course.id}/reviews`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rating: newReview.rating,
+            comment: newReview.comment.trim(),
+          }),
+        });
+      }
+      // Перезагружаем отзывы
+      const data = await apiFetch(`/courses/${course.id}/reviews`);
+      setReviews(data.reviews || []);
+      setReviewStats(data.stats || null);
+      setNewReview({ rating: 5, comment: "" });
+      setIsEditing(false);
+    } catch (err: any) {
+      alert(err.message || "Ошибка");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+  const handleDeleteReview = async () => {
+    if (!confirm("Удалить отзыв?")) return;
+    const token = localStorage.getItem("token");
+    if (!token || !reviewStats?.user_review?.id) return;
+
+    try {
+      await apiFetch(`/reviews/${reviewStats.user_review.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await apiFetch(`/courses/${course?.id}/reviews`);
+      setReviews(data.reviews || []);
+      setReviewStats(data.stats || null);
+    } catch (err: any) {
+      alert(err.message || "Ошибка при удалении");
+    }
+  };
+  const handleReaction = async (
+    reviewId: number,
+    type: "like" | "dislike" | null,
+  ) => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/auth/login");
       return;
     }
+    if (reactingReviewId) return; // Защита от двойных кликов
 
-    if (!course?.id) {
-      console.error("❌ Course ID is missing");
-      return;
-    }
-
-    // 🔥 Валидация: минимум 50 слов
-    const words = newReview.comment
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w);
-    const wordCount = words.length;
-
-    console.log("🔍 [Review] Word count:", wordCount, "/ 50");
-
-    if (wordCount < 50) {
-      setCommentError(`Минимум 50 слов. Сейчас: ${wordCount}`);
-      return;
-    }
-    setCommentError(null);
-
-    setSubmittingReview(true);
+    setReactingReviewId(reviewId);
     try {
-      console.log("🔍 [Review] POST /courses/${course.id}/reviews");
-      await apiFetch(`/courses/${course.id}/reviews`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          rating: newReview.rating,
-          comment: newReview.comment.trim(),
+      if (type === null) {
+        // Убрать реакцию
+        await apiFetch(`/reviews/${reviewId}/reaction`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reaction: type }),
+        });
+      } else {
+        // Поставить реакцию
+        await apiFetch(`/reviews/${reviewId}/reaction?reaction=${type}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+      // Обновляем локально счётчики
+      setReviews((prev) =>
+        prev.map((r) => {
+          if (r.id !== reviewId) return r;
+          // Пересчитываем (упрощённо)
+          return { ...r, user_reaction: type };
         }),
-      });
-
-      // Перезагружаем отзывы
-      const reviewsData = await apiFetch(`/courses/${course.id}/reviews`);
-      setReviews(reviewsData.reviews || []);
-      setReviewStats(reviewsData.stats || null);
-      setNewReview({ rating: 5, comment: "" });
-    } catch (err: any) {
-      console.error("❌ Failed to submit review:", err);
-      alert(err.message || "Ошибка при отправке отзыва");
+      );
+    } catch (err) {
+      console.error("❌ Reaction failed:", err);
     } finally {
-      setSubmittingReview(false);
+      setReactingReviewId(null);
+      // Перезагружаем отзывы для точных счётчиков
+      if (course?.id) {
+        const data = await apiFetch(`/courses/${course.id}/reviews`);
+        setReviews(data.reviews || []);
+        setReviewStats(data.stats || null);
+      }
     }
   };
 
+  // 🔹 Подготовка формы к редактированию
+  const startEditing = () => {
+    if (reviewStats?.user_review) {
+      setNewReview({
+        rating: reviewStats.user_review.rating,
+        comment: reviewStats.user_review.comment,
+      });
+      setIsEditing(true);
+    }
+  };
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -286,7 +400,7 @@ export default function CoursePromoPage() {
       </main>
     );
   }
-
+  const canWriteReview = isEnrolled && (course?.completion_percent ?? 0) >= 75;
   // Подсчёт слов для отображения
   const wordCount = newReview.comment
     .trim()
@@ -345,7 +459,26 @@ export default function CoursePromoPage() {
             </svg>
           </button>
         </div>
+        {course.completion_percent != null &&
+          course.completion_percent >= 90 && (
+            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-semibold text-green-800">
+                Курс завершён! 🎉 {course.completion_percent}%
+              </span>
+            </div>
+          )}
 
+        {/* 🔹 Бейдж: можно оставить отзыв */}
+        {canWriteReview && !reviewStats?.user_review && (
+          <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-100 border border-purple-300 rounded-full">
+            <MessageSquare className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-800">
+              ✅ У вас {course.completion_percent}% — можно оставить или
+              редактировать отзыв
+            </span>
+          </div>
+        )}
         {/* 🔹 Контент */}
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-4">
@@ -442,90 +575,159 @@ export default function CoursePromoPage() {
         </div>
       )}
       {/* 🔹 Отзывы */}
+
       <div className="w-full mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <MessageSquare className="w-5 h-5" /> Отзывы (
           {reviewStats?.total_reviews || 0})
         </h2>
-
-        {/* Форма отзыва */}
-        {/* 🔹 Форма отзыва — с проверкой прогресса */}
-        {!reviewStats?.user_review && (
-          <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
-            {/* Проверка: можно ли оставить отзыв? */}
-            {course.completion_percent != null &&
-            course.completion_percent < 75 ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  📚 Чтобы оставить отзыв, завершите минимум 75% курса
-                </p>
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                  <div
-                    className="bg-purple-500 h-2 rounded-full transition-all"
-                    style={{ width: `${course.completion_percent}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Ваш прогресс: {course.completion_percent}%
-                </p>
-              </div>
-            ) : (
-              // 🔥 Форма доступна
-              <form onSubmit={handleSubmitReview}>
-                <p className="text-sm text-purple-800 mb-3 font-medium">
-                  Оцените курс:
-                </p>
-                <div className="mb-3">
-                  {renderStars(newReview.rating, true, (r) =>
-                    setNewReview((prev) => ({ ...prev, rating: r })),
-                  )}
-                </div>
-                <textarea
-                  value={newReview.comment}
-                  onChange={(e) =>
-                    setNewReview((prev) => ({
-                      ...prev,
-                      comment: e.target.value,
-                    }))
-                  }
-                  placeholder="Напишите ваш отзыв (минимум 50 слов)..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
-                  rows={4}
-                />
-                <div className="flex justify-between items-center mt-2">
-                  <p
-                    className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
-                  >
-                    {commentError || `${wordCount}/50 слов`}
-                  </p>
-                  <button
-                    type="submit"
-                    disabled={submittingReview || wordCount < 50 || !course?.id}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
-                  >
-                    {submittingReview ? "Отправка..." : "Оставить отзыв"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
-        {/* Если уже оставил отзыв */}
-        {reviewStats?.user_review && (
-          <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-200">
-            <p className="text-sm text-green-800 font-medium mb-2">
-              Ваш отзыв:
-            </p>
-            <div className="flex items-start gap-3">
-              {renderStars(reviewStats.user_review.rating)}
-              <p className="text-gray-700 text-sm">
-                {reviewStats.user_review.comment}
+        {/* 🔹 Форма отзыва / просмотр / редактирование — ПРАВИЛЬНЫЙ ПОРЯДОК */}
+        <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
+          {!isEnrolled ? (
+            // ❌ Не записан на курс
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-600 mb-2">
+                🔐 Чтобы оставить отзыв, сначала{" "}
+                <Link
+                  href={`/courses/${slug}`}
+                  className="text-purple-600 font-medium hover:underline"
+                >
+                  запишитесь на курс
+                </Link>
               </p>
             </div>
-          </div>
-        )}
+          ) : !canWriteReview ? (
+            // ❌ Прогресс <75%
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-600 mb-2">
+                📚 Чтобы оставить отзыв, завершите минимум 75% курса
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-purple-500 h-2 rounded-full transition-all"
+                  style={{ width: `${course.completion_percent}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                Ваш прогресс: {course.completion_percent}%
+              </p>
+            </div>
+          ) : isEditing ? (
+            // ✏️ РЕДАКТИРОВАНИЕ — ПРОВЕРЯЕМ ЭТО ПЕРВЫМ!
+            <form onSubmit={handleSubmitReview}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-purple-800">
+                  Редактировать отзыв:
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setNewReview({ rating: 5, comment: "" });
+                  }}
+                  className="p-1 text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="mb-3">
+                {renderStars(newReview.rating, true, (r) =>
+                  setNewReview((prev) => ({ ...prev, rating: r })),
+                )}
+              </div>
+              <textarea
+                value={newReview.comment}
+                onChange={(e) =>
+                  setNewReview((prev) => ({ ...prev, comment: e.target.value }))
+                }
+                placeholder="Ваш отзыв (мин. 50 слов)..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                rows={4}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p
+                  className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
+                >
+                  {commentError || `${wordCount}/50 слов`}
+                </p>
+                <button
+                  type="submit"
+                  disabled={submittingReview || wordCount < 50}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                >
+                  {submittingReview ? "Сохранение..." : "Сохранить изменения"}
+                </button>
+              </div>
+            </form>
+          ) : reviewStats?.user_review ? (
+            // ✅ Просмотр своего отзыва с кнопками
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-sm font-medium text-green-800">Ваш отзыв:</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={startEditing}
+                    className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-100 rounded transition"
+                    title="Редактировать"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleDeleteReview}
+                    className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded transition"
+                    title="Удалить"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                {renderStars(reviewStats.user_review.rating)}
+                <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                  {reviewStats.user_review.comment}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // ➕ Новая форма отзыва
+            <form onSubmit={handleSubmitReview}>
+              <p className="text-sm text-purple-800 mb-3 font-medium">
+                Оцените курс:
+              </p>
+              <div className="mb-3">
+                {renderStars(newReview.rating, true, (r) =>
+                  setNewReview((prev) => ({ ...prev, rating: r })),
+                )}
+              </div>
+              <textarea
+                value={newReview.comment}
+                onChange={(e) =>
+                  setNewReview((prev) => ({ ...prev, comment: e.target.value }))
+                }
+                placeholder="Напишите ваш отзыв (минимум 50 слов)..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                rows={4}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p
+                  className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
+                >
+                  {commentError || `${wordCount}/50 слов`}
+                </p>
+                <button
+                  type="submit"
+                  disabled={submittingReview || wordCount < 50}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                >
+                  {submittingReview ? "Отправка..." : "Оставить отзыв"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+        {/* 🔹 Форма отзыва / сообщение о доступе */}
 
-        {/* Список отзывов */}
+        {/* 🔹 Список отзывов */}
         <div className="space-y-4">
           {reviews.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
@@ -556,6 +758,48 @@ export default function CoursePromoPage() {
                 <p className="text-gray-700 mt-3 text-sm whitespace-pre-wrap">
                   {review.comment}
                 </p>
+
+                {/* 🔹 Реакции */}
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() =>
+                      handleReaction(
+                        review.id,
+                        review.user_reaction === "like" ? null : "like",
+                      )
+                    }
+                    disabled={reactingReviewId === review.id}
+                    className={`flex items-center gap-1.5 text-sm transition ${
+                      review.user_reaction === "like"
+                        ? "text-green-600 font-medium"
+                        : "text-gray-500 hover:text-green-600"
+                    }`}
+                  >
+                    <ThumbsUp
+                      className={`w-4 h-4 ${review.user_reaction === "like" ? "fill-current" : ""}`}
+                    />
+                    <span>{review.likes}</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleReaction(
+                        review.id,
+                        review.user_reaction === "dislike" ? null : "dislike",
+                      )
+                    }
+                    disabled={reactingReviewId === review.id}
+                    className={`flex items-center gap-1.5 text-sm transition ${
+                      review.user_reaction === "dislike"
+                        ? "text-red-600 font-medium"
+                        : "text-gray-500 hover:text-red-600"
+                    }`}
+                  >
+                    <ThumbsDown
+                      className={`w-4 h-4 ${review.user_reaction === "dislike" ? "fill-current" : ""}`}
+                    />
+                    <span>{review.dislikes}</span>
+                  </button>
+                </div>
               </div>
             ))
           )}

@@ -17,6 +17,8 @@ from sqlalchemy import (
     func,
     select,
     insert,
+    case,
+    update,
     update,
     delete,
     or_,
@@ -63,6 +65,7 @@ from models import (
     Flashcard,
     FlashcardDeck,
     FlashcardProgress,
+    ReviewReaction,
 )
 from schemas import (
     UserRegister,
@@ -71,6 +74,10 @@ from schemas import (
     CourseReviewCreate,
     CourseReviewOut,
     CourseReviewsResponse,
+    ReviewOut,
+    ReviewStatsOut,
+    ReviewCreate,
+    ReviewUpdate,
     LanguageLessonOut,
     CourseLessonsResponse,
     LanguageCommentOut,
@@ -506,32 +513,74 @@ async def get_course_promo(
     )
 
 
-@app.get("/courses/{course_id}/reviews", response_model=CourseReviewsResponse)
+# backend/main.py — в create_course_review
+
+
+# backend/main.py
+
+# ============================================================================
+# 🔥 ОТЗЫВЫ: ПОЛНЫЙ НАБОР ЭНДПОИНТОВ
+# ============================================================================
+
+
+@app.get("/courses/{course_id}/reviews")
 async def get_course_reviews(
     course_id: int,
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    # Загружаем отзывы
+    """Получить отзывы курса с реакциями"""
+
+    # Загружаем отзывы с подсчётом реакций
     reviews_result = await db.execute(
-        select(CourseReview, User.username, User.avatar_url)
+        select(
+            CourseReview,
+            User.username,
+            User.avatar_url,
+            func.count(case((ReviewReaction.reaction_type == "like", 1))).label(
+                "likes"
+            ),
+            func.count(case((ReviewReaction.reaction_type == "dislike", 1))).label(
+                "dislikes"
+            ),
+        )
         .join(User, User.id == CourseReview.user_id)
+        .outerjoin(ReviewReaction, ReviewReaction.review_id == CourseReview.id)
         .where(CourseReview.course_id == course_id)
+        .group_by(CourseReview.id, User.id)
         .order_by(CourseReview.created_at.desc())
     )
 
-    reviews_out = [
-        CourseReviewOut(
-            id=r[0].id,
-            user_id=r[0].user_id,
-            username=r[1],
-            avatar_url=r[2],
-            rating=r[0].rating,
-            comment=r[0].comment,
-            created_at=r[0].created_at,
+    reviews_out = []
+    for row in reviews_result.all():
+        review, username, avatar, likes, dislikes = row
+
+        # Реакция текущего пользователя
+        user_reaction = None
+        if current_user:
+            ur = await db.execute(
+                select(ReviewReaction.reaction_type).where(
+                    ReviewReaction.review_id == review.id,
+                    ReviewReaction.user_id == current_user.id,
+                )
+            )
+            user_reaction = ur.scalar_one_or_none()
+
+        reviews_out.append(
+            ReviewOut(
+                id=review.id,
+                user_id=review.user_id,
+                username=username,
+                avatar_url=avatar,
+                rating=review.rating,
+                comment=review.comment,
+                created_at=review.created_at,
+                updated_at=review.updated_at,
+                likes=likes,
+                dislikes=dislikes,
+                user_reaction=user_reaction,
+            )
         )
-        for r in reviews_result.all()
-    ]
 
     # Статистика
     avg = await db.execute(
@@ -541,64 +590,90 @@ async def get_course_reviews(
         select(func.count(CourseReview.id)).where(CourseReview.course_id == course_id)
     )
 
-    avg_rating = avg.scalar() or 0
-    total_reviews = total.scalar() or 0
-
     # Отзыв текущего пользователя
     user_review = None
     if current_user:
         ur = await db.execute(
-            select(CourseReview, User.username, User.avatar_url)
-            .join(User, User.id == CourseReview.user_id)
-            .where(
+            select(CourseReview).where(
                 CourseReview.course_id == course_id,
                 CourseReview.user_id == current_user.id,
             )
         )
-        row = ur.first()
-        if row:
-            user_review = CourseReviewOut(
-                id=row[0].id,
-                user_id=row[0].user_id,
-                username=row[1],
-                avatar_url=row[2],
-                rating=row[0].rating,
-                comment=row[0].comment,
-                created_at=row[0].created_at,
+        rev = ur.scalar_one_or_none()
+        if rev:
+            # Подсчёт реакций для своего отзыва
+            reactions = await db.execute(
+                select(
+                    func.count(case((ReviewReaction.reaction_type == "like", 1))).label(
+                        "likes"
+                    ),
+                    func.count(
+                        case((ReviewReaction.reaction_type == "dislike", 1))
+                    ).label("dislikes"),
+                ).where(ReviewReaction.review_id == rev.id)
+            )
+            likes, dislikes = reactions.first() or (0, 0)
+
+            user_reaction = await db.execute(
+                select(ReviewReaction.reaction_type).where(
+                    ReviewReaction.review_id == rev.id,
+                    ReviewReaction.user_id == current_user.id,
+                )
             )
 
-    return CourseReviewsResponse(
-        reviews=reviews_out,
-        stats={
-            "average_rating": round(avg_rating, 1),
-            "total_reviews": total_reviews,
-            "user_review": user_review,
-        },
-    )
+            user_review = ReviewOut(
+                id=rev.id,
+                user_id=rev.user_id,
+                username=current_user.username,
+                avatar_url=current_user.avatar_url,
+                rating=rev.rating,
+                comment=rev.comment,
+                created_at=rev.created_at,
+                updated_at=rev.updated_at,
+                likes=likes or 0,
+                dislikes=dislikes or 0,
+                user_reaction=user_reaction.scalar_one_or_none(),
+            )
+
+        return {
+            "reviews": reviews_out,  # 🔥 Список отзывов
+            "stats": {  # 🔥 Вложенная статистика
+                "average_rating": round(avg.scalar() or 0, 1),
+                "total_reviews": total.scalar() or 0,
+                "user_review": user_review,
+            },
+        }
 
 
-# backend/main.py — в create_course_review
-
-
-@app.post(
-    "/courses/{course_id}/reviews", response_model=CourseReviewOut, status_code=201
-)
+@app.post("/courses/{course_id}/reviews", response_model=ReviewOut, status_code=201)
 async def create_course_review(
     course_id: int,
-    review_data: CourseReviewCreate,
+    review_data: ReviewCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Оставить отзыв (с проверкой прогресса ≥75%)"""
+
     course = await db.get(EgeSubject, course_id)
     if not course:
         raise HTTPException(404, "Course not found")
 
-    # 🔥 ПРОВЕРКА: прошёл ли пользователь ≥75% курса?
+    # 🔥 Проверка: записан ли пользователь
+    enrollment = await db.execute(
+        select(UserCourseEnrollment).where(
+            UserCourseEnrollment.user_id == current_user.id,
+            UserCourseEnrollment.course_id == course_id,
+        )
+    )
+    if not enrollment.scalar_one_or_none():
+        raise HTTPException(403, "You must be enrolled in the course to leave a review")
+
+    # 🔥 Проверка прогресса ≥75%
     completion = await get_course_completion_percent(current_user.id, course_id, db)
     if completion < 75:
         raise HTTPException(
-            status_code=403,
-            detail=f"Complete at least 75% of the course to leave a review. Your progress: {completion:.1f}%",
+            403,
+            f"Complete at least 75% of the course to leave a review. Your progress: {completion:.1f}%",
         )
 
     # Проверка: уже есть отзыв
@@ -622,7 +697,7 @@ async def create_course_review(
     await db.commit()
     await db.refresh(new_review)
 
-    return CourseReviewOut(
+    return ReviewOut(
         id=new_review.id,
         user_id=new_review.user_id,
         username=current_user.username,
@@ -630,7 +705,161 @@ async def create_course_review(
         rating=new_review.rating,
         comment=new_review.comment,
         created_at=new_review.created_at,
+        updated_at=new_review.updated_at,
+        likes=0,
+        dislikes=0,
+        user_reaction=None,
     )
+
+
+@app.put("/reviews/{review_id}", response_model=ReviewOut)
+async def update_review(
+    review_id: int,
+    review_data: ReviewUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Редактировать свой отзыв"""
+
+    review = await db.get(CourseReview, review_id)
+    if not review:
+        raise HTTPException(404, "Review not found")
+
+    # 🔥 Только автор может редактировать
+    if review.user_id != current_user.id:
+        raise HTTPException(403, "You can only edit your own review")
+
+    if review_data.rating is not None:
+        review.rating = review_data.rating
+    if review_data.comment is not None:
+        review.comment = review_data.comment.strip()
+
+    review.updated_at = func.now()
+    await db.commit()
+    await db.refresh(review)
+
+    return ReviewOut(
+        id=review.id,
+        user_id=review.user_id,
+        username=current_user.username,
+        avatar_url=current_user.avatar_url,
+        rating=review.rating,
+        comment=review.comment,
+        created_at=review.created_at,
+        updated_at=review.updated_at,
+        likes=0,
+        dislikes=0,
+        user_reaction=None,
+    )
+
+
+@app.delete("/reviews/{review_id}")
+async def delete_review(
+    review_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Удалить свой отзыв"""
+
+    review = await db.get(CourseReview, review_id)
+    if not review:
+        raise HTTPException(404, "Review not found")
+
+    # 🔥 Только автор может удалить
+    if review.user_id != current_user.id:
+        raise HTTPException(403, "You can only delete your own review")
+
+    await db.delete(review)
+    await db.commit()
+
+    return {"message": "Review deleted"}
+
+
+@app.post("/reviews/{review_id}/reaction")
+async def react_to_review(
+    review_id: int,
+    reaction: Literal["like", "dislike"] = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Лайкнуть или дизлайкнуть отзыв"""
+
+    review = await db.get(CourseReview, review_id)
+    if not review:
+        raise HTTPException(404, "Review not found")
+
+    # Проверка: уже есть реакция
+    existing = await db.execute(
+        select(ReviewReaction).where(
+            ReviewReaction.user_id == current_user.id,
+            ReviewReaction.review_id == review_id,
+        )
+    )
+
+    if existing.scalar_one_or_none():
+        # Обновляем реакцию
+        await db.execute(
+            update(ReviewReaction)
+            .where(
+                ReviewReaction.user_id == current_user.id,
+                ReviewReaction.review_id == review_id,
+            )
+            .values(reaction_type=reaction)
+        )
+    else:
+        # Создаём новую
+        db.add(
+            ReviewReaction(
+                user_id=current_user.id, review_id=review_id, reaction_type=reaction
+            )
+        )
+
+    await db.commit()
+
+    # Возвращаем обновлённые счётчики
+    counts = await db.execute(
+        select(
+            func.count(case((ReviewReaction.reaction_type == "like", 1))),
+            func.count(case((ReviewReaction.reaction_type == "dislike", 1))),
+        ).where(ReviewReaction.review_id == review_id)
+    )
+    likes, dislikes = counts.first()
+
+    return {"likes": likes or 0, "dislikes": dislikes or 0}
+
+
+@app.delete("/reviews/{review_id}/reaction")
+async def remove_reaction(
+    review_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Убрать свою реакцию с отзыва"""
+
+    reaction = await db.execute(
+        select(ReviewReaction).where(
+            ReviewReaction.user_id == current_user.id,
+            ReviewReaction.review_id == review_id,
+        )
+    )
+    item = reaction.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(404, "Reaction not found")
+
+    await db.delete(item)
+    await db.commit()
+
+    # Возвращаем обновлённые счётчики
+    counts = await db.execute(
+        select(
+            func.count(case((ReviewReaction.reaction_type == "like", 1))),
+            func.count(case((ReviewReaction.reaction_type == "dislike", 1))),
+        ).where(ReviewReaction.review_id == review_id)
+    )
+    likes, dislikes = counts.first()
+
+    return {"likes": likes or 0, "dislikes": dislikes or 0}
 
 
 @app.post("/flashcards/{card_id}/answer", response_model=dict)
@@ -1537,6 +1766,7 @@ async def get_course_lessons(
         "lessons": lessons_out,
         "units": units_with_counts,
         "is_enrolled": is_enrolled,
+        "completion_percent": round(completion_percent, 1),
     }
 
 

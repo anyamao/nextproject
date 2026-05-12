@@ -117,6 +117,45 @@ class EgeLessonOut(BaseModel):
     is_locked: bool = False  # 🔥 Добавили поле с дефолтом
 
 
+# backend/schemas.py
+
+
+class ReviewOut(BaseModel):
+    """Полный отзыв с реакциями"""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    username: str
+    avatar_url: str | None = None
+    rating: int
+    comment: str
+    created_at: datetime
+    updated_at: datetime | None = None
+    # 🔥 Реакции:
+    likes: int = 0
+    dislikes: int = 0
+    user_reaction: str | None = None  # "like" | "dislike" | None
+
+
+class ReviewStatsOut(BaseModel):
+    """Статистика отзывов"""
+
+    model_config = ConfigDict(from_attributes=True)
+    reviews: list[ReviewOut]  # 🔥 Добавь это поле!
+    stats: dict  # { average_rating, total_reviews, user_review }
+
+
+class ReviewCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = Field(..., min_length=50, max_length=2000)
+
+
+class ReviewUpdate(BaseModel):
+    rating: int | None = Field(None, ge=1, le=5)
+    comment: str | None = Field(None, min_length=50, max_length=2000)
+
+
 class PromoCourseOut(BaseModel):
     """Данные для промо-страницы курса"""
 
@@ -402,6 +441,10 @@ class FlashcardAnswer(BaseModel):
 
 __all__ = [
     "PromoCourseOut",
+    "ReviewOut",
+    "ReviewStatsOut",
+    "ReviewCreate",
+    "ReviewUpdate",
     "UserRegister",
     "UserLogin",
     "UserOut",

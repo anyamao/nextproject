@@ -182,6 +182,9 @@ class CourseReview(Base):
 
     user = relationship("User")
     course = relationship("EgeSubject", back_populates="reviews")
+    reactions = relationship(
+        "ReviewReaction", back_populates="review", cascade="all, delete-orphan"
+    )
 
 
 # backend/models.py
@@ -626,6 +629,29 @@ class TestResult(Base):
     test = relationship("EgeTest")
     lesson = relationship("EgeLesson", back_populates="test_results")  # опционально
     __table_args__ = ()
+
+
+class ReviewReaction(Base):
+    """Лайки/дизлайки к отзывам"""
+
+    __tablename__ = "review_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    review_id = Column(
+        Integer, ForeignKey("course_reviews.id", ondelete="CASCADE"), nullable=False
+    )
+    reaction_type = Column(String(10), nullable=False)  # "like" или "dislike"
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "review_id", name="uq_user_review_reaction"),
+    )
+
+    user = relationship("User")
+    review = relationship("CourseReview", back_populates="reactions")
 
 
 class UserCompletedLesson(Base):
