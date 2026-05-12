@@ -34,7 +34,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
-
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
 
     # FlashcardProgress (уже есть, проверяем back_populates)

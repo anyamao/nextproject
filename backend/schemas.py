@@ -34,6 +34,8 @@ class UserOut(BaseModel):
     avatar_url: str | None = "default_cat.jpg"
     status: str | None = None
     created_at: datetime | None = None
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class Token(BaseModel):
@@ -46,6 +48,8 @@ class UserUpdate(BaseModel):
     username: str | None = Field(None, min_length=3, max_length=30)
     avatar_url: str | None = None
     status: str | None = Field(None, max_length=200)
+    first_name: str | None = Field(None, max_length=100)
+    last_name: str | None = Field(None, max_length=100)
 
 
 class EgeSubjectCreate(BaseModel):

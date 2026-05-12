@@ -231,6 +231,8 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
         username=current_user.username,
         avatar_url=current_user.avatar_url or "default_cat.jpg",
         status=current_user.status,
+        first_name=current_user.first_name,  # 🔥 Добавь это!
+        last_name=current_user.last_name,
         created_at=current_user.created_at,
     )
 
@@ -315,7 +317,17 @@ async def update_profile_settings(
     current_user.updated_at = datetime.now()
     await db.commit()
     await db.refresh(current_user)
-
+    if data.first_name is not None:
+        current_user.first_name = (
+            data.first_name.strip() if data.first_name.strip() else None
+        )
+    if data.last_name is not None:
+        current_user.last_name = (
+            data.last_name.strip() if data.last_name.strip() else None
+        )
+    current_user.updated_at = datetime.now()
+    await db.commit()
+    await db.refresh(current_user)
     return UserOut(
         id=current_user.id,
         email=current_user.email,

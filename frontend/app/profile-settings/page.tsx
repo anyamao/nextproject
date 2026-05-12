@@ -13,12 +13,16 @@ type UserProfile = {
   username: string;
   email: string;
   avatar_url: string;
+  first_name: string | null; // 🔥 Добавь
+  last_name: string | null;
   status: string | null;
 };
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
   const { setUser, toggleLogin } = useContactStore();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +51,8 @@ export default function ProfileSettingsPage() {
 
         setProfile(data);
         setUsername(data.username);
+        setFirstName(data.first_name || "");
+        setLastName(data.last_name || "");
         setSelectedAvatar(data.avatar_url || "default_cat.jpg");
       } catch (err: any) {
         console.error("❌ Failed to load profile:", err);
@@ -90,6 +96,8 @@ export default function ProfileSettingsPage() {
         },
         body: JSON.stringify({
           username: username.trim(),
+          first_name: firstName.trim() || null, // 🔥 Добавь
+          last_name: lastName.trim() || null, // 🔥 Добавь
           avatar_url: selectedAvatar,
         }),
       });
@@ -101,16 +109,21 @@ export default function ProfileSettingsPage() {
       );
 
       setProfile(updated);
-      setSuccess(true);
-
       // ✅ Обновляем localStorage и store
       const newUser = {
         id: updated.id,
         email: updated.email,
         username: updated.username,
-        avatar_url: updated.avatar_url || selectedAvatar, // 🔥 ФОЛЛБЭК на selectedAvatar
+        avatar_url: updated.avatar_url || selectedAvatar,
         status: updated.status,
+        first_name: updated.first_name || firstName, // 🔥 Добавь
+        last_name: updated.last_name || lastName, // 🔥 Добавь
       };
+
+      console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      setUser(newUser);
+      setSuccess(true);
 
       console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
@@ -245,7 +258,47 @@ export default function ProfileSettingsPage() {
             </button>
           </div>
         </div>
+        {/* ✅ Карточка: ФИО для сертификата */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Данные для сертификата
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Укажите ваше имя и фамилию так, как они должны отображаться в
+            сертификате
+          </p>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Имя *
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
+                placeholder="Иван"
+                disabled={saving}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Фамилия *
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
+                placeholder="Иванов"
+                disabled={saving}
+              />
+            </div>
+          </div>
+        </div>
         {/* 🔴 Карточка: Удаление аккаунта */}
         <div className="bg-white p-6 rounded-2xl border border-red-200 shadow-sm">
           <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">

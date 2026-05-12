@@ -33,6 +33,7 @@ type PromoCourse = {
   duration_minutes: number | null;
   certificate_available: boolean;
   enrolled_count?: number;
+  is_enrolled?: boolean; // 🔥 Добавь это поле
   rating?: number | null;
   completion_percent?: number | null;
   teachers?: Teacher[]; // 🔥 Список учителей
@@ -126,8 +127,10 @@ export default function CoursePromoPage() {
         // 3️⃣ Объединяем базовые данные с деталями
         const mergedCourse: PromoCourse = {
           ...found,
-          about: courseDetails.about || null, // 🔥 Добавляем about!
-          teachers: courseDetails.teachers || [], // 🔥 Добавляем teachers!
+          about: courseDetails.about || null,
+          teachers: courseDetails.teachers || [],
+          completion_percent: courseDetails.completion_percent ?? null, // 🔥 Добавь это!
+          is_enrolled: courseDetails.is_enrolled ?? false, // 🔥 И это!
         };
 
         setCourse(mergedCourse);
@@ -491,6 +494,27 @@ export default function CoursePromoPage() {
             </span>
           </div>
         )}
+        {/* 🔹 Кнопка сертификата */}
+        {course.is_enrolled && course.completion_percent >= 90 && (
+          <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-yellow-800">
+                  🎓 Поздравляем! Вы прошли курс на {course.completion_percent}%
+                </p>
+                <p className="text-xs text-yellow-700">
+                  Получите сертификат об окончании
+                </p>
+              </div>
+              <Link
+                href={`/courses/${slug}/certificate`}
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition whitespace-nowrap"
+              >
+                Получить сертификат
+              </Link>
+            </div>
+          </div>
+        )}
         {/* 🔹 Контент */}
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-4">
@@ -566,27 +590,28 @@ export default function CoursePromoPage() {
           </div>
         </div>
       </div>
-
-      {/* 🔹 Бейдж завершения курса */}
-      {course.completion_percent != null && course.completion_percent >= 90 && (
-        <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
-          <svg
-            className="w-5 h-5 text-green-600"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="text-sm font-semibold text-green-800">
-            Курс завершён! 🎉 {course.completion_percent}%
-          </span>
-        </div>
-      )}
-
+      <div className="w-full bg-red-500 p-[10px]">
+        {/* 🔹 Бейдж завершения курса */}
+        {course.completion_percent != null &&
+          course.completion_percent >= 30 && (
+            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
+              <svg
+                className="w-5 h-5 text-green-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-green-800">
+                Курс завершён! 🎉 {course.completion_percent}%
+              </span>
+            </div>
+          )}
+      </div>
       {/* 🔹 О курсе */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
