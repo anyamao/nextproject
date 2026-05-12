@@ -95,6 +95,14 @@ function Mainnav() {
             Разные курсы
           </Link>
           <Link
+            href="/courses"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500 whitespace-nowrap duration-300"
+          >
+            Мои курсы
+          </Link>
+
+          <Link
             href="/articles"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500 whitespace-nowrap duration-300"

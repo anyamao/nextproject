@@ -43,8 +43,9 @@ export default function RootLayout({
             <Signup />
             <ContactForm />
             <NavigationPanel />
-            <CourseSidePanel></CourseSidePanel>
-            <div className="w-full px-[10px] md:px-[20px]">{children}</div>
+            <div className="w-full px-[10px] md:px-[20px] justify-center flex flex-row ">
+              {children}
+            </div>
           </div>
           <Footer />
         </div>

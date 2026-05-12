@@ -78,10 +78,10 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
       <button
         onClick={() => handleReaction("like")}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
           myReaction === "like"
-            ? "bg-green-100 border-green-300 text-green-700 shadow-sm"
-            : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+            ? "bg-gray-800 text-gray-200 "
+            : "bg-white text-gray-600 hover:bg-gray-50"
         }`}
       >
         <ThumbsUp className="w-[15px] h-[15px]" />
@@ -91,10 +91,10 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
       <button
         onClick={() => handleReaction("dislike")}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 ml-[10px] rounded-full border transition-all ${
+        className={`flex items-center gap-2 px-4 py-2 ml-[10px] rounded-full transition-all ${
           myReaction === "dislike"
-            ? "bg-red-100 border-red-300 text-red-700 shadow-sm"
-            : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+            ? "bg-gray-800  text-gray-200 shadow-sm"
+            : "bg-white text-gray-600 hover:bg-gray-50"
         }`}
       >
         <ThumbsDown className="w-[15px] h-[15px]" />

@@ -3,7 +3,7 @@ import useContactStore from "@/store/states";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye, Trophy, Lock, Clock } from "lucide-react";
+import { ArrowLeft, Eye, Trophy, Lock, Clock, Check } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LessonReactions from "@/components/LessonReactions";
 import CommentsSection from "@/components/CommentsSection";
@@ -17,6 +17,10 @@ type Lesson = {
   title: string;
   description: string | null;
   content: string | null;
+  unit?: {
+    id: number;
+    title: string;
+  } | null;
   time_minutes: number | null;
 };
 
@@ -52,7 +56,96 @@ export default function LessonClient({
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
+  const [unitLessons, setUnitLessons] = useState<
+    Array<{
+      id: number;
+      slug: string;
+      title: string;
+      test_id: number | null;
+      is_completed?: boolean;
+      unit?: {
+        // 🔥 Добавь это
+        id: number;
+        title: string;
+      } | null;
+    }>
+  >([]);
+  useEffect(() => {
+    async function loadUnitLessons() {
+      if (!subjectSlug || !lesson?.id) {
+        console.log(
+          "⚠️ [UnitLessons] Skipping: missing subjectSlug or lesson.id",
+        );
+        return;
+      }
 
+      try {
+        console.log(
+          "🔍 [UnitLessons] Fetching course:",
+          `/courses/${subjectSlug}`,
+        );
+        const courseData = await apiFetch(`/courses/${subjectSlug}`);
+
+        // 🔥 Находим текущий урок внутри курса, чтобы получить его unit
+        const currentLesson = courseData.lessons?.find(
+          (l: any) => l.id === lesson.id,
+        );
+
+        console.log("✅ [UnitLessons] Current lesson from course:", {
+          id: currentLesson?.id,
+          unit: currentLesson?.unit,
+        });
+
+        if (!currentLesson?.unit?.id) {
+          console.log("⚠️ [UnitLessons] Current lesson has no unit");
+          return;
+        }
+
+        const allLessons = courseData.lessons || [];
+
+        // Фильтруем уроки по юниту текущего урока
+        const currentUnitLessons = allLessons
+          .filter((l: any) => l.unit?.id === currentLesson.unit.id)
+          .sort((a: any, b: any) => a.id - b.id);
+
+        console.log(
+          "✅ [UnitLessons] Found unit lessons:",
+          currentUnitLessons.length,
+        );
+
+        // Проверяем статус завершения
+        const lessonsWithStatus = await Promise.all(
+          currentUnitLessons.map(async (l: any) => {
+            let isCompleted = false;
+            if (l.test_id) {
+              try {
+                const token = localStorage.getItem("token");
+                if (token) {
+                  const result = await apiFetch(`/tests/${l.test_id}/result`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    cache: "no-store",
+                  });
+                  if (result?.score !== undefined && result.score >= 75) {
+                    isCompleted = true;
+                  }
+                }
+              } catch (e) {
+                console.warn(`⚠️ Could not fetch test result for ${l.test_id}`);
+              }
+            }
+            return { ...l, is_completed: isCompleted };
+          }),
+        );
+
+        console.log("✅ [UnitLessons] Setting state:", lessonsWithStatus);
+        setUnitLessons(lessonsWithStatus);
+      } catch (err) {
+        console.error("❌ [UnitLessons] Failed:", err);
+      }
+    }
+
+    loadUnitLessons();
+  }, [subjectSlug, lesson?.id]); // 🔥 Зависимости: subjectSlug и lesson.id
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -227,36 +320,38 @@ export default function LessonClient({
       <div className="p-10 text-center text-red-600">Ошибка загрузки урока</div>
     );
   }
-  console.log("✅ [LessonClient] Rendering normal lesson content");
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1000px] mx-auto gap-6">
-      <>
-        {/* 🔒 Полноэкранный блокирующий оверлей */}
-
-        {/* 🔥 Затемнённый фон под оверлеем (контент страницы) */}
-      </>
-
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto gap-6">
       <div className="flex-1 w-full items-center justify-center">
-        <div className="flex flex-row items-center text-gray-500 max-w-[400px] whitespace-nowrap overflow-x-auto smaller-text mb-[15px] font-semibold">
-          <Link className="hover:underline  " href={`/courses`}>
-            Курсы /
-          </Link>
-
-          <Link className="hover:underline " href={`/courses/${subjectSlug}`}>
-            {courseTitle || "Загрузка..."} /
-          </Link>
-        </div>
-
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
-          <div className="w-full">
-            <Link
-              href={`/courses/${subjectSlug}`}
-              className="text-black hover:text-purple-600 transition flex items-center gap-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Все уроки</span>
-            </Link>
+          <div className="flex flex-row">
+            {/* 🔹 Динамические квадраты уроков юнита */}
+            {unitLessons.length > 0 && ( // 🔥 Проверяем unitLessons, а не lesson.unit!
+              <div className="flex flex-row items-center">
+                <div className="flex flex-row">
+                  {unitLessons.map((unitLesson) => {
+                    const isCurrent = unitLesson.slug === lessonSlug;
+                    const isCompleted = unitLesson.is_completed === true;
+
+                    return (
+                      <Link
+                        key={unitLesson.id}
+                        href={`/courses/${subjectSlug}/${unitLesson.slug}`}
+                        className={`flex w-[25px] h-[25px] rounded-lg mx-[3px] items-center justify-center transition-all ${isCurrent ? "border-[2px] border-purple-600" : ""}
+${isCompleted ? "bg-green-400" : ""}
+                        }`}
+                        title={unitLesson.title}
+                      >
+                        {isCompleted && (
+                          <Check className="text-white h-4 w-4" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="w-full justify-end ">
@@ -275,9 +370,11 @@ export default function LessonClient({
         </div>
 
         <div className="flex md:flex-row flex-col items-center w-full mt-[15px] justify-between">
-          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
+          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
-              <p className="smaller-text text-gray-600">Поделиться</p>
+              <p className="smaller-text text-gray-600 font-semibold">
+                Поделиться
+              </p>
               <CopyLinkButton variant="icon" />
             </div>
             {lesson.time_minutes && (
@@ -291,7 +388,7 @@ export default function LessonClient({
           </div>
 
           {isAuthenticated ? (
-            <div className="p-[10px] bg-white rounded-lg mt-[10px] md:mt-[0px] h-[50px] flex flex-row items-center border border-gray-200 shadow-sm">
+            <div className="p-[10px] bg-white rounded-lg mt-[10px] md:mt-[0px] h-[50px] flex flex-row items-center ">
               {loadingResult ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
@@ -351,48 +448,70 @@ export default function LessonClient({
         )}
       </div>
 
-      <div className="flex flex-col text-wrap w-full">
+      <div className="flex flex-col bg-white px-[30px] p-[20px] rounded-lg w-full">
         {testId && (
-          <p className="ord-text mb-[10px]">
+          <p className="ord-text text-gray-700 font-normal text-sm mb-[10px]">
             <strong>Молодец!</strong> Ты прочитал всю теорию по данному уроку.
             Теперь самая важная часть — практика! Пройди тест, чтобы знать,
             остались ли где-то пробелы.
           </p>
         )}
-        <p className="ord-text">
-          Понравился урок? Поставь ему лайк и поделись с другом
-        </p>
 
-        <div className="flex flex-col md:flex-row items-center mt-[20px] justify-between">
-          {lesson?.id && <LessonReactions lessonId={lesson?.id} />}
+        <div className="flex flex-row items-center mt-[20px] justify-between">
+          <div className="flex flex-row">
+            {testId &&
+              (isAuthenticated ? (
+                <button
+                  onClick={handleStartTest}
+                  className="block min-w-[220px] cursor-pointer mt-[10px] md:mt-[0px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium text-sm transition  font-semibold text-center"
+                >
+                  {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+                </button>
+              ) : (
+                <button
+                  onClick={openLogin}
+                  className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl  transition font-semibold text-center"
+                >
+                  {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+                </button>
+              ))}
+          </div>
 
-          {testId &&
-            (isAuthenticated ? (
-              <button
-                onClick={handleStartTest}
-                className="block w-[90%] max-w-[300px] mt-[10px] md:mt-[0px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
-              >
-                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-              </button>
-            ) : (
-              <button
-                onClick={openLogin}
-                className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium transition shadow-md text-center"
-              >
-                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-              </button>
-            ))}
-
-          <div className="flex flex-row items-center mt-[10px] md:mt-[0px] ">
-            <div className="flex flex-row items-center min-w-[90px] mr-[5px]">
-              <p className="smaller-text text-gray-600">Поделиться</p>
-              <CopyLinkButton variant="icon" />
+          {flashcardStats?.has_deck && (
+            <div className="flex flex-row bg-white rounded-lg  px-[20px] cursor-pointer  w-full items-center">
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setShowFlashcards(true)}
+                  className="hover:bg-purple-200 cursor-pointer duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-100 text-purple-700 rounded-xl font-medium transition   flex flex-row "
+                >
+                  <BookOpen className="w-5 h-5" />
+                  <div className=" flex-col hidden lg:flex ml-[15px] ">
+                    <span className="ord-text whitespace-nowrap font-semibold text-purple-700 w-full text-center  ">
+                      {flashcardStats.title}
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={openLogin}
+                  className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
+                >
+                  <BookOpen className="w-5 h-5" />
+                  <div className="flex flex-col ml-[15px] ">
+                    <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
+                      {flashcardStats.title}
+                    </span>
+                    <span className="w-full smaller-text  whitespace-nowrap"></span>
+                  </div>
+                </button>
+              )}
             </div>
-
+          )}
+          <div className="flex flex-row items-center mt-[10px] md:mt-[0px] ">
             {lessonsLoaded && nextLessonSlug ? (
               <Link
                 href={`/courses/${subjectSlug}/${nextLessonSlug}`}
-                className="block smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-200 border-[1px] border-purple-300 hover:bg-purple-300 duration-300 text-purple-800 rounded-xl font-medium transition shadow-md text-center"
+                className="block smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-200   hover:bg-purple-300 duration-300 text-purple-700 rounded-xl font-semibold transition  text-center"
               >
                 <p>Следующий урок</p>
                 <ArrowLeft className="rotate-180 w-[15px] ml-[5px] h-[15px]" />
@@ -409,6 +528,7 @@ export default function LessonClient({
           </div>
         </div>
       </div>
+
       <div className="flex md:flex-row flex-col w-full  items-center">
         {showFlashcards && (
           <FlashcardSession
@@ -416,69 +536,14 @@ export default function LessonClient({
             onClose={() => setShowFlashcards(false)}
           />
         )}
+      </div>
+      <div className="flex flex-row w-full items-center justify-between">
+        {lesson?.id && <LessonReactions lessonId={lesson?.id} />}
 
-        {flashcardStats?.has_deck && (
-          <div className="flex flex-row w-full items-center">
-            {isAuthenticated ? (
-              <button
-                onClick={() => setShowFlashcards(true)}
-                className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
-              >
-                <BookOpen className="w-5 h-5" />
-                <div className="flex flex-col ml-[15px] ">
-                  <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
-                    {flashcardStats.title}
-                  </span>
-                  <span className="w-full smaller-text  whitespace-nowrap">
-                    {(() => {
-                      const total =
-                        flashcardStats.due_count + flashcardStats.new_count;
-                      const lastDigit = total % 10;
-                      const lastTwoDigits = total % 100;
-
-                      let word;
-                      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-                        word = "карточек";
-                      } else if (lastDigit === 1) {
-                        word = "карточка";
-                      } else if (lastDigit >= 2 && lastDigit <= 4) {
-                        word = "карточки";
-                      } else {
-                        word = "карточек";
-                      }
-
-                      return `${total} ${word}`;
-                    })()}
-                  </span>
-                </div>
-              </button>
-            ) : (
-              <button
-                onClick={openLogin}
-                className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
-              >
-                <BookOpen className="w-5 h-5" />
-                <div className="flex flex-col ml-[15px] ">
-                  <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
-                    {flashcardStats.title}
-                  </span>
-                  <span className="w-full smaller-text  whitespace-nowrap"></span>
-                </div>
-              </button>
-            )}
-            <p className="smaller-text ml-[15px] ">
-              <span className="bg-purple-200 ord-text font-bold mr-[5px]">
-                Карточки для повторения
-              </span>
-              <strong>
-                - следующий шаг, для тех, кто правда хочет учиться.{" "}
-              </strong>
-              После прохождения теста возвращайся сюда раз в неделю и открывай
-              карточки к уроку. Там собраны в краткой форме все слова/ концепты
-              для быстрого повторения
-            </p>
-          </div>
-        )}
+        <div className="flex flex-row bg-white p-[5px] px-[10px] rounded-lg items-center min-w-[90px] mr-[5px]">
+          <p className="smaller-text text-gray-600 font-semibold">Поделиться</p>
+          <CopyLinkButton variant="icon" />
+        </div>
       </div>
 
       {lesson?.id && <CommentsSection lessonId={lesson?.id} />}

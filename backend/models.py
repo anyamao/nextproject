@@ -200,12 +200,14 @@ class EgeSubject(Base):
     image = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     category = Column(String(50), nullable=True)
-
+    about = Column(Text, nullable=True)  # 🔥 Добавь это!
     # 🔥 ДОБАВЬ ЭТИ ПОЛЯ:
     cover_image = Column(String(500), nullable=True)  # Обложка курса
     duration_minutes = Column(Integer, nullable=True)  # Время прохождения в минутах
     certificate_available = Column(Boolean, default=False, nullable=False)  # Сертификат
-
+    teachers = relationship(
+        "Teacher", secondary="course_teachers", back_populates="courses"
+    )
     # Отношения
     units = relationship(
         "CourseUnit", back_populates="subject", cascade="all, delete-orphan"
@@ -222,6 +224,51 @@ class EgeSubject(Base):
     reviews = relationship(
         "CourseReview", back_populates="course", cascade="all, delete-orphan"
     )
+
+
+class Teacher(Base):
+    """Преподаватель"""
+
+    __tablename__ = "teachers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(200), nullable=False)
+    image = Column(String(500), nullable=True)
+    about = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Связь с курсами
+    courses = relationship(
+        "EgeSubject", secondary="course_teachers", back_populates="teachers"
+    )
+
+
+class CourseTeacher(Base):
+    """Связь курсов и учителей"""
+
+    __tablename__ = "course_teachers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(
+        Integer,
+        ForeignKey("ege_subjects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("course_id", "teacher_id", name="uq_course_teacher"),
+    )
+
+    course = relationship("EgeSubject")
+    teacher = relationship("Teacher")
 
 
 class EgeLesson(Base):

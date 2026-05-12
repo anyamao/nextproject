@@ -70,7 +70,7 @@ class EgeSubjectOut(BaseModel):
     category: str | None = None
     created_at: datetime
     completion_percent: float | None = None
-
+    is_enrolled: bool | None = None
     # 🔥 Новые поля:
     certificate_available: bool = False
     duration_minutes: int | None = None
@@ -138,6 +138,17 @@ class ReviewOut(BaseModel):
     user_reaction: str | None = None  # "like" | "dislike" | None
 
 
+class TeacherOut(BaseModel):
+    """Информация о преподавателе"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    full_name: str
+    image: str | None = None
+    about: str | None = None
+
+
 class ReviewStatsOut(BaseModel):
     """Статистика отзывов"""
 
@@ -172,7 +183,9 @@ class PromoCourseOut(BaseModel):
     enrolled_count: int = 0
     rating: float | None = None
     is_favorite: bool = False
+    about: str | None = None  # 🔥 Новое поле
     is_enrolled: bool = False
+    teachers: list[TeacherOut] = []  # 🔥 Список учителей
 
 
 # backend/schemas.py
@@ -457,6 +470,7 @@ __all__ = [
     "EgeSubjectOut",
     "EgeLessonCreate",
     "COurseLessonsResponse",
+    "TeacherOut",
     "EgeLessonOut",
     "EgeLessonList",
     "TestQuestionCreate",

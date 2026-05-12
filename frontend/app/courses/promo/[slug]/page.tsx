@@ -29,11 +29,20 @@ type PromoCourse = {
   image: string | null;
   category: string | null;
   is_favorite: boolean;
+  about: string | null; // 🔥 Новое поле
   duration_minutes: number | null;
   certificate_available: boolean;
   enrolled_count?: number;
   rating?: number | null;
   completion_percent?: number | null;
+  teachers?: Teacher[]; // 🔥 Список учителей
+};
+
+type Teacher = {
+  id: number;
+  full_name: string;
+  image: string | null;
+  about: string | null;
 };
 type Review = {
   id: number;
@@ -94,37 +103,41 @@ export default function CoursePromoPage() {
 
         console.log("✅ Found course:", { id: found.id, title: found.title });
 
-        // 2️⃣ Инициализируем course с базовыми данными
-        setCourse(found);
-
-        // 3️⃣ Загружаем детали: is_enrolled + completion_percent
+        // 2️⃣ Загружаем ДЕТАЛИ курса (about, teachers, is_enrolled, completion_percent)
         const token = localStorage.getItem("token");
+        let courseDetails: any = {};
+        let isEnrolledValue = false;
+
         if (token) {
           try {
-            const courseDetails = await apiFetch(`/courses/${slug}`);
+            courseDetails = await apiFetch(`/courses/promo/${slug}`);
             console.log("✅ Course details:", {
               is_enrolled: courseDetails.is_enrolled,
               completion_percent: courseDetails.completion_percent,
+              has_about: !!courseDetails.about,
+              teachers_count: courseDetails.teachers?.length || 0,
             });
-
-            setIsEnrolled(courseDetails.is_enrolled || false);
-
-            // 🔥 КРИТИЧЕСКИ ВАЖНО: обновляем course с completion_percent
-            setCourse((prevCourse) => {
-              const updated = {
-                ...prevCourse,
-                completion_percent: courseDetails.completion_percent,
-              };
-              console.log(
-                "✅ Updated course with completion_percent:",
-                updated.completion_percent,
-              );
-              return updated;
-            });
+            isEnrolledValue = courseDetails.is_enrolled || false;
           } catch (err) {
             console.warn("⚠️ Could not load course details:", err);
           }
         }
+
+        // 3️⃣ Объединяем базовые данные с деталями
+        const mergedCourse: PromoCourse = {
+          ...found,
+          about: courseDetails.about || null, // 🔥 Добавляем about!
+          teachers: courseDetails.teachers || [], // 🔥 Добавляем teachers!
+        };
+
+        setCourse(mergedCourse);
+        setIsEnrolled(isEnrolledValue);
+
+        console.log("✅ Merged course:", {
+          id: mergedCourse.id,
+          has_about: !!mergedCourse.about,
+          teachers_count: mergedCourse.teachers?.length || 0,
+        });
 
         // 4️⃣ Загружаем отзывы
         try {
@@ -147,7 +160,6 @@ export default function CoursePromoPage() {
 
     if (slug) fetchData();
   }, [slug]);
-
   const handleEnroll = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -574,6 +586,66 @@ export default function CoursePromoPage() {
           </span>
         </div>
       )}
+
+      {/* 🔹 О курсе */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
+        {course.about ? (
+          <div
+            className="prose prose-purple max-w-none text-gray-700"
+            dangerouslySetInnerHTML={{ __html: course.about }}
+          />
+        ) : (
+          <p className="text-gray-500 italic">
+            Пока ничего не написано о курсе
+          </p>
+        )}
+      </div>
+
+      {/* 🔹 Преподаватели */}
+      {course.teachers && course.teachers.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Преподаватели курса
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {course.teachers.map((teacher) => (
+              <div
+                key={teacher.id}
+                className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition"
+              >
+                <div className="flex items-start gap-4">
+                  {teacher.image ? (
+                    <img
+                      src={`/${teacher.image}`}
+                      alt={teacher.full_name}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-purple-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg border-2 border-purple-200">
+                      {teacher.full_name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">
+                      {teacher.full_name}
+                    </h3>
+                    {teacher.about && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {teacher.about}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 🔹 Отзывы */}
 
       <div className="w-full mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">

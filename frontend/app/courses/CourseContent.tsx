@@ -14,6 +14,7 @@ import {
   LanguagesIcon,
   Notebook,
   Heart,
+  ChevronRight,
   Braces,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ type Course = {
   enrolled_count?: number;
   rating?: number | null; // 1-5, или null если нет оценок
   is_favorite?: boolean; // Для отображения сердца
+  is_enrolled?: boolean; // 🔥 Добавь это поле
 };
 
 const CATEGORIES = [
@@ -193,7 +195,7 @@ export default function CoursesContent() {
   };
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1100px] mx-auto mt-[40px]">
+    <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 w-full max-w-[1400px] mx-auto mt-[40px]">
       <div className="w-full mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Курсы</h1>
         <p className="text-gray-600 mt-2">
@@ -224,7 +226,7 @@ export default function CoursesContent() {
                 onClick={() => setSelectedCategory(cat.value)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
                   isActive
-                    ? "bg-purple-600 text-white shadow-md"
+                    ? "bg-gray-800 text-gray-100 shadow-md"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -262,7 +264,7 @@ export default function CoursesContent() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 justify-between md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
           {filteredCourses.map((course) => {
             const isFav = favorites.has(course.id);
 
@@ -270,7 +272,7 @@ export default function CoursesContent() {
               <Link
                 key={course.id}
                 href={`/courses/promo/${course.slug}`}
-                className="group block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all overflow-hidden relative"
+                className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
               >
                 {/* 🔹 Кнопка "В избранное" (поверх карточки) */}
                 <button
@@ -278,7 +280,7 @@ export default function CoursesContent() {
                   className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${
                     isFav
                       ? "bg-red-500 text-white hover:bg-red-600"
-                      : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"
+                      : "bg-white text-gray-400 hover:text-red-500 hover:bg-white"
                   }`}
                   title={
                     isFav ? "Убрать из избранного" : "Добавить в избранное"
@@ -301,11 +303,11 @@ export default function CoursesContent() {
 
                 {/* 🔹 Обложка курса */}
                 {course.image && (
-                  <div className="h-40 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
+                  <div className="h-65 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
                     <img
                       src={`/${course.image}`}
                       alt={course.title}
-                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      className="w-[120%] h-[140%] mt-[-20px] ml-[15px] object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         (
                           e.target as HTMLImageElement
@@ -326,7 +328,7 @@ export default function CoursesContent() {
                       </span>
                     )}
                     {course.certificate_available && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg bg-yellow-200 text-yellow-700">
                         <svg
                           className="w-3 h-3"
                           fill="currentColor"
@@ -354,49 +356,68 @@ export default function CoursesContent() {
                   )}
 
                   {/* 🔹 Мета-информация: время, студенты, рейтинг */}
-                  <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex flex-row justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-100">
                     {/* Время */}
-                    {course.duration_minutes && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <span>{formatDuration(course.duration_minutes)}</span>
-                      </div>
+                    <div className="flex flex-row items-center">
+                      {" "}
+                      {course.duration_minutes && (
+                        <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <span>{formatDuration(course.duration_minutes)}</span>
+                        </div>
+                      )}
+                      {/* Записанные */}
+                      {course.enrolled_count !== undefined && (
+                        <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                          </svg>
+                          <span>{course.enrolled_count}+</span>
+                        </div>
+                      )}
+                      {/* Рейтинг (только если есть) */}
+                      {renderRating(course.rating)}
+                      {/* 🔹 Кнопка: Записаться или Продолжить */}
+                    </div>
+                    {course.is_enrolled ? (
+                      <Link
+                        href={`/courses/${course.slug}`}
+                        className="bg-purple-500 text-sm font-semibold ml-[10px] hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
+                      >
+                        <p>Продолжить</p>
+                        <ChevronRight className="w-5 h-5 ml-[10px]" />
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/courses/promo/${course.slug}`}
+                        className="bg-purple-500 text-sm font-semibold hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
+                      >
+                        <p>Записаться</p>
+                        <ChevronRight className="w-5 h-5 ml-[10px]" />
+                      </Link>
                     )}
-
-                    {/* Записанные */}
-                    {course.enrolled_count !== undefined && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                          />
-                        </svg>
-                        <span>{course.enrolled_count}+</span>
-                      </div>
-                    )}
-
-                    {/* Рейтинг (только если есть) */}
-                    {renderRating(course.rating)}
                   </div>
                 </div>
               </Link>

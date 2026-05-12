@@ -63,12 +63,15 @@ from models import (
     LanguageLessonView,
     CourseUnit,
     Flashcard,
+    Teacher,
+    CourseTeacher,
     FlashcardDeck,
     FlashcardProgress,
     ReviewReaction,
 )
 from schemas import (
     UserRegister,
+    TeacherOut,
     PromoCourseOut,
     FavoriteCourseItem,
     CourseReviewCreate,
@@ -230,6 +233,51 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
         status=current_user.status,
         created_at=current_user.created_at,
     )
+
+
+# backend/main.py
+
+
+@app.get("/courses/{slug}/meta")
+async def get_course_meta(
+    slug: str,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    course = course.scalar_one_or_none()
+    if not course:
+        raise HTTPException(404, "Course not found")
+
+    # 🔥 Считаем реальное количество юнитов
+    units_count = await db.execute(
+        select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == course.id)
+    )
+    total_units = units_count.scalar() or 0
+
+    is_enrolled = False
+    completion_percent = 0.0
+
+    if current_user:
+        enr = await db.execute(
+            select(UserCourseEnrollment).where(
+                UserCourseEnrollment.user_id == current_user.id,
+                UserCourseEnrollment.course_id == course.id,
+            )
+        )
+        is_enrolled = enr.scalar_one_or_none() is not None
+
+        completion_percent = await get_course_completion_percent(
+            current_user.id, course.id, db
+        )
+
+    return {
+        "title": course.title,
+        "slug": course.slug,
+        "is_enrolled": is_enrolled,
+        "completion_percent": round(completion_percent, 1),
+        "total_units": total_units,  # 🔥 Новое поле
+    }
 
 
 @app.patch("/profile/settings", response_model=UserOut)
@@ -478,6 +526,22 @@ async def get_course_promo(
             )
         )
         is_favorite = fav.scalar_one_or_none() is not None
+        teachers_result = await db.execute(
+            select(Teacher)
+            .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
+            .where(CourseTeacher.course_id == course.id)
+        )
+    teachers = teachers_result.scalars().all()
+
+    teachers_out = [
+        TeacherOut(
+            id=t.id,
+            full_name=t.full_name,
+            image=t.image,
+            about=t.about,
+        )
+        for t in teachers
+    ]
 
     # 5. Проверяем, записан ли пользователь на курс
     is_enrolled = False
@@ -506,11 +570,23 @@ async def get_course_promo(
         duration_minutes=course.duration_minutes,
         certificate_available=course.certificate_available or False,
         enrolled_count=enrolled_count,
+        about=course.about,
         rating=rating,
         is_favorite=is_favorite,
+        teachers=teachers_out,
         completion_percent=round(completion_percent, 1),
         is_enrolled=is_enrolled,
     )
+
+
+@app.get("/teachers", response_model=list[TeacherOut])
+async def get_teachers(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Teacher).order_by(Teacher.full_name))
+    teachers = result.scalars().all()
+    return [
+        TeacherOut(id=t.id, full_name=t.full_name, image=t.image, about=t.about)
+        for t in teachers
+    ]
 
 
 # backend/main.py — в create_course_review
@@ -1654,6 +1730,14 @@ async def get_course_subjects(
             )
         )
         fav_ids = {row[0] for row in favs.all()}
+    enrolled_course_ids = set()
+    if current_user:
+        enrolled = await db.execute(
+            select(UserCourseEnrollment.course_id).where(
+                UserCourseEnrollment.user_id == current_user.id
+            )
+        )
+        enrolled_course_ids = {row[0] for row in enrolled.all()}
 
     # 5. 🔥 Верни курсы с новыми полями
     return [
@@ -1667,6 +1751,7 @@ async def get_course_subjects(
             created_at=s.created_at,
             certificate_available=s.certificate_available or False,
             duration_minutes=s.duration_minutes,
+            is_enrolled=(s.id in enrolled_course_ids) if current_user else False,
             enrolled_count=enrolled_dict.get(s.id, 0),
             rating=round(ratings_dict.get(s.id, 0), 1)
             if ratings_dict.get(s.id)
@@ -1741,6 +1826,16 @@ async def get_course_lessons(
     # 5. 🔥 ВРУЧНУЮ ДОБАВЛЯЕМ is_locked 🔥
     lessons_out = []
     for i, lesson in enumerate(all_lessons):
+        # 🔥 Сериализуем unit вручную
+        unit_data = None
+        if lesson.unit:
+            unit_data = {
+                "id": lesson.unit.id,
+                "title": lesson.unit.title,
+                "unit_number": lesson.unit.unit_number,
+                "description": lesson.unit.description,
+            }
+
         lessons_out.append(
             {
                 "id": lesson.id,
@@ -1752,15 +1847,12 @@ async def get_course_lessons(
                 "time_minutes": lesson.time_minutes,
                 "is_completed": False,
                 "test_id": lesson.test_id,
-                "unit": lesson.unit,
+                "unit": unit_data,  # 🔥 Теперь это dict, а не модель!
                 "created_at": lesson.created_at,
                 "updated_at": lesson.updated_at,
-                "completion_percent": round(completion_percent, 1),
-                "is_locked": not is_enrolled
-                and i > 0,  # ✅ Первый открыт, остальные закрыты если не записан
+                "is_locked": not is_enrolled and i > 0,
             }
         )
-
     # 6. Возвращаем обычный словарь (без Pydantic-валидации)
     return {
         "lessons": lessons_out,
