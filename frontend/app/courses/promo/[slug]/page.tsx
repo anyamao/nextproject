@@ -1,6 +1,7 @@
 // frontend/app/courses/promo/[slug]/page.tsx
 "use client";
-import Toast from "@/components/Toast";
+
+import Toast from "@/components/Toast"; // 🔥 Импорт с большой буквы
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ import {
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
 import ConfirmDialog from "@/components/ConfirmDialog";
+
 type PromoCourse = {
   id: number;
   title: string;
@@ -83,6 +85,7 @@ type RatingDistribution = {
   4: number;
   5: number;
 };
+
 type CourseUnit = {
   id: number;
   title: string;
@@ -104,6 +107,7 @@ type Lesson = {
   is_completed?: boolean;
   is_locked?: boolean;
 };
+
 export default function CoursePromoPage() {
   const params = useParams();
   const router = useRouter();
@@ -117,7 +121,7 @@ export default function CoursePromoPage() {
     onConfirm: () => {},
     message: "",
   });
-  // Получаем состояние аутентификации из стора
+
   const { isAuthenticated, openLogin } = useContactStore();
 
   const [course, setCourse] = useState<PromoCourse | null>(null);
@@ -143,7 +147,10 @@ export default function CoursePromoPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
-  const { rewardTokens } = useTokens();
+
+  // 🔥 Убрали rewardTokens, если не используем на фронтенде
+  // const { rewardTokens } = useTokens();
+
   const [totalUnits, setTotalUnits] = useState(0);
   const [totalLessons, setTotalLessons] = useState(0);
   const [totalTests, setTotalTests] = useState(0);
@@ -153,12 +160,13 @@ export default function CoursePromoPage() {
   const [expandedCourseUnits, setExpandedCourseUnits] = useState<Set<number>>(
     new Set(),
   );
-  // 🔹 Рядом с существующим стейтом `toast` добавь:
 
+  // 🔹 Toast стейт с типом
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error" | "info";
   } | null>(null);
+
   const toggleCourseUnit = (unitId: number) => {
     setExpandedCourseUnits((prev) => {
       const next = new Set(prev);
@@ -170,12 +178,15 @@ export default function CoursePromoPage() {
       return next;
     });
   };
+
+  // 🔹 Функция showToast с типом
   const showToast = (
     message: string,
     type: "success" | "error" | "info" = "success",
   ) => {
     setToast({ message, type });
   };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -192,9 +203,10 @@ export default function CoursePromoPage() {
 
         console.log("✅ Found course:", { id: found.id, title: found.title });
 
-        // 🔥 ДОБАВЛЯЕМ: Отдельный запрос для получения структуры курса (юниты и уроки)
         try {
           const courseStructure = await apiFetch(`/courses/${slug}`);
+
+          // 🔥 Показываем тост за прогресс, если есть награды
           if (courseStructure.rewards_granted?.length > 0) {
             const total = courseStructure.rewards_granted.reduce(
               (sum: number, r: { amount: number }) => sum + r.amount,
@@ -202,6 +214,7 @@ export default function CoursePromoPage() {
             );
             showToast(`+${total} XP за прогресс! 🎉`, "success");
           }
+
           console.log("✅ Course structure:", {
             units_count: courseStructure.units?.length || 0,
             lessons_count: courseStructure.lessons?.length || 0,
@@ -287,7 +300,7 @@ export default function CoursePromoPage() {
 
     if (slug) fetchData();
   }, [slug]);
-  // Подсчёт распределения оценок
+
   const calculateRatingDistribution = (reviewsList: Review[]) => {
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     reviewsList.forEach((review) => {
@@ -301,12 +314,10 @@ export default function CoursePromoPage() {
   const getFilteredAndSortedReviews = () => {
     let filtered = [...reviews];
 
-    // Фильтрация по оценке
     if (filterRating !== null) {
       filtered = filtered.filter((review) => review.rating === filterRating);
     }
 
-    // Сортировка
     filtered.sort((a, b) => {
       if (sortBy === "date") {
         return sortOrder === "desc"
@@ -322,7 +333,6 @@ export default function CoursePromoPage() {
   };
 
   const handleEnroll = async () => {
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -332,13 +342,19 @@ export default function CoursePromoPage() {
 
     setEnrolling(true);
     try {
-      await apiFetch(`/courses/${course.slug}/enroll`, {
+      // 🔥 Сохраняем ответ, чтобы проверить reward_granted
+      const response = await apiFetch(`/courses/${course.slug}/enroll`, {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+
       setIsEnrolled(true);
 
-      setToast("+20 токенов!");
+      // 🔥 Показываем тост только если бэкенд выдал награду
+      if (response.reward_granted) {
+        showToast("+20 XP за первую запись! 🎉", "success");
+      }
+
       setTimeout(() => router.push(`/courses/${slug}`), 1000);
     } catch (err: any) {
       console.error("❌ Failed to enroll:", err);
@@ -351,7 +367,6 @@ export default function CoursePromoPage() {
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -403,14 +418,17 @@ export default function CoursePromoPage() {
       calculateRatingDistribution(data.reviews || []);
       setNewReview({ rating: 5, comment: "" });
       setIsEditing(false);
+
+      // 🔥 Показываем тост за успешный отзыв
+      showToast("+50 XP за отзыв! 💬", "success");
     } catch (err: any) {
+      alert(err.message || "Ошибка");
     } finally {
       setSubmittingReview(false);
     }
   };
 
   const handleDeleteReview = () => {
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -433,18 +451,18 @@ export default function CoursePromoPage() {
           setReviews(data.reviews || []);
           setReviewStats(data.stats || null);
           calculateRatingDistribution(data.reviews || []);
-          setToast("Отзыв успешно удалён");
+          showToast("Отзыв удалён", "info");
         } catch (err: any) {
           alert(err.message || "Ошибка при удалении");
         }
       },
     });
   };
+
   const handleReaction = async (
     reviewId: number,
     type: "like" | "dislike" | null,
   ) => {
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -493,7 +511,6 @@ export default function CoursePromoPage() {
   };
 
   const startEditing = () => {
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -512,7 +529,6 @@ export default function CoursePromoPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -611,7 +627,15 @@ export default function CoursePromoPage() {
           <ArrowLeft className="w-5 h-5" /> Все курсы
         </Link>
       </div>
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
+      {/* 🔹 Toast с типом */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       <div className="bg-white rounded-lg shadow-xs overflow-hidden w-full">
         <div className="relative flex flex-row p-[20px]">
@@ -629,7 +653,7 @@ export default function CoursePromoPage() {
               />
             </div>
           )}
-          {/* Confirm Dialog */}
+
           <ConfirmDialog
             isOpen={confirmDialog.isOpen}
             onClose={() =>
@@ -649,6 +673,7 @@ export default function CoursePromoPage() {
             cancelText="Отмена"
             type="danger"
           />
+
           <div className=" ml-[30px]">
             <div className="flex items-start justify-between mb-4">
               {course.category && (
@@ -762,6 +787,7 @@ export default function CoursePromoPage() {
           </button>
         </div>
       </div>
+
       {course.completion_percent != null && course.completion_percent >= 90 && (
         <div className="bg-white w-full my-[30px] p-[20px] rounded-lg shadow-xs">
           <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-200 rounded-lg">
@@ -797,6 +823,7 @@ export default function CoursePromoPage() {
           )}
         </div>
       )}
+
       <div className="my-[20px] w-full bg-white p-[20px] rounded-lg shadow-xs">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
         {course.about ? (
@@ -876,6 +903,7 @@ export default function CoursePromoPage() {
           </p>
         </div>
       </div>
+
       <div className="w-full bg-white p-5 rounded-lg shadow-xs mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Программа курса
@@ -1009,7 +1037,6 @@ export default function CoursePromoPage() {
           {reviewStats?.total_reviews || 0})
         </h2>
         <div className="flex flex-row items-center justify-between">
-          {/* 🔹 Распределение оценок */}
           {reviewStats && reviewStats.total_reviews > 0 && (
             <div className="mb-6 p-6 max-w-[390px] min-w-[390px] rotate-2 bg-gray-100 rounded-xl">
               <h3 className="text-sm font-semibold text-gray-900 -rotate-2 mb-3">
@@ -1068,7 +1095,7 @@ export default function CoursePromoPage() {
           </span>
         </div>
       )}
-      {/* 🔹 Фильтры и сортировка */}
+
       <div className="mb-6 flex flex-wrap items-center gap-3 p-4 bg-white mt-[20px] rounded-lg shadow-xs w-full px-[20px]">
         <Filter className="w-4 h-4 text-gray-500" />
         <span className="text-sm text-gray-600">Фильтр по оценке:</span>
@@ -1144,7 +1171,6 @@ export default function CoursePromoPage() {
           </div>
         </div>
       ) : !reviewStats?.user_review ? (
-        // Показываем форму только если нет отзыва
         <div className="mb-6 p-4 bg-white w-full rounded-xl ">
           <form onSubmit={handleSubmitReview}>
             <div className="mb-3">
@@ -1179,7 +1205,6 @@ export default function CoursePromoPage() {
         </div>
       ) : null}
 
-      {/* 🔹 Список отзывов */}
       <div className="space-y-4">
         {filteredSortedReviews.length === 0 ? (
           <p className="text-gray-500 text-center py-4">
@@ -1199,7 +1224,6 @@ export default function CoursePromoPage() {
                 className={`p-4 bg-white shadow-xs rounded-lg p-[20px] ${isCurrentUserReview && !isEditingThisReview ? "" : ""}`}
               >
                 {isEditingThisReview ? (
-                  // Форма редактирования отзыва
                   <form onSubmit={handleSubmitReview}>
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-medium text-purple-800">
@@ -1252,7 +1276,6 @@ export default function CoursePromoPage() {
                     </div>
                   </form>
                 ) : (
-                  // Отображение отзыва
                   <>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -1342,7 +1365,6 @@ export default function CoursePromoPage() {
                         <span>{review.dislikes}</span>
                       </button>
 
-                      {/* Кнопки редактирования/удаления только для своего отзыва */}
                       {isCurrentUserReview && (
                         <div className="flex gap-2 ml-auto">
                           <button

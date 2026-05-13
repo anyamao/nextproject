@@ -1,4 +1,6 @@
+// frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
 "use client";
+
 import useContactStore from "@/store/states";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -21,8 +23,6 @@ import FlashcardSession from "@/components/FlashcardSession";
 import { BookOpen } from "lucide-react";
 import Toast from "@/components/Toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useTokens } from "@/hooks/useTokens";
-import { formatTimeAgo } from "@/lib/format-date";
 
 type Lesson = {
   id: number;
@@ -40,6 +40,7 @@ type TestResult = {
   score: number;
   passed: boolean;
   completed_at: string;
+  reward_granted?: boolean; // 🔥 Новый флаг от бэкенда
 };
 
 interface LessonClientProps {
@@ -61,10 +62,13 @@ export default function LessonClient({
   const [loadingResult, setLoadingResult] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
+
+  // 🔹 Toast стейт с типом
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error" | "info";
   } | null>(null);
+
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     onConfirm: () => void;
@@ -84,6 +88,7 @@ export default function LessonClient({
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
 
+  // 🔹 Функция showToast с типом
   const showToast = (
     message: string,
     type: "success" | "error" | "info" = "success",
@@ -119,7 +124,25 @@ export default function LessonClient({
       ]);
     }
   }, [lesson?.id, lessonSlug, lesson?.title, testId]);
-
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`course_${subjectSlug}_unitLessons`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setUnitLessons(parsed);
+      } catch (e) {
+        console.error("❌ Failed to parse saved unit lessons:", e);
+      }
+    }
+  }, [subjectSlug]);
+  useEffect(() => {
+    if (unitLessons.length > 0) {
+      sessionStorage.setItem(
+        `course_${subjectSlug}_unitLessons`,
+        JSON.stringify(unitLessons),
+      );
+    }
+  }, [unitLessons, subjectSlug]);
   useEffect(() => {
     async function loadUnitLessons() {
       if (!subjectSlug || !lesson?.id) return;
@@ -209,6 +232,7 @@ export default function LessonClient({
     fetchViews();
   }, [lesson?.id]);
 
+  // 🔹 Загрузка результата теста
   useEffect(() => {
     if (!testId) return;
 
@@ -229,10 +253,8 @@ export default function LessonClient({
         );
         if (result) {
           setTestResult(result);
-
-          if (result.passed && result.score >= 75) {
-            await rewardTokens(20, "first_test_passed", showToast);
-          }
+          // 🔥 Награды за тест теперь выдаются на бэкенде при завершении
+          // Здесь только показываем результат
         }
       } catch (err) {
       } finally {
@@ -382,7 +404,7 @@ export default function LessonClient({
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto gap-6">
-      {/* Toast */}
+      {/* 🔹 Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -391,7 +413,7 @@ export default function LessonClient({
         />
       )}
 
-      {/* Confirm Dialog */}
+      {/* 🔹 Confirm Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
@@ -419,12 +441,8 @@ export default function LessonClient({
                         key={unitLesson.id}
                         href={`/courses/${subjectSlug}/${unitLesson.slug}`}
                         className={`flex w-[25px] h-[25px] rounded-lg mx-[3px] items-center justify-center transition-all ${
-                          isCurrent
-                            ? "bg-gray-300 border-[2px] border-purple-500"
-                            : isCompleted
-                              ? "bg-green-400 border-[2px] border-green-500"
-                              : "bg-gray-300 border-[2px] border-transparent"
-                        }`}
+                          isCurrent ? " border-[2px] border-purple-500" : ""
+                        } ${isCompleted ? "bg-green-400" : "bg-gray-300 "}`}
                         title={unitLesson.title}
                       >
                         {isCompleted && (
