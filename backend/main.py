@@ -42,6 +42,8 @@ from models import (
     EgeSubject,
     EgeLesson,
     EgeTest,
+    ShopItem,
+    UserInventory,
     EgeTestQuestion,
     TestResult,
     UserCourseEnrollment,
@@ -75,6 +77,7 @@ from schemas import (
     TokenReward,
     UserRegister,
     TeacherOut,
+    ShopItemOut,
     PromoCourseOut,
     FavoriteCourseItem,
     CourseReviewCreate,
@@ -314,11 +317,36 @@ async def read_me(current_user: User = Depends(get_current_user)):
     )
 
 
+# backend/main.py
+
+
+# backend/main.py — в get_my_profile
+
+
 @app.get("/profile", response_model=UserOut)
-async def get_my_profile(current_user: User = Depends(get_current_user)):
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Получить данные текущего пользователя"""
+
+    # 🔥 Предзагружаем экипированную вещь, чтобы избежать ленивой загрузки
+    if current_user.equipped_item_id:
+        await db.refresh(current_user, attribute_names=["equipped_item"])
+
     print(
-        f"🔍 [DEBUG] get_my_profile: user_id={current_user.id}, avatar_url={current_user.avatar_url}"
+        f"🔍 [DEBUG] get_my_profile: user_id={current_user.id}, equipped_item_id={current_user.equipped_item_id}"
     )
+
+    equipped_item = None
+    if current_user.equipped_item_id and current_user.equipped_item:
+        equipped_item = {
+            "id": current_user.equipped_item.id,
+            "name": current_user.equipped_item.name,
+            "image": current_user.equipped_item.image,
+            "price": current_user.equipped_item.price,
+            "description": current_user.equipped_item.description,
+        }
 
     return UserOut(
         id=current_user.id,
@@ -326,18 +354,150 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
         username=current_user.username,
         avatar_url=current_user.avatar_url or "default_cat.jpg",
         status=current_user.status,
-        first_name=current_user.first_name,  # 🔥 Добавь это!
+        first_name=current_user.first_name,
         last_name=current_user.last_name,
         token_balance=current_user.token_balance,
-        about_me=current_user.about_me,  # 🔥 ДОБАВЬ ЭТО!
+        about_me=current_user.about_me,
         created_at=current_user.created_at,
+        equipped_item=equipped_item,  # 🔥 Возвращаем вещь
     )
 
 
 # backend/main.py
 
+# backend/main.py — добавь после импортов
 
-# backend/main.py
+
+# 🔹 Получить список товаров
+@app.get("/shop/items", response_model=list[ShopItemOut])
+async def get_shop_items(
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Получить доступные товары в магазине"""
+
+    items = await db.execute(select(ShopItem).where(ShopItem.is_active == True))
+    shop_items = items.scalars().all()
+
+    # Если пользователь авторизован — добавляем флаги owned/equipped
+    items_out = []
+    if current_user:
+        # Загружаем инвентарь и экипированное
+        inventory = await db.execute(
+            select(UserInventory.item_id).where(
+                UserInventory.user_id == current_user.id
+            )
+        )
+        owned_ids = {row[0] for row in inventory.all()}
+
+        equipped_id = current_user.equipped_item_id
+
+        for item in shop_items:
+            items_out.append(
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "image": item.image,
+                    "price": item.price,
+                    "description": item.description,
+                    "is_owned": item.id in owned_ids,
+                    "is_equipped": item.id == equipped_id,
+                }
+            )
+    else:
+        # Для неавторизованных — без флагов
+        for item in shop_items:
+            items_out.append(
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "image": item.image,
+                    "price": item.price,
+                    "description": item.description,
+                    "is_owned": False,
+                    "is_equipped": False,
+                }
+            )
+
+    return items_out
+
+
+# 🔹 Купить товар
+@app.post("/shop/items/{item_id}/buy")
+async def buy_shop_item(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Купить товар за токены"""
+
+    # Находим товар
+    item = await db.get(ShopItem, item_id)
+    if not item or not item.is_active:
+        raise HTTPException(404, "Item not found")
+
+    # Проверяем, не купил ли уже
+    existing = await db.execute(
+        select(UserInventory).where(
+            UserInventory.user_id == current_user.id,
+            UserInventory.item_id == item_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(400, "You already own this item")
+
+    # Проверяем баланс
+    if current_user.token_balance < item.price:
+        raise HTTPException(
+            400,
+            f"Not enough tokens. Need {item.price}, have {current_user.token_balance}",
+        )
+
+    # Списываем токены и добавляем в инвентарь
+    current_user.token_balance -= item.price
+    db.add(UserInventory(user_id=current_user.id, item_id=item_id))
+    await db.commit()
+
+    return {
+        "message": f"Purchased {item.name}!",
+        "remaining_balance": current_user.token_balance,
+        "item_id": item_id,
+    }
+
+
+# 🔹 Экипировать/снять вещь
+@app.post("/shop/items/{item_id}/equip")
+async def equip_shop_item(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Экипировать купленную вещь (или снять, если item_id=0)"""
+
+    # item_id=0 означает "снять всё"
+    if item_id == 0:
+        current_user.equipped_item_id = None
+        await db.commit()
+        return {"message": "Item unequipped", "equipped_item_id": None}
+
+    # Проверяем, что вещь куплена
+    owned = await db.execute(
+        select(UserInventory).where(
+            UserInventory.user_id == current_user.id,
+            UserInventory.item_id == item_id,
+        )
+    )
+    if not owned.scalar_one_or_none():
+        raise HTTPException(403, "You don't own this item")
+
+    # Экипируем
+    current_user.equipped_item_id = item_id
+    await db.commit()
+
+    return {
+        "message": "Item equipped!",
+        "equipped_item_id": item_id,
+    }
 
 
 @app.get("/courses/my", response_model=list[PromoCourseOut])
@@ -871,20 +1031,24 @@ async def get_teachers(db: AsyncSession = Depends(get_db)):
 # ============================================================================
 
 
+# backend/main.py
+
+
 @app.get("/courses/{course_id}/reviews")
 async def get_course_reviews(
     course_id: int,
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Получить отзывы курса с реакциями"""
+    """Получить отзывы курса с реакциями и экипировкой авторов"""
 
-    # Загружаем отзывы с подсчётом реакций
+    # 🔥 Загружаем отзывы с предзагрузкой equipped_item
     reviews_result = await db.execute(
         select(
             CourseReview,
             User.username,
             User.avatar_url,
+            User.equipped_item_id,  # 🔥 Добавляем для проверки
             func.count(case((ReviewReaction.reaction_type == "like", 1))).label(
                 "likes"
             ),
@@ -897,11 +1061,29 @@ async def get_course_reviews(
         .where(CourseReview.course_id == course_id)
         .group_by(CourseReview.id, User.id)
         .order_by(CourseReview.created_at.desc())
+        # 🔥 Предзагружаем equipped_item, чтобы избежать ленивой загрузки:
+        .options(selectinload(CourseReview.user).selectinload(User.equipped_item))
     )
 
     reviews_out = []
     for row in reviews_result.all():
-        review, username, avatar, likes, dislikes = row
+        review, username, avatar, equipped_item_id, likes, dislikes = row
+
+        # 🔥 Формируем equipped_item для ответа
+        equipped_item = None
+        if (
+            equipped_item_id
+            and hasattr(review, "user")
+            and review.user
+            and review.user.equipped_item
+        ):
+            equipped_item = {
+                "id": review.user.equipped_item.id,
+                "name": review.user.equipped_item.name,
+                "image": review.user.equipped_item.image,
+                "price": review.user.equipped_item.price,
+                "description": review.user.equipped_item.description,
+            }
 
         # Реакция текущего пользователя
         user_reaction = None
@@ -915,19 +1097,21 @@ async def get_course_reviews(
             user_reaction = ur.scalar_one_or_none()
 
         reviews_out.append(
-            ReviewOut(
-                id=review.id,
-                user_id=review.user_id,
-                username=username,
-                avatar_url=avatar,
-                rating=review.rating,
-                comment=review.comment,
-                created_at=review.created_at,
-                updated_at=review.updated_at,
-                likes=likes,
-                dislikes=dislikes,
-                user_reaction=user_reaction,
-            )
+            {
+                "id": review.id,
+                "user_id": review.user_id,
+                "username": username,
+                "avatar_url": avatar,
+                "rating": review.rating,
+                "comment": review.comment,
+                "created_at": review.created_at,
+                "updated_at": review.updated_at,
+                "likes": likes,
+                "dislikes": dislikes,
+                "user_reaction": user_reaction,
+                # 🔥 Добавляем экипировку:
+                "equipped_item": equipped_item,
+            }
         )
 
     # Статистика
@@ -949,7 +1133,6 @@ async def get_course_reviews(
         )
         rev = ur.scalar_one_or_none()
         if rev:
-            # Подсчёт реакций для своего отзыва
             reactions = await db.execute(
                 select(
                     func.count(case((ReviewReaction.reaction_type == "like", 1))).label(
@@ -969,23 +1152,35 @@ async def get_course_reviews(
                 )
             )
 
-            user_review = ReviewOut(
-                id=rev.id,
-                user_id=rev.user_id,
-                username=current_user.username,
-                avatar_url=current_user.avatar_url,
-                rating=rev.rating,
-                comment=rev.comment,
-                created_at=rev.created_at,
-                updated_at=rev.updated_at,
-                likes=likes or 0,
-                dislikes=dislikes or 0,
-                user_reaction=user_reaction.scalar_one_or_none(),
-            )
+            # 🔥 Экипировка для своего отзыва
+            my_equipped_item = None
+            if current_user.equipped_item_id and current_user.equipped_item:
+                my_equipped_item = {
+                    "id": current_user.equipped_item.id,
+                    "name": current_user.equipped_item.name,
+                    "image": current_user.equipped_item.image,
+                    "price": current_user.equipped_item.price,
+                    "description": current_user.equipped_item.description,
+                }
+
+            user_review = {
+                "id": rev.id,
+                "user_id": rev.user_id,
+                "username": current_user.username,
+                "avatar_url": current_user.avatar_url,
+                "rating": rev.rating,
+                "comment": rev.comment,
+                "created_at": rev.created_at,
+                "updated_at": rev.updated_at,
+                "likes": likes or 0,
+                "dislikes": dislikes or 0,
+                "user_reaction": user_reaction.scalar_one_or_none(),
+                "equipped_item": my_equipped_item,  # 🔥 Добавляем
+            }
 
     return {
-        "reviews": reviews_out,  # 🔥 Список отзывов
-        "stats": {  # 🔥 Вложенная статистика
+        "reviews": reviews_out,
+        "stats": {
             "average_rating": round(avg.scalar() or 0, 1),
             "total_reviews": total.scalar() or 0,
             "user_review": user_review,
@@ -1129,7 +1324,17 @@ async def get_public_profile(
                         "completion_percent": round(completion_percent, 1),
                     }
                 )
-
+    equipped_item = None
+    if user.equipped_item_id:
+        equipped = await db.get(ShopItem, user.equipped_item_id)
+        if equipped:
+            equipped_item = {
+                "id": equipped.id,
+                "name": equipped.name,
+                "image": equipped.image,
+                "price": equipped.price,
+                "description": equipped.description,
+            }
     # 🔥 ОТЛАДКА: смотрим, что реально возвращается
     print(f"🔍 [DEBUG] Returning profile for user {user_id}:")
     print(f"   status={user.status!r}")
@@ -1142,6 +1347,7 @@ async def get_public_profile(
         "avatar_url": user.avatar_url,
         "first_name": user.first_name,
         "last_name": user.last_name,
+        "equipped_item": equipped_item,
         "status": user.status,  # 🔥 Прямо из модели
         "about_me": user.about_me,  # 🔥 Прямо из модели
         "created_at": user.created_at.isoformat()
@@ -2971,6 +3177,15 @@ async def format_comment_with_stats(
             user_reaction = "like"
         elif val is False:
             user_reaction = "dislike"
+    equipped_item = None
+    if comment.user and comment.user.equipped_item_id and comment.user.equipped_item:
+        equipped_item = {
+            "id": comment.user.equipped_item.id,
+            "name": comment.user.equipped_item.name,
+            "image": comment.user.equipped_item.image,
+            "price": comment.user.equipped_item.price,
+            "description": comment.user.equipped_item.description,
+        }
 
     return {
         "id": comment.id,
@@ -2983,6 +3198,7 @@ async def format_comment_with_stats(
         "avatar_url": comment.user.avatar_url if comment.user else None,
         "likes": likes,
         "dislikes": dislikes,
+        "equipped_item": equipped_item,
         "user_reaction": user_reaction,
         "replies": [],
     }
@@ -3002,13 +3218,16 @@ async def get_lesson_comments(
         select(Comment)
         .where(Comment.lesson_id == lesson_id, Comment.parent_id.is_(None))
         .options(
-            selectinload(Comment.user),
-            selectinload(Comment.replies).selectinload(Comment.user),
+            # 🔥 Предзагружаем user И его equipped_item:
+            selectinload(Comment.user).selectinload(User.equipped_item),
+            # 🔥 То же самое для ответов:
+            selectinload(Comment.replies)
+            .selectinload(Comment.user)
+            .selectinload(User.equipped_item),
         )
         .order_by(Comment.created_at.asc())
     )
     comments = result.scalars().all()
-
     formatted = []
     for c in comments:
         c_data = await format_comment_with_stats(c, db, current_user)

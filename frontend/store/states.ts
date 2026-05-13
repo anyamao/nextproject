@@ -8,6 +8,13 @@ export type AppUser = {
   avatar_url?: string;
   status?: string;
   created_at?: string | null;
+  equipped_item?: {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    description: string | null;
+  } | null;
 };
 
 interface ContactFormData {
@@ -126,6 +133,7 @@ const useContactStore = create<ContactState>()(
 
       user: null,
       isAuthenticated: false,
+
       setUser: (userData) => {
         if (
           userData &&
@@ -145,6 +153,8 @@ const useContactStore = create<ContactState>()(
                 : userData.avatar_url,
             status: userData.status,
             created_at: userData.created_at,
+            // 🔥 ДОБАВЬ ЭТО:
+            equipped_item: userData.equipped_item || null,
           };
 
           set({
@@ -158,6 +168,7 @@ const useContactStore = create<ContactState>()(
           });
         }
       },
+
       logout: () => {
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");

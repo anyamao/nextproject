@@ -1,6 +1,6 @@
 // frontend/app/courses/promo/[slug]/page.tsx
 "use client";
-
+import AvatarWithOverlay from "@/components/AvatarWithOverlay";
 import Toast from "@/components/Toast"; // 🔥 Импорт с большой буквы
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
@@ -58,6 +58,8 @@ type Teacher = {
   about: string | null;
 };
 
+// 🔹 В типе Review добавь:
+
 type Review = {
   id: number;
   user_id: number;
@@ -70,8 +72,16 @@ type Review = {
   likes: number;
   dislikes: number;
   user_reaction: "like" | "dislike" | null;
-};
 
+  // 🔥 Добавь это поле:
+  equipped_item?: {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    description: string | null;
+  } | null;
+};
 type ReviewStats = {
   average_rating: number;
   total_reviews: number;
@@ -1283,16 +1293,14 @@ export default function CoursePromoPage() {
                           className="cursor-pointer block overflow-hidden rounded-full"
                           href={`/profile/${review.user_id}`}
                         >
-                          <img
-                            src={`/avatars/${review.avatar_url}`}
-                            className="rounded-full cursor-pointer w-10 h-10 object-cover transition-transform duration-300 hover:scale-120"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "/avatars/default_cat.jpg";
-                            }}
+                          <AvatarWithOverlay
+                            baseAvatar={review.avatar_url || "default_cat.jpg"}
+                            overlayImage={review.equipped_item?.image} // 🔥 Наложение, если есть
+                            alt={review.username}
+                            size="md" // 🔥 Размер как в отзывах (~40px)
+                            className="transition-transform duration-300 hover:scale-120"
                           />
                         </Link>
-
                         <div>
                           <div className="flex items-center gap-2">
                             <Link

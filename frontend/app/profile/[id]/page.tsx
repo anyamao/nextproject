@@ -1,6 +1,6 @@
 // frontend/app/profile/[id]/page.tsx
 "use client";
-
+import AvatarWithOverlay from "@/components/AvatarWithOverlay";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +26,13 @@ type PublicProfile = {
   created_at: string; //
   token_balance: number;
   completed_courses: CompletedCourse[];
+  equipped_item?: {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    description: string | null;
+  } | null;
 };
 
 export default function PublicProfilePage() {
@@ -100,20 +107,12 @@ export default function PublicProfilePage() {
       <div className="bg-white rounded-lg shadow-xs p-8 w-full mb-8">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           {/* Аватар */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
-            {profile.avatar_url ? (
-              <img
-                src={`/avatars/${profile.avatar_url}`}
-                alt={fullName}
-                className="w-full h-full rounded-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : (
-              <span>{fullName.charAt(0).toUpperCase()}</span>
-            )}
-          </div>
+          <AvatarWithOverlay
+            baseAvatar={profile?.avatar_url || "default_cat.jpg"}
+            overlayImage={profile?.equipped_item?.image}
+            alt={profile?.username}
+            size="xxxl"
+          />
 
           {/* Информация */}
           <div className="flex-1 text-center sm:text-left">

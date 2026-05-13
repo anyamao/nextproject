@@ -3,7 +3,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Trash2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Save,
+  Trash2,
+  Sparkles,
+  ChevronRight,
+  AlertTriangle,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
 import AvatarSelector from "@/components/AvatarSelector";
@@ -267,6 +275,20 @@ export default function ProfileSettingsPage() {
         </h1>
       </div>
 
+      <div className="bg-pink-200 w-full rounded-lg relative flex flex-row items-center justify-between mb-[20px] p-[10px] px-[30px]">
+        <p className="text-pink-900 font-bold">
+          Добавь своему котику аксессуары!
+        </p>
+        <Link
+          href="/shop"
+          className="bg-pink-400 px-[20px] flex hover:bg-pink-500 duration-300 cursor-pointer flex-row items-center py-[5px] text-pink-50 rounded-lg"
+        >
+          магазин
+          <ChevronRight className="w-4 h-4 ml-[5px]"></ChevronRight>
+          <Sparkles className="text-pink-400 w-10 absolute mb-[5px] ml-[-20px] -rotate-12 left-0 bottom-0 h-10"></Sparkles>
+          <Sparkles className="text-pink-400 w-9 absolute mb-[10px] mr-[-15px] rotate-12 right-0 bottom-0 h-9"></Sparkles>
+        </Link>
+      </div>
       <form onSubmit={handleSaveProfile} className="w-full space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-xs">
           <AvatarSelector

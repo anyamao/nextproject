@@ -1,3 +1,4 @@
+// frontend/components/Contactform.tsx
 "use client";
 
 import Link from "next/link";
@@ -5,6 +6,8 @@ import { useEffect, useState } from "react";
 import useContactStore from "@/store/states";
 import { LogIn, User, UserPen } from "lucide-react";
 import LogoutButton from "./LogoutButton";
+import AvatarWithOverlay from "@/components/AvatarWithOverlay";
+import { apiFetch } from "@/lib/api"; // 🔥 Добавь этот импорт!
 
 function Contactform() {
   const isAuthenticated = useContactStore((state) => state.isAuthenticated);
@@ -21,26 +24,53 @@ function Contactform() {
   const avatarUrl = user?.avatar_url || "default_cat.jpg";
   const userId = user?.id;
 
+  // 🔹 Отладка: смотрим, что в user
+  useEffect(() => {
+    console.log("🔍 [Contactform] User in store:", {
+      id: user?.id,
+      username: user?.username,
+      avatar_url: user?.avatar_url,
+      equipped_item: user?.equipped_item,
+    });
+  }, [user]);
+
+  // 🔹 Загрузка пользователя + фоновое обновление с сервера
   useEffect(() => {
     setMounted(true);
 
+    // 1️⃣ Сначала загружаем из localStorage (быстро)
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-
         if (!parsedUser.avatar_url) {
           parsedUser.avatar_url = "default_cat.jpg";
         }
-
         setUser(parsedUser);
       } catch (err) {
         localStorage.removeItem("user");
       }
     }
+
+    // 2️⃣ Затем фоновое обновление с сервера (актуальные данные)
+    const token = localStorage.getItem("token");
+    if (token) {
+      apiFetch("/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((data) => {
+          // 🔥 Обновляем стейт и localStorage актуальными данными
+          setUser(data);
+          localStorage.setItem("user", JSON.stringify(data));
+          console.log("🟢 [Contactform] Profile refreshed from server");
+        })
+        .catch((err) => {
+          console.error("❌ Failed to refresh profile:", err);
+        });
+    }
   }, [setUser]);
 
-  // Handle animation on open/close
+  // 🔹 Анимация выпадающего меню
   useEffect(() => {
     if (profilenavigationState) {
       setShouldRender(true);
@@ -59,6 +89,7 @@ function Contactform() {
     }
   }, [profilenavigationState, shouldRender]);
 
+  // 🔹 Пока не смонтирован — показываем скелетон
   if (!mounted) {
     return (
       <div className="w-[35px] h-[35px] rounded-full bg-gray-200 animate-pulse" />
@@ -72,19 +103,16 @@ function Contactform() {
       )}
 
       {isAuthenticated && user && (
-        <div onClick={toggleprofilenavigation} className="relative group">
-          <div className="w-[35px] h-[35px] rounded-full overflow-hidden shadow-sm bg-gray-100">
-            <img
-              key={avatarUrl}
-              src={`/avatars/${avatarUrl}`}
-              alt={user?.username || "Avatar"}
-              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
-              onError={(e) => {
-                console.error("❌ Failed to load avatar:", avatarUrl);
-                (e.target as HTMLImageElement).src = "/avatars/default_cat.jpg";
-              }}
-            />
-          </div>
+        <div
+          onClick={toggleprofilenavigation}
+          className="relative w-[35px] h-[35px]; group"
+        >
+          <AvatarWithOverlay
+            baseAvatar={user?.avatar_url || "default_cat.jpg"}
+            overlayImage={user?.equipped_item?.image} // 🔥 Теперь будет работать!
+            alt={user?.username}
+            size="md"
+          />
         </div>
       )}
 

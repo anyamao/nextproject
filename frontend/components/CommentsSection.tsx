@@ -13,6 +13,8 @@ import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Toast from "@/components/Toast";
+import AvatarWithOverlay from "@/components/AvatarWithOverlay";
+// 🔹 В начале файла, в типе Comment:
 
 type Comment = {
   id: number;
@@ -27,8 +29,16 @@ type Comment = {
   avatar_url: string | null;
   user_reaction: "like" | "dislike" | null;
   replies: Comment[];
-};
 
+  // 🔥 Добавь это поле (опционально, для совместимости):
+  equipped_item?: {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    description: string | null;
+  } | null;
+};
 interface CommentsSectionProps {
   lessonId?: number;
   articleId?: number;
@@ -261,18 +271,15 @@ export default function CommentsSection({
         {comments.map((comment) => (
           <div key={comment.id} className="px-[10px] flex flex-row w-full">
             <Link href={`/profile/${comment.user_id}`}>
-              <img
+              <AvatarWithOverlay
                 key={`avatar-${comment.user_id}-${comment.id}`}
-                src={`/avatars/${getAvatarUrl(comment)}`}
+                baseAvatar={comment.avatar_url || "default_cat.jpg"}
+                overlayImage={comment.equipped_item?.image} // 🔥 Наложение, если есть
                 alt={comment.username}
-                className="w-[30px] h-[30px] rounded-full object-cover transition-transform duration-200 hover:scale-110"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "/avatars/default_cat.jpg";
-                }}
+                size="sm" // 🔥 Маленький размер для комментариев
+                className="transition-transform duration-200 hover:scale-110"
               />
             </Link>
-
             <div className="flex flex-col w-full">
               <div className="flex flex-col ml-[10px] w-full">
                 <div className="flex items-start justify-between">

@@ -37,7 +37,17 @@ class User(Base):
     first_name = Column(String(100), nullable=True)
     about_me = Column(Text, nullable=True)  # Подробное "о себе"
     last_name = Column(String(100), nullable=True)
+    equipped_item_id = Column(
+        Integer,
+        ForeignKey("shop_items.id", ondelete="SET NULL"),
+        nullable=True,
+        default=None,
+    )
+    equipped_item = relationship("ShopItem", foreign_keys=[equipped_item_id])
     # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
+    inventory = relationship(
+        "UserInventory", back_populates="user", cascade="all, delete-orphan"
+    )
     token_balance = Column(Integer, default=0, nullable=False)
     # FlashcardProgress (уже есть, проверяем back_populates)
     flashcard_progress = relationship(
@@ -287,6 +297,41 @@ class CourseTeacher(Base):
 
 
 # backend/models.py
+# backend/models.py
+
+
+class ShopItem(Base):
+    __tablename__ = "shop_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    image = Column(String(255), nullable=False)  # "pink_bow.png"
+    price = Column(Integer, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    # Связи
+    inventory = relationship("UserInventory", back_populates="item")
+
+
+class UserInventory(Base):
+    __tablename__ = "user_inventory"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    item_id = Column(
+        Integer, ForeignKey("shop_items.id", ondelete="CASCADE"), nullable=False
+    )
+    acquired_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User", back_populates="inventory")
+    item = relationship("ShopItem", back_populates="inventory")
+
+    __table_args__ = (UniqueConstraint("user_id", "item_id", name="uq_user_item"),)
 
 
 class UserAchievement(Base):

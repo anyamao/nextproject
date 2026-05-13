@@ -26,6 +26,18 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ShopItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    image: str  # "pink_bow.png"
+    price: int
+    description: str | None = None
+    is_owned: bool = False  # 🔥 Купил ли текущий юзер?
+    is_equipped: bool = False  # 🔥 Экипировано ли сейчас?
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -34,6 +46,7 @@ class UserOut(BaseModel):
     avatar_url: str | None = "default_cat.jpg"
     status: str | None = None
     created_at: datetime | None = None
+    equipped_item: ShopItemOut | None = None
     first_name: str | None = None
     last_name: str | None = None
     token_balance: int = 0
@@ -149,6 +162,7 @@ class ReviewOut(BaseModel):
     # 🔥 Реакции:
     likes: int = 0
     dislikes: int = 0
+    equipped_item: dict | None = None  # 🔥 Добавь это
     user_reaction: str | None = None  # "like" | "dislike" | None
 
 
@@ -280,6 +294,9 @@ class TestSubmissionResult(BaseModel):
     reward_granted: bool = False  # 🔥 Добавь это поле
 
 
+# backend/schemas.py
+
+
 class TestSubmission(BaseModel):
     answers: dict[str, str]
 
@@ -362,6 +379,7 @@ class PublicProfileOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     username: str
+    equipped_item: dict | None = None
     avatar_url: str | None = None
     first_name: str | None = None
     last_name: str | None = None
@@ -490,6 +508,7 @@ class FlashcardAnswer(BaseModel):
 
 __all__ = [
     "TokenReward",
+    "ShopItemOut",
     "PublicProfileOut",
     "PromoCourseOut",
     "ReviewOut",
