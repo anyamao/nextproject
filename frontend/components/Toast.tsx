@@ -17,7 +17,7 @@ export default function Toast({
   message,
   type = "success",
   onClose,
-  duration = 3000,
+  duration = 2000,
 }: ToastProps) {
   const [isExiting, setIsExiting] = useState(false);
 

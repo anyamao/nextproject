@@ -306,12 +306,6 @@ export default function ProfileSettingsPage() {
                   {error}
                 </p>
               )}
-
-              {success && (
-                <p className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">
-                  ✅ Профиль обновлён!
-                </p>
-              )}
             </div>
             <div className="space-y-4 mt-[10px]">
               {/* Статус */}
@@ -424,7 +418,7 @@ export default function ProfileSettingsPage() {
             type="button"
             onClick={openDeleteConfirmDialog}
             disabled={deleting}
-            className="w-full py-3 bg-red-50 text-red-700 border-2 border-red-200 rounded-xl font-semibold hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-red-600 text-white  border-red-200 rounded-xl font-semibold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Trash2 className="w-5 h-5" /> Удалить аккаунт
           </button>

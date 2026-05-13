@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import useContactStore from "@/store/states";
-import { LogIn, User } from "lucide-react";
+import { LogIn, User, UserPen } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 
 function Contactform() {
@@ -19,6 +19,7 @@ function Contactform() {
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
 
   const avatarUrl = user?.avatar_url || "default_cat.jpg";
+  const userId = user?.id;
 
   useEffect(() => {
     setMounted(true);
@@ -42,15 +43,12 @@ function Contactform() {
   // Handle animation on open/close
   useEffect(() => {
     if (profilenavigationState) {
-      // Открываем - сначала рендерим, потом добавляем анимацию открытия
       setShouldRender(true);
       setIsAnimatingOut(false);
-      // Небольшая задержка для запуска анимации открытия
       setTimeout(() => {
         setIsAnimatingIn(true);
       }, 10);
     } else if (shouldRender) {
-      // Закрываем - сначала запускаем анимацию закрытия
       setIsAnimatingIn(false);
       setIsAnimatingOut(true);
       const timer = setTimeout(() => {
@@ -93,7 +91,7 @@ function Contactform() {
       {shouldRender && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`cursor-pointer p-[15px] absolute bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[100px] right-0 top-0 mt-[-20px] mr-[-20px] sm:mt-[70px] shadow-md flex flex-col items-center text-black rounded-xl transition-all duration-300 origin-top ${
+          className={`cursor-pointer p-[15px] absolute bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[140px] right-0 top-0 mt-[-20px] mr-[-20px] sm:mt-[70px] shadow-md flex flex-col items-center text-black rounded-xl transition-all duration-300 origin-top ${
             isAnimatingOut
               ? "opacity-0 -translate-y-[20px] scale-95"
               : isAnimatingIn
@@ -105,12 +103,20 @@ function Contactform() {
             <LogoutButton />
           </div>
           <Link
-            href="/profile-settings"
+            href={`/profile/${userId}`}
             onClick={toggleprofilenavigation}
             className="flex flex-row text-xs hover:bg-purple-100 duration-300 rounded-lg items-center py-[10px] px-[10px] h-[60px] w-full border-gray-300 justify-start"
           >
             <User className="w-5 h-5 text-gray-500" />
             <p className="ml-[10px]">Мой профиль</p>
+          </Link>
+          <Link
+            href="/profile-settings"
+            onClick={toggleprofilenavigation}
+            className="flex flex-row text-xs hover:bg-purple-100 duration-300 rounded-lg items-center py-[10px] px-[10px] h-[60px] w-full border-gray-300 justify-start"
+          >
+            <UserPen className="w-5 h-5 text-gray-500" />
+            <p className="ml-[10px]">Настройки профиля</p>
           </Link>
         </div>
       )}
