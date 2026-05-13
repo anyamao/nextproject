@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Coins, Trophy, BookOpen } from "lucide-react";
+import { ArrowLeft, Coins, Trophy, PawPrint, BookOpen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 type CompletedCourse = {
@@ -97,7 +97,7 @@ export default function PublicProfilePage() {
 
       {/* 🔹 Карточка профиля */}
       {/* 🔹 Карточка профиля */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full mb-8">
+      <div className="bg-white rounded-lg shadow-xs p-8 w-full mb-8">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           {/* Аватар */}
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
@@ -139,8 +139,8 @@ export default function PublicProfilePage() {
             </p>
             {/* Баланс токенов */}
             <div className="flex items-center justify-center sm:justify-start gap-2 mt-4">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full text-white text-sm font-semibold">
-                <Coins className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 rounded-full text-white text-sm font-semibold">
+                <PawPrint className="w-4 h-4" />
                 <span>{profile.token_balance} токенов</span>
               </div>
             </div>
@@ -159,10 +159,11 @@ export default function PublicProfilePage() {
       </div>
       {/* 🔹 Пройденные курсы */}
       <div className="w-full">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
-          Пройденные курсы ({profile.completed_courses.length})
-        </h2>
+        <div className="w-full mb-[20px] shadow-xs bg-white text-white rounded-lg p-[10px] px-[20px]">
+          <h2 className="text-md  font-semibold text-gray-800  flex items-center gap-2">
+            Пройденные курсы ({profile.completed_courses.length})
+          </h2>
+        </div>
 
         {profile.completed_courses.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
@@ -177,7 +178,7 @@ export default function PublicProfilePage() {
               <Link
                 key={course.id}
                 href={`/courses/promo/${course.slug}`}
-                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-purple-300 transition"
+                className="group bg-white rounded-lg  overflow-hidden hover:border-purple-300 transition"
               >
                 {course.image ? (
                   <div className="h-32 bg-gray-100 overflow-hidden">
