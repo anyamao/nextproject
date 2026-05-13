@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Trophy,
   Lock,
+  Check,
   X,
 } from "lucide-react";
 import useContactStore from "@/store/states";
@@ -272,7 +273,7 @@ export default function CourseSidePanel() {
     return (
       <button
         onClick={togglecourseNavigation}
-        className={`w-[40px] h-[40px] items-center justify-center ${isCertificatePage ? "hidden" : "flex"} rounded-lg bg-gray-200 text-gray-500 absolute top-0 left-0 z-50 hover:bg-gray-300 transition-colors`}
+        className={`w-[40px] h-[40px] items-center justify-center ${isCertificatePage ? "hidden" : "flex"} rounded-lg bg-white text-gray-500 absolute top-0 left-0 z-50 hover:bg-gray-300 transition-colors`}
       >
         <ChevronRight />
       </button>
@@ -281,7 +282,7 @@ export default function CourseSidePanel() {
 
   return (
     <div
-      className={`h-full rounded-lg flex-1 bg-white ${isCertificatePage ? "hidden" : "flex"} rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
+      className={`h-full rounded-lg flex-1 bg-white ${isCertificatePage ? "hidden" : "flex flex-col"} rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
         isAnimatingOut
           ? "-translate-x-full"
           : isAnimatingIn
@@ -301,7 +302,7 @@ export default function CourseSidePanel() {
         </button>
       </div>
 
-      <div className="h-full overflow-y-auto pb-20">
+      <div className="h-full overflow-y-auto  pb-40">
         <div className="">
           {loading ? (
             <div className="flex justify-center py-20">
@@ -337,7 +338,7 @@ export default function CourseSidePanel() {
                   <div key={unit.id} className="overflow-hidden">
                     <button
                       onClick={() => toggleUnit(unit.id)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
+                      className="w-full flex items-center justify-between p-4  transition"
                     >
                       <div className="flex items-center gap-3">
                         <div className="text-left">
@@ -378,7 +379,7 @@ export default function CourseSidePanel() {
                           lesson.is_locked ? (
                             <div
                               key={lesson.id}
-                              className="group flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed"
+                              className="group flex items-center justify-between  rounded-lg  opacity-60 cursor-not-allowed"
                             >
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -399,27 +400,15 @@ export default function CourseSidePanel() {
                             <Link
                               key={lesson.id}
                               href={`/courses/${courseSlug}/${lesson.slug}`}
-                              onClick={handleClose}
-                              className={`group block p-3 rounded-lg border transition-all relative ${
+                              className={`group block p-2  rounded-lg transition-all relative ${
                                 lesson.slug === currentLessonSlug
-                                  ? "bg-purple-50 border-purple-400 shadow-sm"
-                                  : "bg-white border-gray-200 hover:border-purple-300 hover:shadow-sm"
+                                  ? " border-l-[4px] border-l-purple-500 bg-gray-100"
+                                  : "bg-white "
                               }`}
                             >
                               {lesson.is_completed === true && (
-                                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300">
-                                  <svg
-                                    className="w-2.5 h-2.5"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                  <span>Пройдено</span>
+                                <div className="absolute flex items-center justify-center top-[9px] bg-green-400 p-[2px] text-white  right-2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     min-w-4 min-h-4 rounded-full ">
+                                  <Check className="w-3  h-3"></Check>
                                 </div>
                               )}
 
@@ -428,8 +417,8 @@ export default function CourseSidePanel() {
                                   <h5
                                     className={`text-sm font-semibold line-clamp-2 ${
                                       lesson.slug === currentLessonSlug
-                                        ? "text-purple-700"
-                                        : "text-gray-900 group-hover:text-purple-700"
+                                        ? "text-gray-900"
+                                        : "text-gray-600 group-hover:text-gray-800"
                                     }`}
                                   >
                                     {lesson.title}

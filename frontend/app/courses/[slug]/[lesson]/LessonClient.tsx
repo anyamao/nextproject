@@ -3,7 +3,15 @@ import useContactStore from "@/store/states";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye, Trophy, Lock, Clock, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  Trophy,
+  Lock,
+  Clock,
+  Check,
+  Trash2,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LessonReactions from "@/components/LessonReactions";
 import CommentsSection from "@/components/CommentsSection";
@@ -12,8 +20,10 @@ import { saveTestReturnUrl } from "@/lib/test-return";
 import FlashcardSession from "@/components/FlashcardSession";
 import { BookOpen } from "lucide-react";
 import Toast from "@/components/Toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useTokens } from "@/hooks/useTokens";
 import { formatTimeAgo } from "@/lib/format-date";
+
 type Lesson = {
   id: number;
   title: string;
@@ -37,7 +47,7 @@ interface LessonClientProps {
   subjectSlug: string;
   lessonSlug: string;
   testId: number | null;
-  isLocked?: boolean; // 🔥 Новое поле
+  isLocked?: boolean;
 }
 
 export default function LessonClient({
@@ -51,8 +61,21 @@ export default function LessonClient({
   const [loadingResult, setLoadingResult] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
-  const { rewardTokens } = useTokens();
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    onConfirm: () => void;
+    message?: string;
+    title?: string;
+  }>({
+    isOpen: false,
+    onConfirm: () => {},
+    message: "",
+    title: "",
+  });
 
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [nextLessonSlug, setNextLessonSlug] = useState<string | null>(null);
@@ -60,7 +83,13 @@ export default function LessonClient({
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
-  const showToast = (message: string) => setToast(message);
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "success",
+  ) => {
+    setToast({ message, type });
+  };
 
   const [unitLessons, setUnitLessons] = useState<
     Array<{
@@ -70,14 +99,12 @@ export default function LessonClient({
       test_id: number | null;
       is_completed?: boolean;
       unit?: {
-        // 🔥 Добавь это
         id: number;
         title: string;
       } | null;
     }>
   >([]);
 
-  // 🔥 Инициализируем unitLessons с текущим уроком, чтобы квадраты появились сразу
   useEffect(() => {
     if (lesson?.id && lessonSlug) {
       setUnitLessons([
@@ -86,7 +113,7 @@ export default function LessonClient({
           slug: lessonSlug,
           title: lesson.title,
           test_id: testId ?? null,
-          unit: null, // Пока не знаем, потом обновим
+          unit: null,
           is_completed: false,
         },
       ]);
@@ -100,7 +127,6 @@ export default function LessonClient({
       try {
         const courseData = await apiFetch(`/courses/${subjectSlug}`);
 
-        // Находим текущий урок внутри курса, чтобы получить его unit
         const currentLesson = courseData.lessons?.find(
           (l: any) => l.id === lesson.id,
         );
@@ -108,12 +134,10 @@ export default function LessonClient({
 
         const allLessons = courseData.lessons || [];
 
-        // Фильтруем уроки по юниту текущего урока
         const currentUnitLessons = allLessons
           .filter((l: any) => l.unit?.id === currentLesson.unit.id)
           .sort((a: any, b: any) => a.id - b.id);
 
-        // Проверяем статус завершения для каждого урока
         const lessonsWithStatus = await Promise.all(
           currentUnitLessons.map(async (l: any) => {
             let isCompleted = false;
@@ -136,7 +160,7 @@ export default function LessonClient({
             return {
               ...l,
               is_completed: isCompleted,
-              unit: currentLesson.unit, // 🔥 Добавляем unit к каждому уроку
+              unit: currentLesson.unit,
             };
           }),
         );
@@ -158,7 +182,6 @@ export default function LessonClient({
   useEffect(() => {
     const recordView = async () => {
       const token = localStorage.getItem("token");
-      // 🔥 Защита: если lesson===null — ничего не делаем
       if (!token || !lesson?.id) return;
       try {
         await apiFetch(`/lessons/${lesson.id}/view`, {
@@ -168,7 +191,7 @@ export default function LessonClient({
       } catch (err) {}
     };
     recordView();
-  }, [lesson?.id]); // 🔥 Опциональная цепочка в зависимостях
+  }, [lesson?.id]);
 
   useEffect(() => {
     if (!lesson?.id) return;
@@ -207,9 +230,7 @@ export default function LessonClient({
         if (result) {
           setTestResult(result);
 
-          // 🔥 Начисляем токены за первый пройденный тест
           if (result.passed && result.score >= 75) {
-            // Проверяем, первый ли это тест (можно добавить флаг в БД)
             await rewardTokens(20, "first_test_passed", showToast);
           }
         }
@@ -220,6 +241,7 @@ export default function LessonClient({
     };
     fetchResult();
   }, [testId]);
+
   useEffect(() => {
     async function fetchFlashcardStats() {
       try {
@@ -250,11 +272,10 @@ export default function LessonClient({
 
         const response = await apiFetch(`/courses/${subjectSlug}`);
 
-        // 🔥 ИЗВЛЕКАЕМ массив уроков из объекта!
         const lessons: Array<{ id: number; slug: string }> =
           response.lessons || [];
 
-        const sorted = [...lessons].sort((a, b) => a.id - b.id); // 🔥 Копия массива, чтобы не мутировать оригинал
+        const sorted = [...lessons].sort((a, b) => a.id - b.id);
         const currentIndex = sorted.findIndex((l) => l.id === lesson?.id);
 
         if (currentIndex !== -1 && currentIndex < sorted.length - 1) {
@@ -286,14 +307,39 @@ export default function LessonClient({
 
     window.location.href = `/tests/${testId}?returnTo=${encodeURIComponent(returnTo)}`;
   };
+
+  const handleResetTestProgress = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Сброс прогресса теста",
+      message:
+        "Вы уверены, что хотите сбросить прогресс теста? Это действие нельзя отменить, и вам придётся проходить тест заново.",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            openLogin();
+            return;
+          }
+          await apiFetch(`/tests/${testId}/reset`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setTestResult(null);
+          showToast("Прогресс теста успешно сброшен", "success");
+        } catch (err: any) {
+          showToast(err.message || "Ошибка при сбросе прогресса", "error");
+        }
+      },
+    });
+  };
+
   useEffect(() => {
     console.log("🔍 [LessonClient] Props:", { isLocked, lessonId: lesson?.id });
   }, [isLocked, lesson?.id]);
 
   if (isLocked) {
     console.log("🔒 [LessonClient] Rendering LOCKED overlay");
-  }
-  if (isLocked) {
     return (
       <>
         <div className="fixed inset-0 z-50 bg-gray-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6">
@@ -327,6 +373,7 @@ export default function LessonClient({
       </>
     );
   }
+
   if (!lesson) {
     return (
       <div className="p-10 text-center text-red-600">Ошибка загрузки урока</div>
@@ -335,12 +382,30 @@ export default function LessonClient({
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto gap-6">
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title || "Подтверждение"}
+        message={confirmDialog.message || "Вы уверены?"}
+        confirmText="Да, подтверждаю"
+        cancelText="Отмена"
+        type="danger"
+      />
+
       <div className="flex-1 w-full items-center justify-center">
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
           <div className="flex flex-row">
-            {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-            {/* 🔹 Динамические квадраты уроков юнита */}
-
             {/* 🔹 Динамические квадраты уроков юнита */}
             {unitLessons.length > 0 && (
               <div className="flex flex-row items-center">
@@ -444,8 +509,13 @@ export default function LessonClient({
           ) : (
             <div className="p-4 bg-white shadow-sm h-[50px] rounded-lg flex flex-row border border-gray-200 items-center text-center">
               <p className="text-sm text-gray-600 smaller-text">
-                <span className="font-medium smaller-text">Войдите</span>, чтобы
-                сохранять результаты
+                <button
+                  onClick={openLogin}
+                  className="font-medium smaller-text text-purple-600 hover:underline"
+                >
+                  Войдите
+                </button>
+                , чтобы сохранять результаты
               </p>
             </div>
           )}
@@ -478,59 +548,36 @@ export default function LessonClient({
 
         <div className="flex flex-row items-center mt-[20px] justify-between">
           <div className="flex flex-row">
-            {testId &&
-              (isAuthenticated ? (
-                <button
-                  onClick={handleStartTest}
-                  className="block min-w-[220px] cursor-pointer mt-[10px] md:mt-[0px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium text-sm transition  font-semibold text-center"
-                >
-                  {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-                </button>
-              ) : (
-                <button
-                  onClick={openLogin}
-                  className="block w-[90%] max-w-[300px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl  transition font-semibold text-center"
-                >
-                  {testResult?.score ? "Перепройти тест" : "Пройти тест"}
-                </button>
-              ))}
+            {testId && (
+              <button
+                onClick={handleStartTest}
+                className="block min-w-[220px] cursor-pointer mt-[10px] md:mt-[0px] hover:bg-purple-700 duration-300 h-[55px] p-4 bg-purple-600 text-white rounded-xl font-medium text-sm transition font-semibold text-center"
+              >
+                {testResult?.score ? "Перепройти тест" : "Пройти тест"}
+              </button>
+            )}
           </div>
 
           {flashcardStats?.has_deck && (
-            <div className="flex flex-row bg-white rounded-lg  px-[20px] cursor-pointer  w-full items-center">
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setShowFlashcards(true)}
-                  className="hover:bg-purple-200 cursor-pointer duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-100 text-purple-700 rounded-xl font-medium transition   flex flex-row "
-                >
-                  <BookOpen className="w-5 h-5" />
-                  <div className=" flex-col hidden lg:flex ml-[15px] ">
-                    <span className="ord-text whitespace-nowrap font-semibold text-purple-700 w-full text-center  ">
-                      {flashcardStats.title}
-                    </span>
-                  </div>
-                </button>
-              ) : (
-                <button
-                  onClick={openLogin}
-                  className="hover:bg-purple-700 duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-600 text-white rounded-xl font-medium transition shadow-md  flex flex-row "
-                >
-                  <BookOpen className="w-5 h-5" />
-                  <div className="flex flex-col ml-[15px] ">
-                    <span className="ord-text whitespace-nowrap font-semibold text-white w-full text-center  ">
-                      {flashcardStats.title}
-                    </span>
-                    <span className="w-full smaller-text  whitespace-nowrap"></span>
-                  </div>
-                </button>
-              )}
+            <div className="flex flex-row bg-white rounded-lg px-[20px] cursor-pointer w-full items-center">
+              <button
+                onClick={() => setShowFlashcards(true)}
+                className="hover:bg-purple-200 cursor-pointer duration-300 items-center h-[55px] p-4 px-[30px] bg-purple-100 text-purple-700 rounded-xl font-medium transition flex flex-row"
+              >
+                <BookOpen className="w-5 h-5" />
+                <div className="flex-col hidden lg:flex ml-[15px]">
+                  <span className="ord-text whitespace-nowrap font-semibold text-purple-700 w-full text-center">
+                    {flashcardStats.title}
+                  </span>
+                </div>
+              </button>
             </div>
           )}
-          <div className="flex flex-row items-center mt-[10px] md:mt-[0px] ">
+          <div className="flex flex-row items-center mt-[10px] md:mt-[0px]">
             {lessonsLoaded && nextLessonSlug ? (
               <Link
                 href={`/courses/${subjectSlug}/${nextLessonSlug}`}
-                className="block smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-200   hover:bg-purple-300 duration-300 text-purple-700 rounded-xl font-semibold transition  text-center"
+                className="block smaller-text items-center h-[55px] min-w-[160px] flex flex-row p-4 bg-purple-200 hover:bg-purple-300 duration-300 text-purple-700 rounded-xl font-semibold transition text-center"
               >
                 <p>Следующий урок</p>
                 <ArrowLeft className="rotate-180 w-[15px] ml-[5px] h-[15px]" />
@@ -548,7 +595,7 @@ export default function LessonClient({
         </div>
       </div>
 
-      <div className="flex md:flex-row flex-col w-full  items-center">
+      <div className="flex md:flex-row flex-col w-full items-center">
         {showFlashcards && (
           <FlashcardSession
             lessonId={lesson?.id}
@@ -556,6 +603,7 @@ export default function LessonClient({
           />
         )}
       </div>
+
       <div className="flex flex-row w-full items-center justify-between">
         {lesson?.id && <LessonReactions lessonId={lesson?.id} />}
 

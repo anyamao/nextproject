@@ -67,6 +67,13 @@ export default function CourseLessonsPage() {
           lockedLessons: data.lessons.filter((l: any) => l.is_locked).length,
         });
 
+        console.log("🟢 [CourseLessons] Raw response:", {
+          hasData: !!data,
+          lessonsCount: data?.lessons?.length,
+          unitsCount: data?.units?.length,
+          is_enrolled: data?.is_enrolled,
+          completion_percent: data?.completion_percent,
+        });
         console.log(
           "🔍 [Frontend] Lessons:",
           data.lessons.map((l: any) => ({

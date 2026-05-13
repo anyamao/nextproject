@@ -10,8 +10,9 @@ import {
   ThumbsDown,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
 import useContactStore from "@/store/states";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import Toast from "@/components/Toast";
 
 type Comment = {
   id: number;
@@ -44,6 +45,22 @@ export default function CommentsSection({
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    onConfirm: () => void;
+    message?: string;
+    title?: string;
+  }>({
+    isOpen: false,
+    onConfirm: () => {},
+    message: "",
+    title: "",
+  });
+
   const currentUser = useContactStore((state) => state.user);
 
   const currentUserId =
@@ -51,12 +68,17 @@ export default function CommentsSection({
       ? JSON.parse(localStorage.getItem("user") || "{}")?.id
       : null;
 
-  // frontend/components/CommentsSection.tsx
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "success",
+  ) => {
+    setToast({ message, type });
+  };
 
   const getAvatarUrl = (comment: Comment) => {
-    // 🔥 Просто возвращаем avatar_url из комментария
     return comment.avatar_url || "default_cat.jpg";
   };
+
   const entityType = lessonId ? "lessons" : "articles";
   const entityId = lessonId || articleId;
 
@@ -104,22 +126,40 @@ export default function CommentsSection({
       setNewComment("");
       setReplyContent("");
       setReplyingTo(null);
+      showToast(
+        parentId ? "Ответ отправлен!" : "Комментарий добавлен!",
+        "success",
+      );
     } catch (err) {
+      showToast("Ошибка при отправке", "error");
     } finally {
       setLoading(false);
     }
   };
+
   const handleDelete = async (commentId: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      await apiFetch(`/comments/${commentId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await apiFetch(`/${entityType}/${entityId}/comments`);
-      setComments(data);
-    } catch (err) {}
+    setConfirmDialog({
+      isOpen: true,
+      title: "Удаление комментария",
+      message:
+        "Вы уверены, что хотите удалить этот комментарий? Это действие нельзя отменить.",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          await apiFetch(`/comments/${commentId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await apiFetch(`/${entityType}/${entityId}/comments`);
+          setComments(data);
+          showToast("Комментарий успешно удалён!", "success");
+        } catch (err) {
+          showToast("Ошибка при удалении", "error");
+        }
+      },
+    });
   };
+
   const handleReaction = async (
     commentId: number,
     type: "like" | "dislike",
@@ -147,6 +187,7 @@ export default function CommentsSection({
       setComments(data);
     } catch (err) {}
   };
+
   const handleEdit = async (commentId: number) => {
     if (!editContent.trim()) return;
     try {
@@ -162,13 +203,38 @@ export default function CommentsSection({
       const data = await apiFetch(`/${entityType}/${entityId}/comments`);
       setComments(data);
       setEditingId(null);
-    } catch (err) {}
+      showToast("Комментарий обновлён!", "success");
+    } catch (err) {
+      showToast("Ошибка при редактировании", "error");
+    }
   };
 
   if (!entityId) return null;
+
   return (
-    <div className="mt-12 pt-8 border-t w-full  border-gray-200">
-      <p className="font-bold bigger-text ">Комментарии</p>
+    <div className="mt-12 pt-8 border-t w-full border-gray-200">
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title || "Подтверждение"}
+        message={confirmDialog.message || "Вы уверены?"}
+        confirmText="Удалить"
+        cancelText="Отмена"
+        type="danger"
+      />
+
+      <p className="font-bold bigger-text">Комментарии</p>
       <p className="text-gray-600 ord-text mt-[10px]">
         Обсудите пройденный урок, поделитесь мнением, вопросами. Что было
         непонятно? Что бы вы улучшили?
@@ -193,7 +259,7 @@ export default function CommentsSection({
 
       <div className="space-y-6">
         {comments.map((comment) => (
-          <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
+          <div key={comment.id} className="px-[10px] flex flex-row w-full">
             <Link href={`/profile/${comment.user_id}`}>
               <img
                 key={`avatar-${comment.user_id}-${comment.id}`}
@@ -208,7 +274,7 @@ export default function CommentsSection({
             </Link>
 
             <div className="flex flex-col w-full">
-              <div className="flex flex-col ml-[10px]  w-full">
+              <div className="flex flex-col ml-[10px] w-full">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="font-semibold smaller-text text-gray-900">
@@ -216,7 +282,7 @@ export default function CommentsSection({
                     </span>
                   </div>
                   {currentUserId === comment.user_id && (
-                    <div className="flex gap-2 ">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => {
                           setEditingId(comment.id);
@@ -224,7 +290,7 @@ export default function CommentsSection({
                         }}
                         className="text-gray-400 hover:text-purple-600 transition"
                       >
-                        <Pencil className=" w-[15px] h-[15px]" />
+                        <Pencil className="w-[15px] h-[15px]" />
                       </button>
                       <button
                         onClick={() => handleDelete(comment.id)}
@@ -275,7 +341,7 @@ export default function CommentsSection({
                           : "text-gray-500 hover:text-green-600"
                       }`}
                     >
-                      <ThumbsUp className="text-gray-500 w-[15px] h-[15px]"></ThumbsUp>{" "}
+                      <ThumbsUp className="text-gray-500 w-[15px] h-[15px]" />{" "}
                       {comment.likes || 0}
                     </button>
                     <button
@@ -286,7 +352,7 @@ export default function CommentsSection({
                           : "text-gray-500 hover:text-red-600"
                       }`}
                     >
-                      <ThumbsDown className="text-gray-500 w-[15px] h-[15px]"></ThumbsDown>{" "}
+                      <ThumbsDown className="text-gray-500 w-[15px] h-[15px]" />{" "}
                       {comment.dislikes || 0}
                     </button>
                   </div>

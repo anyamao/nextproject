@@ -107,7 +107,7 @@ function Mainnav() {
             Разные курсы
           </Link>
           <Link
-            href="/courses"
+            href="/courses/my"
             onClick={closeEverything}
             className="ml-[20px] hover:text-blue-500 whitespace-nowrap duration-300"
           >

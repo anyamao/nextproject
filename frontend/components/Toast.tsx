@@ -1,55 +1,62 @@
-// frontend/components/Toast.tsx
+// components/Toast.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Coins } from "lucide-react";
+import { useEffect } from "react";
+import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
 
-type ToastProps = {
+type ToastType = "success" | "error" | "info";
+
+interface ToastProps {
   message: string;
-  type?: "success" | "error" | "info";
-  duration?: number;
+  type?: ToastType;
   onClose: () => void;
-};
+  duration?: number;
+}
 
 export default function Toast({
   message,
   type = "success",
-  duration = 3000,
   onClose,
+  duration = 3000,
 }: ToastProps) {
-  const [visible, setVisible] = useState(true);
-
   useEffect(() => {
     const timer = setTimeout(() => {
-      setVisible(false);
       onClose();
     }, duration);
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const bgColor = {
-    success: "bg-green-500",
-    error: "bg-red-500",
-    info: "bg-purple-500",
-  }[type];
-
-  if (!visible) return null;
+  const config = {
+    success: {
+      bg: "bg-green-500",
+      icon: <CheckCircle className="w-5 h-5" />,
+      border: "border-green-400",
+    },
+    error: {
+      bg: "bg-red-500",
+      icon: <AlertCircle className="w-5 h-5" />,
+      border: "border-red-400",
+    },
+    info: {
+      bg: "bg-blue-500",
+      icon: <Info className="w-5 h-5" />,
+      border: "border-blue-400",
+    },
+  };
 
   return (
-    <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white ${bgColor} animate-slide-up`}
-    >
-      <Coins className="w-5 h-5" />
-      <span className="text-sm font-medium">{message}</span>
-      <button
-        onClick={() => {
-          setVisible(false);
-          onClose();
-        }}
-        className="ml-2 p-1 hover:bg-white/20 rounded transition"
+    <div className="fixed top-20 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+      <div
+        className={`${config[type].bg} text-white rounded-lg shadow-lg p-4 min-w-[300px] flex items-center justify-between gap-3 border ${config[type].border}`}
       >
-        <X className="w-4 h-4" />
-      </button>
+        <div className="flex items-center gap-2">
+          {config[type].icon}
+          <span className="text-sm font-medium">{message}</span>
+        </div>
+        <button onClick={onClose} className="hover:opacity-80 transition">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

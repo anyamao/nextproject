@@ -200,6 +200,8 @@ class PromoCourseOut(BaseModel):
     about: str | None = None  # 🔥 Новое поле
     is_enrolled: bool = False
     teachers: list[TeacherOut] = []  # 🔥 Список учителей
+    total_units: int | None = None
+    completed_units: int | None = None
 
 
 # backend/schemas.py

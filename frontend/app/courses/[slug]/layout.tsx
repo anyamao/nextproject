@@ -72,7 +72,7 @@ export default function RootLayout({
   const pathParts = pathname.split("/").filter(Boolean);
   const currentLessonSlug =
     pathParts.length > 2 ? pathParts[pathParts.length - 1] : null;
-  const isLessonPage = pathParts.length == 3; // например: /courses/slug/lesson-slug
+  const isLessonPage = pathParts.length == 2; // например: /courses/slug/lesson-slug
   if (loading || !meta) {
     return (
       <div className="flex flex-col w-full h-full max-w-[1100px]">

@@ -244,6 +244,134 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
 # backend/main.py
 
 
+# backend/main.py
+
+
+@app.get("/courses/my", response_model=list[PromoCourseOut])
+async def get_my_courses(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    search: str | None = None,
+):
+    """Получить курсы пользователя: записанные + избранные (не записанные)"""
+
+    # 🔥 1. Загружаем IDs записанных курсов
+    enrolled_ids_result = await db.execute(
+        select(UserCourseEnrollment.course_id).where(
+            UserCourseEnrollment.user_id == current_user.id
+        )
+    )
+    enrolled_ids = {row[0] for row in enrolled_ids_result.all()}
+
+    # 🔥 2. Загружаем IDs избранных курсов
+    favorite_ids_result = await db.execute(
+        select(UserFavoriteCourse.course_id).where(
+            UserFavoriteCourse.user_id == current_user.id
+        )
+    )
+    favorite_ids = {row[0] for row in favorite_ids_result.all()}
+
+    # 🔥 3. Объединяем: записанные ИЛИ избранные
+    course_ids = enrolled_ids | favorite_ids
+
+    if not course_ids:
+        return []
+
+    # 🔥 4. Загружаем данные курсов
+    subjects_result = await db.execute(
+        select(EgeSubject).where(EgeSubject.id.in_(course_ids))
+    )
+    subjects = subjects_result.scalars().all()
+
+    # 🔥 5. Поиск по названию (после загрузки)
+    if search:
+        subjects = [s for s in subjects if search.lower() in s.title.lower()]
+
+    # 🔥 6. Собираем ответ для каждого курса
+    courses_out = []
+    for s in subjects:
+        # Флаги
+        is_enrolled = s.id in enrolled_ids
+        is_favorite = s.id in favorite_ids
+
+        # Прогресс (только если записан)
+        completion_percent = 0.0
+        if is_enrolled:
+            completion_percent = await get_course_completion_percent(
+                current_user.id, s.id, db
+            )
+
+        # Юниты
+        units_count = await db.execute(
+            select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == s.id)
+        )
+        total_units = units_count.scalar() or 1
+
+        completed_units = 0
+        if is_enrolled and current_user:
+            course_lessons = await db.execute(
+                select(EgeLesson.id, EgeLesson.unit_id).where(
+                    EgeLesson.subject_id == s.id
+                )
+            )
+            lessons_by_unit = {}
+            for lesson_id, unit_id in course_lessons.all():
+                if unit_id not in lessons_by_unit:
+                    lessons_by_unit[unit_id] = []
+                lessons_by_unit[unit_id].append(lesson_id)
+
+            for unit_id, lesson_ids in lessons_by_unit.items():
+                if not lesson_ids:
+                    continue
+                completed_lessons = await db.execute(
+                    select(func.count(UserCompletedLesson.id)).where(
+                        UserCompletedLesson.user_id == current_user.id,
+                        UserCompletedLesson.lesson_id.in_(lesson_ids),
+                    )
+                )
+                if completed_lessons.scalar() == len(lesson_ids):
+                    completed_units += 1
+
+        # Учителя
+        teachers_result = await db.execute(
+            select(Teacher)
+            .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
+            .where(CourseTeacher.course_id == s.id)
+        )
+        teachers = teachers_result.scalars().all()
+        teachers_out = [
+            {"id": t.id, "full_name": t.full_name, "image": t.image, "about": t.about}
+            for t in teachers
+        ]
+
+        courses_out.append(
+            {
+                "id": s.id,
+                "title": s.title,
+                "slug": s.slug,
+                "description": s.description,
+                "image": s.image,
+                "category": s.category,
+                "about": s.about,
+                "duration_minutes": s.duration_minutes,
+                "certificate_available": s.certificate_available or False,
+                "enrolled_count": 0,
+                "rating": None,
+                "is_favorite": is_favorite,  # 🔥 Сердечко
+                "is_enrolled": is_enrolled,  # 🔥 Записан или нет
+                "completion_percent": round(completion_percent, 1),
+                "total_units": total_units,
+                "completed_units": completed_units,
+                "teachers": teachers_out,
+            }
+        )
+
+    # 🔥 Сортировка: сначала записанные, потом избранные
+    courses_out.sort(key=lambda c: (not c["is_enrolled"], c["title"].lower()))
+
+    return courses_out
+
+
 @app.get("/courses/{slug}/meta")
 async def get_course_meta(
     slug: str,
@@ -349,6 +477,35 @@ async def update_profile_settings(
 
 
 # backend/main.py — ДОБАВЬ ЭТИ ЭНДПОИНТЫ
+@app.delete("/courses/{slug}/unenroll")
+async def unenroll_from_course(
+    slug: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Отменить запись на курс"""
+
+    course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
+    course = course.scalar_one_or_none()
+    if not course:
+        raise HTTPException(404, "Course not found")
+    # В начале unenroll_from_course:
+    print(f"🔴 [UNENROLL] Called for user {current_user.id}, slug={slug}")
+    enrollment = await db.execute(
+        select(UserCourseEnrollment).where(
+            UserCourseEnrollment.user_id == current_user.id,
+            UserCourseEnrollment.course_id == course.id,
+        )
+    )
+    item = enrollment.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(400, "Not enrolled in this course")
+
+    await db.delete(item)
+    await db.commit()
+
+    return {"message": "Successfully unenrolled"}
 
 
 # 🔹 Получить список избранного
@@ -2002,7 +2159,10 @@ async def get_course_lessons(
     lessons_result = await db.execute(
         select(EgeLesson)
         .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)
-        .options(selectinload(EgeLesson.unit))
+        .options(
+            selectinload(EgeLesson.unit),
+            selectinload(EgeLesson.flashcard_deck),
+        )
         .where(EgeLesson.subject_id == subject.id)
         .order_by(
             EgeLesson.unit_id.nulls_last(),
@@ -2029,6 +2189,7 @@ async def get_course_lessons(
                 "unit_number": lesson.unit.unit_number,
                 "description": lesson.unit.description,
             }
+        has_flashcards = lesson.flashcard_deck is not None  # или используй свою логику
 
         lessons_out.append(
             {
@@ -2045,8 +2206,13 @@ async def get_course_lessons(
                 "created_at": lesson.created_at,
                 "updated_at": lesson.updated_at,
                 "is_locked": not is_enrolled and i > 0,
+                "has_flashcards": getattr(lesson, "flashcard_deck", None) is not None,
             }
         )
+    print(
+        f"🟢 [DEBUG] Returning {len(lessons_out)} lessons, {len(units_with_counts)} units"
+    )
+
     # 6. Возвращаем обычный словарь (без Pydantic-валидации)
     return {
         "lessons": lessons_out,

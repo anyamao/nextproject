@@ -6,15 +6,17 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Trash2, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
-import AvatarSelector from "@/components/AvatarSelector"; // ✅ Импортируем
+import AvatarSelector from "@/components/AvatarSelector";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import Toast from "@/components/Toast";
 
 type UserProfile = {
   id: number;
   username: string;
   email: string;
   avatar_url: string;
-  first_name: string | null; // 🔥 Добавь
-  about_me: string | null; // 🔥 Добавь
+  first_name: string | null;
+  about_me: string | null;
   created_at?: string;
   last_name: string | null;
   status: string | null;
@@ -30,16 +32,35 @@ export default function ProfileSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  // В начале компонента:
   const [aboutMe, setAboutMe] = useState("");
-
   const [status, setStatus] = useState("");
-
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("default_cat.jpg");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    onConfirm: () => void;
+    message?: string;
+    title?: string;
+  }>({
+    isOpen: false,
+    onConfirm: () => {},
+    message: "",
+    title: "",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "success",
+  ) => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -54,7 +75,6 @@ export default function ProfileSettingsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // 🔥 ОТЛАДКА: смотрим, что реально приходит
         console.log("🔍 [ProfileSettings] Raw profile data:", {
           about_me: data.about_me,
           about_me_type: typeof data.about_me,
@@ -65,15 +85,12 @@ export default function ProfileSettingsPage() {
 
         setProfile(data);
         setUsername(data.username);
-
-        // 🔥 ИСПОЛЬЗУЕМ ?? ВМЕСТО || (проверяет только null/undefined)
         setFirstName(data.first_name ?? "");
         setLastName(data.last_name ?? "");
         setStatus(data.status ?? "");
-        setAboutMe(data.about_me ?? ""); // 🔥 Ключевое изменение!
+        setAboutMe(data.about_me ?? "");
         setSelectedAvatar(data.avatar_url ?? "default_cat.jpg");
 
-        // 🔥 Проверяем, установились ли значения
         console.log("🔍 [ProfileSettings] After setState:", {
           aboutMe_after: data.about_me ?? "",
           status_after: data.status ?? "",
@@ -81,6 +98,7 @@ export default function ProfileSettingsPage() {
       } catch (err: any) {
         console.error("❌ Failed to load profile:", err);
         setError("Не удалось загрузить профиль");
+        showToast("Не удалось загрузить профиль", "error");
         if (err?.status === 401) {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
@@ -93,16 +111,17 @@ export default function ProfileSettingsPage() {
 
     fetchProfile();
   }, [router]);
+
   useEffect(() => {
     console.log("🔍 [Render] aboutMe state:", aboutMe);
     console.log("🔍 [Render] status state:", status);
   }, [aboutMe, status]);
-  // 🔹 2️⃣ Сохранение изменений (имя + аватар)
-  // 🔹 2️⃣ Сохранение изменений (имя + аватар)
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || username.length < 3) {
       setError("Имя должно содержать минимум 3 символа");
+      showToast("Имя должно содержать минимум 3 символа", "error");
       return;
     }
 
@@ -123,10 +142,10 @@ export default function ProfileSettingsPage() {
         },
         body: JSON.stringify({
           username: username.trim(),
-          first_name: firstName.trim() || null, // 🔥 Добавь
-          last_name: lastName.trim() || null, // 🔥 Добавь
-          status: status.trim() || null, // 🔥 Добавь
-          about_me: aboutMe.trim() || null, //
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          status: status.trim() || null,
+          about_me: aboutMe.trim() || null,
           avatar_url: selectedAvatar,
         }),
       });
@@ -138,39 +157,34 @@ export default function ProfileSettingsPage() {
       );
 
       setProfile(updated);
-      // ✅ Обновляем localStorage и store
 
-      // ✅ Обновляем localStorage и store
       const newUser = {
         id: updated.id,
         email: updated.email,
         username: updated.username,
         avatar_url: updated.avatar_url ?? selectedAvatar,
-        status: updated.status ?? status, // 🔥 ?? вместо ||
+        status: updated.status ?? status,
         first_name: updated.first_name ?? firstName,
         last_name: updated.last_name ?? lastName,
-        about_me: updated.about_me ?? aboutMe, // 🔥 ?? вместо ||
+        about_me: updated.about_me ?? aboutMe,
       };
 
       console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       setUser(newUser);
       setSuccess(true);
+      showToast("Профиль успешно обновлён!", "success");
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error("❌ [ProfileSettings] Error:", err);
       setError(err.message || "Ошибка при сохранении");
+      showToast(err.message || "Ошибка при сохранении", "error");
     } finally {
       setSaving(false);
     }
   };
-  // 🔹 3️⃣ Удаление аккаунта
-  const handleDeleteAccount = async () => {
-    if (!showDeleteConfirm) {
-      setShowDeleteConfirm(true);
-      return;
-    }
 
+  const handleDeleteAccount = async () => {
     setDeleting(true);
     setError(null);
 
@@ -182,22 +196,34 @@ export default function ProfileSettingsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // ✅ Полная очистка и редирект
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);
       toggleLogin();
-
-      window.location.href = "/";
+      showToast("Аккаунт успешно удалён", "success");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err: any) {
       setError(err.message || "Ошибка при удалении аккаунта");
+      showToast(err.message || "Ошибка при удалении аккаунта", "error");
       setShowDeleteConfirm(false);
     } finally {
       setDeleting(false);
+      setConfirmDialog({ ...confirmDialog, isOpen: false });
     }
   };
 
-  // 🔹 Лоадер
+  const openDeleteConfirmDialog = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Удаление аккаунта",
+      message:
+        "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить. Все ваши данные, прогресс и настройки будут безвозвратно удалены.",
+      onConfirm: handleDeleteAccount,
+    });
+  };
+
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
@@ -208,6 +234,27 @@ export default function ProfileSettingsPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-2xl mx-auto">
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Confirm Dialog для удаления аккаунта */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title || "Подтверждение"}
+        message={confirmDialog.message || "Вы уверены?"}
+        confirmText="Да, удалить"
+        cancelText="Отмена"
+        type="danger"
+      />
+
       <div className="w-full mb-8">
         <button
           onClick={() => router.back()}
@@ -221,118 +268,92 @@ export default function ProfileSettingsPage() {
       </div>
 
       <form onSubmit={handleSaveProfile} className="w-full space-y-6">
-        {/* ✅ Выбор аватара */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white p-6 rounded-lg shadow-xs">
           <AvatarSelector
             currentAvatar={selectedAvatar}
             onAvatarSelect={setSelectedAvatar}
           />
         </div>
 
-        {/* ✅ Карточка: Имя пользователя */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Имя пользователя
-          </h2>
+        <div className="bg-purple-500 rotate-2 my-[30px] p-8 rounded-lg shadow-xs">
+          <div className="flex flex-col -rotate-2 p-[20px] rounded-lg  bg-purple-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Обо мне
+            </h2>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Новое имя
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                minLength={3}
-                maxLength={30}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
-                placeholder="Введите новое имя"
-                disabled={saving}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Минимум 3 символа, максимум 30
-              </p>
-            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-purple-900 mb-2">
+                  Мой юзернейм
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  minLength={3}
+                  maxLength={30}
+                  className="w-full p-3 bg-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
+                  placeholder="Введите новое имя"
+                  disabled={saving}
+                />
+                <p className="text-xs text-gray-700 mt-1">
+                  Минимум 3 символа, максимум 30
+                </p>
+              </div>
 
-            {error && !error.includes("удалении") && (
-              <p className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-                {error}
-              </p>
-            )}
-
-            {success && (
-              <p className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">
-                ✅ Профиль обновлён!
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={saving || !username.trim() || username.length < 3}
-              className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                  Сохранение...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" /> Сохранить изменения
-                </>
+              {error && !error.includes("удалении") && (
+                <p className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                  {error}
+                </p>
               )}
-            </button>
-          </div>
-        </div>
-        {/* ✅ Карточка: Статус и О себе */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Информация о себе
-          </h2>
 
-          <div className="space-y-4">
-            {/* Статус */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Статус
-              </label>
-              <input
-                type="text"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                maxLength={200}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
-                placeholder="Например: 🎓 Студент | 💻 Разработчик"
-                disabled={saving}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Короткая строка о себе (до 200 символов)
-              </p>
+              {success && (
+                <p className="text-green-600 text-sm bg-green-50 p-3 rounded-lg">
+                  ✅ Профиль обновлён!
+                </p>
+              )}
             </div>
+            <div className="space-y-4 mt-[10px]">
+              {/* Статус */}
+              <div>
+                <label className="block text-sm font-semibold text-purple-900 mb-2">
+                  Статус
+                </label>
+                <input
+                  type="text"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  maxLength={200}
+                  className="w-full p-3  focus:ring-2 focus:ring-purple-500  rounded-lg bg-white outline-none transition"
+                  placeholder="Например: 🎓 Студент | 💻 Разработчик"
+                  disabled={saving}
+                />
+                <p className="text-xs text-gray-500 mt-1">До 200 символов</p>
+              </div>
 
-            {/* О себе */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                О себе
-              </label>
-              <textarea
-                value={aboutMe}
-                onChange={(e) => setAboutMe(e.target.value)}
-                maxLength={2000}
-                rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition resize-none"
-                placeholder="Расскажите немного о себе, ваших интересах и целях..."
-                disabled={saving}
-              />
-              <p className="text-xs text-gray-500 mt-1 text-right">
-                {aboutMe.length}/2000
-              </p>
+              {/* О себе */}
+              <div>
+                <label className="block text-sm font-medium text-purple-700 mb-2">
+                  О себе
+                </label>
+                <textarea
+                  value={aboutMe}
+                  onChange={(e) => setAboutMe(e.target.value)}
+                  maxLength={2000}
+                  rows={4}
+                  className="w-full p-3 bg-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition resize-none"
+                  placeholder="Расскажите немного о себе, ваших интересах и целях..."
+                  disabled={saving}
+                />
+                <p className="text-xs text-gray-500 mt-1 text-right">
+                  {aboutMe.length}/2000
+                </p>
+              </div>
             </div>
           </div>
         </div>
         {/* ✅ Карточка: ФИО для сертификата */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white p-6 rounded-lg shadow-xs">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Данные для сертификата
           </h2>
@@ -343,8 +364,8 @@ export default function ProfileSettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Имя *
+              <label className="block text-sm font-medium text-purple-700 mb-2">
+                Имя
               </label>
               <input
                 type="text"
@@ -357,8 +378,8 @@ export default function ProfileSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Фамилия *
+              <label className="block text-sm font-medium text-purple-700 mb-2">
+                Фамилия
               </label>
               <input
                 type="text"
@@ -372,67 +393,41 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
         </div>
-        {/* 🔴 Карточка: Удаление аккаунта */}
+        <button
+          type="submit"
+          disabled={saving || !username.trim() || username.length < 3}
+          className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {saving ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+              Сохранение...
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" /> Сохранить изменения
+            </>
+          )}
+        </button>
+
         <div className="bg-white p-6 rounded-2xl border border-red-200 shadow-sm">
           <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">
             <Trash2 className="w-5 h-5" />
             Опасная зона
           </h2>
 
-          {!showDeleteConfirm ? (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                Удаление аккаунта необратимо. Все ваши данные, прогресс и
-                настройки будут безвозвратно удалены.
-              </p>
-              <button
-                type="button"
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                className="w-full py-3 bg-red-50 text-red-700 border-2 border-red-200 rounded-xl font-semibold hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-5 h-5" /> Удалить аккаунт
-              </button>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-800">
-                  <strong>Вы уверены?</strong> Это действие нельзя отменить. Все
-                  ваши данные будут удалены навсегда.
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleting}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition disabled:opacity-50"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteAccount}
-                  disabled={deleting}
-                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {deleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                      Удаление...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-5 h-5" /> Да, удалить
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
+          <p className="text-sm text-gray-600 mb-4">
+            Удаление аккаунта необратимо. Все ваши данные, прогресс и настройки
+            будут безвозвратно удалены.
+          </p>
+          <button
+            type="button"
+            onClick={openDeleteConfirmDialog}
+            disabled={deleting}
+            className="w-full py-3 bg-red-50 text-red-700 border-2 border-red-200 rounded-xl font-semibold hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-5 h-5" /> Удалить аккаунт
+          </button>
         </div>
       </form>
     </main>

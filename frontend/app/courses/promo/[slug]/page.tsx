@@ -7,6 +7,10 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Layers,
+  StickyNote,
+  BookCheck,
+  WalletCards,
   ThumbsUp,
   ThumbsDown,
   BookOpen,
@@ -14,6 +18,8 @@ import {
   Award,
   CheckCircle,
   Edit2,
+  ChevronUp,
+  ChevronDown,
   Trash2,
   X,
   Star,
@@ -77,7 +83,27 @@ type RatingDistribution = {
   4: number;
   5: number;
 };
+type CourseUnit = {
+  id: number;
+  title: string;
+  unit_number: number;
+  description: string | null;
+  lesson_count: number;
+  progress?: { completed: number; total: number; percent: number } | null;
+};
 
+type Lesson = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  time_minutes: number | null;
+  test_id?: number | null;
+  unit: CourseUnit | null;
+  has_flashcards?: boolean;
+  is_completed?: boolean;
+  is_locked?: boolean;
+};
 export default function CoursePromoPage() {
   const params = useParams();
   const router = useRouter();
@@ -119,22 +145,31 @@ export default function CoursePromoPage() {
   const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
   const { rewardTokens } = useTokens();
   const [toast, setToast] = useState<string | null>(null);
+  const [totalUnits, setTotalUnits] = useState(0);
+  const [totalLessons, setTotalLessons] = useState(0);
+  const [totalTests, setTotalTests] = useState(0);
+  const [totalFlashcards, setTotalFlashcards] = useState(0);
+  const [courseUnits, setCourseUnits] = useState<CourseUnit[]>([]);
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
+  const [expandedCourseUnits, setExpandedCourseUnits] = useState<Set<number>>(
+    new Set(),
+  );
+
+  const toggleCourseUnit = (unitId: number) => {
+    setExpandedCourseUnits((prev) => {
+      const next = new Set(prev);
+      if (next.has(unitId)) {
+        next.delete(unitId);
+      } else {
+        next.add(unitId);
+      }
+      return next;
+    });
+  };
 
   const showToast = (message: string) => {
     setToast(message);
   };
-
-  // Подсчёт распределения оценок
-  const calculateRatingDistribution = (reviewsList: Review[]) => {
-    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    reviewsList.forEach((review) => {
-      if (review.rating >= 1 && review.rating <= 5) {
-        distribution[review.rating as 1 | 2 | 3 | 4 | 5]++;
-      }
-    });
-    setRatingDistribution(distribution);
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -150,6 +185,31 @@ export default function CoursePromoPage() {
         }
 
         console.log("✅ Found course:", { id: found.id, title: found.title });
+
+        // 🔥 ДОБАВЛЯЕМ: Отдельный запрос для получения структуры курса (юниты и уроки)
+        try {
+          const courseStructure = await apiFetch(`/courses/${slug}`);
+          console.log("✅ Course structure:", {
+            units_count: courseStructure.units?.length || 0,
+            lessons_count: courseStructure.lessons?.length || 0,
+          });
+
+          if (courseStructure.lessons) {
+            setTotalLessons(courseStructure.lessons.length);
+            setTotalTests(
+              courseStructure.lessons.filter((l: any) => l.test_id).length,
+            );
+            const flashcardsCount = courseStructure.lessons.filter(
+              (l: any) => l.has_flashcards === true,
+            ).length;
+            setTotalFlashcards(flashcardsCount);
+            setTotalUnits(courseStructure.units?.length || 0);
+            setCourseUnits(courseStructure.units || []);
+            setCourseLessons(courseStructure.lessons || []);
+          }
+        } catch (err) {
+          console.warn("⚠️ Could not load course structure:", err);
+        }
 
         const token = localStorage.getItem("token");
         let courseDetails: any = {};
@@ -205,6 +265,8 @@ export default function CoursePromoPage() {
             data: err?.data,
           });
         }
+      } catch (err) {
+        console.error("❌ [Promo] Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -212,8 +274,17 @@ export default function CoursePromoPage() {
 
     if (slug) fetchData();
   }, [slug]);
+  // Подсчёт распределения оценок
+  const calculateRatingDistribution = (reviewsList: Review[]) => {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviewsList.forEach((review) => {
+      if (review.rating >= 1 && review.rating <= 5) {
+        distribution[review.rating as 1 | 2 | 3 | 4 | 5]++;
+      }
+    });
+    setRatingDistribution(distribution);
+  };
 
-  // Фильтрация и сортировка отзывов
   const getFilteredAndSortedReviews = () => {
     let filtered = [...reviews];
 
@@ -720,6 +791,135 @@ export default function CoursePromoPage() {
         )}
       </div>
 
+      <div className="flex flex-row gap-4 w-full mb-8">
+        <div className="flex-1 bg-purple-200 rounded-lg p-5 text-center">
+          <p className="font-black text-3xl text-violet-900">
+            {totalUnits || 0}
+          </p>
+          <p className="font-semibold text-purple-800">Юнитов</p>
+          <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-300">
+            Уроки структурированы по юнитам, четкий учебный план
+          </p>
+        </div>
+
+        <div className="flex-1 bg-purple-300 rounded-lg p-5 text-center">
+          <p className="font-black text-3xl text-violet-950">
+            {totalLessons || 0}
+          </p>
+          <p className="font-semibold text-purple-900">Уроков</p>
+          <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-400">
+            Закроем темы полностью, можно писать обратную связь
+          </p>
+        </div>
+
+        <div className="flex-1 bg-purple-200 rounded-lg p-5 text-center">
+          <p className="font-black text-3xl text-violet-900">
+            {totalTests || 0}
+          </p>
+          <p className="font-semibold text-purple-800">Тестов</p>
+          <p className="text-xs text-purple-700 mt-2 pt-2 border-t border-purple-300">
+            Чтобы точно знать свои пробелы, сохраняется лучший результат
+          </p>
+        </div>
+
+        <div className="flex-1 bg-purple-300 rounded-lg p-5 text-center">
+          <p className="font-black text-3xl text-violet-950">
+            {totalFlashcards || 0}
+          </p>
+          <p className="font-semibold text-purple-900">Комплектов карточек</p>
+          <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-400">
+            Повторяй в любое время в любом месте!
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full bg-white p-5 rounded-lg shadow-xs mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Программа курса
+        </h2>
+
+        {courseUnits.length === 0 ? (
+          <p className="text-gray-500 italic">Загрузка программы курса...</p>
+        ) : (
+          <div className="space-y-4">
+            {courseUnits.map((unit) => {
+              const unitLessons = courseLessons.filter(
+                (l) => l.unit?.id === unit.id,
+              );
+              const isExpanded = expandedCourseUnits.has(unit.id);
+
+              return (
+                <div
+                  key={unit.id}
+                  className="border border-gray-200 rounded-xl overflow-hidden"
+                >
+                  <button
+                    onClick={() => toggleCourseUnit(unit.id)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
+                  >
+                    <div className="text-left">
+                      <div className="flex flex-row items-baseline gap-1">
+                        {unit.unit_number > 0 && (
+                          <span className="text-base font-semibold text-gray-900">
+                            Unit {unit.unit_number} —
+                          </span>
+                        )}
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {unit.title}
+                        </h3>
+                      </div>
+                      {unit.description && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {unit.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {unitLessons.length} уроков
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4 space-y-2 border-t border-gray-100 pt-3">
+                      {unitLessons.map((lesson) => (
+                        <div
+                          key={lesson.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-gray-900">
+                              {lesson.title}
+                            </h4>
+                            {lesson.description && (
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                                {lesson.description}
+                              </p>
+                            )}
+                          </div>
+                          {lesson.time_minutes && (
+                            <div className="flex items-center gap-1 text-gray-400 text-xs whitespace-nowrap">
+                              <Clock className="w-3 h-3" />
+                              <span>{lesson.time_minutes} мин</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {course.teachers && course.teachers.length > 0 && (
         <div className="mb-8 w-full">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -821,7 +1021,7 @@ export default function CoursePromoPage() {
       </div>
 
       {canWriteReview && !reviewStats?.user_review && (
-        <div className="mb-4 w-full inline-flex items-center gap-2 px-4 py-3 bg-purple-600 mt-[20px] rounded-lg">
+        <div className="mb-4 w-full inline-flex items-center gap-2 px-4 py-3 bg-purple-500 mt-[20px] rounded-lg">
           <span className="text-sm font-semibold text-white">
             Так держать! У вас {course.completion_percent}% — можно оставить
             отзыв. Оставь отзыв и получи +40xp

@@ -15,6 +15,11 @@ export default function LogoutButton() {
       authStorage.clear();
 
       logout();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // 🔥 Сбрасываем баланс токенов в сторе
+      useContactStore.getState().setTokenBalance(0); // ← Добавь это!
 
       window.location.reload();
     } catch (err) {
