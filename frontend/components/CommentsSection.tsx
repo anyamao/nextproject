@@ -50,13 +50,13 @@ export default function CommentsSection({
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")?.id
       : null;
+
+  // frontend/components/CommentsSection.tsx
+
   const getAvatarUrl = (comment: Comment) => {
-    if (comment.user_id === currentUser?.id) {
-      return currentUser.avatar_url || "default_cat.jpg";
-    }
+    // 🔥 Просто возвращаем avatar_url из комментария
     return comment.avatar_url || "default_cat.jpg";
   };
-
   const entityType = lessonId ? "lessons" : "articles";
   const entityId = lessonId || articleId;
 
@@ -196,15 +196,11 @@ export default function CommentsSection({
           <div key={comment.id} className=" px-[10px] flex flex-row w-full ">
             <Link href={`/profile/${comment.user_id}`}>
               <img
-                key={`${comment.user_id}-${currentUser?.avatar_url}`}
+                key={`avatar-${comment.user_id}-${comment.id}`}
                 src={`/avatars/${getAvatarUrl(comment)}`}
                 alt={comment.username}
                 className="w-[30px] h-[30px] rounded-full object-cover transition-transform duration-200 hover:scale-110"
                 onError={(e) => {
-                  console.error(
-                    "❌ Failed to load avatar for comment:",
-                    comment.username,
-                  );
                   (e.target as HTMLImageElement).src =
                     "/avatars/default_cat.jpg";
                 }}

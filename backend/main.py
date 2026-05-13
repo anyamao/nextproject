@@ -733,14 +733,14 @@ async def get_course_reviews(
                 user_reaction=user_reaction.scalar_one_or_none(),
             )
 
-        return {
-            "reviews": reviews_out,  # 🔥 Список отзывов
-            "stats": {  # 🔥 Вложенная статистика
-                "average_rating": round(avg.scalar() or 0, 1),
-                "total_reviews": total.scalar() or 0,
-                "user_review": user_review,
-            },
-        }
+    return {
+        "reviews": reviews_out,  # 🔥 Список отзывов
+        "stats": {  # 🔥 Вложенная статистика
+            "average_rating": round(avg.scalar() or 0, 1),
+            "total_reviews": total.scalar() or 0,
+            "user_review": user_review,
+        },
+    }
 
 
 @app.post("/courses/{course_id}/reviews", response_model=ReviewOut, status_code=201)
@@ -2661,6 +2661,7 @@ async def format_comment_with_stats(
         "parent_id": comment.parent_id,
         "created_at": comment.created_at,
         "updated_at": comment.updated_at,
+        "avatar_url": comment.user.avatar_url if comment.user else None,
         "likes": likes,
         "dislikes": dislikes,
         "user_reaction": user_reaction,
@@ -2780,6 +2781,7 @@ async def create_comment(
         content=comment.content,
         parent_id=comment.parent_id,
         created_at=comment.created_at,
+        avatar_url=current_user.avatar_url,
         replies=[],
     )
 

@@ -23,7 +23,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
+import useContactStore from "@/store/states";
+import ConfirmDialog from "@/components/ConfirmDialog";
 type PromoCourse = {
   id: number;
   title: string;
@@ -81,6 +82,17 @@ export default function CoursePromoPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    onConfirm: () => void;
+    message?: string;
+  }>({
+    isOpen: false,
+    onConfirm: () => {},
+    message: "",
+  });
+  // Получаем состояние аутентификации из стора
+  const { isAuthenticated, openLogin } = useContactStore();
 
   const [course, setCourse] = useState<PromoCourse | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -176,19 +188,23 @@ export default function CoursePromoPage() {
         });
 
         try {
+          console.log("🔍 [Reviews] Fetching:", `/courses/${found.id}/reviews`);
           const reviewsData = await apiFetch(`/courses/${found.id}/reviews`);
-          console.log("✅ Reviews loaded:", {
-            total: reviewsData.stats?.total_reviews,
-            user_review: reviewsData.stats?.user_review ? "exists" : "null",
+          console.log("✅ [Reviews] Response:", {
+            status: 200,
+            reviews_count: reviewsData.reviews?.length,
+            stats: reviewsData.stats,
           });
           setReviews(reviewsData.reviews || []);
           setReviewStats(reviewsData.stats || null);
           calculateRatingDistribution(reviewsData.reviews || []);
-        } catch (err) {
-          console.error("❌ Could not load reviews:", err);
+        } catch (err: any) {
+          console.error("❌ [Reviews] Error:", {
+            status: err?.status,
+            message: err?.message,
+            data: err?.data,
+          });
         }
-      } catch (err) {
-        console.error("❌ Failed to load promo:", err);
       } finally {
         setLoading(false);
       }
@@ -222,9 +238,9 @@ export default function CoursePromoPage() {
   };
 
   const handleEnroll = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
       return;
     }
 
@@ -234,7 +250,7 @@ export default function CoursePromoPage() {
     try {
       await apiFetch(`/courses/${course.slug}/enroll`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setIsEnrolled(true);
 
@@ -251,6 +267,13 @@ export default function CoursePromoPage() {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token || !course?.id) return;
 
@@ -304,34 +327,49 @@ export default function CoursePromoPage() {
     }
   };
 
-  const handleDeleteReview = async () => {
-    if (!confirm("Удалить отзыв?")) return;
+  const handleDeleteReview = () => {
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token || !reviewStats?.user_review?.id) return;
 
-    try {
-      await apiFetch(`/reviews/${reviewStats.user_review.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await apiFetch(`/courses/${course?.id}/reviews`);
-      setReviews(data.reviews || []);
-      setReviewStats(data.stats || null);
-      calculateRatingDistribution(data.reviews || []);
-    } catch (err: any) {
-      alert(err.message || "Ошибка при удалении");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      message:
+        "Вы действительно хотите удалить свой отзыв? Это действие нельзя отменить.",
+      onConfirm: async () => {
+        try {
+          await apiFetch(`/reviews/${reviewStats.user_review.id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await apiFetch(`/courses/${course?.id}/reviews`);
+          setReviews(data.reviews || []);
+          setReviewStats(data.stats || null);
+          calculateRatingDistribution(data.reviews || []);
+          setToast("Отзыв успешно удалён");
+        } catch (err: any) {
+          alert(err.message || "Ошибка при удалении");
+        }
+      },
+    });
   };
-
   const handleReaction = async (
     reviewId: number,
     type: "like" | "dislike" | null,
   ) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
       return;
     }
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
     if (reactingReviewId) return;
 
     setReactingReviewId(reviewId);
@@ -373,6 +411,12 @@ export default function CoursePromoPage() {
   };
 
   const startEditing = () => {
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+
     if (reviewStats?.user_review) {
       setNewReview({
         rating: reviewStats.user_review.rating,
@@ -386,9 +430,9 @@ export default function CoursePromoPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
       return;
     }
 
@@ -398,7 +442,7 @@ export default function CoursePromoPage() {
       const isFav = course.is_favorite;
       await apiFetch(`/courses/${course.id}/favorite`, {
         method: isFav ? "DELETE" : "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setCourse((prev) => (prev ? { ...prev, is_favorite: !isFav } : prev));
     } catch (err) {
@@ -503,7 +547,26 @@ export default function CoursePromoPage() {
               />
             </div>
           )}
-
+          {/* Confirm Dialog */}
+          <ConfirmDialog
+            isOpen={confirmDialog.isOpen}
+            onClose={() =>
+              setConfirmDialog({
+                isOpen: false,
+                onConfirm: () => {},
+                message: "",
+              })
+            }
+            onConfirm={confirmDialog.onConfirm}
+            title="Удаление отзыва"
+            message={
+              confirmDialog.message ||
+              "Вы уверены, что хотите удалить этот отзыв?"
+            }
+            confirmText="Удалить"
+            cancelText="Отмена"
+            type="danger"
+          />
           <div className=" ml-[30px]">
             <div className="flex items-start justify-between mb-4">
               {course.category && (
@@ -607,54 +670,42 @@ export default function CoursePromoPage() {
             </svg>
           </button>
         </div>
-
-        {canWriteReview && !reviewStats?.user_review && (
-          <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-100 border border-purple-300 rounded-full">
-            <MessageSquare className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">
-              ✅ У вас {course.completion_percent}% — можно оставить или
-              редактировать отзыв
+      </div>
+      {course.completion_percent != null && course.completion_percent >= 90 && (
+        <div className="bg-white w-full my-[30px] p-[20px] rounded-lg shadow-xs">
+          <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-200 rounded-lg">
+            <CheckCircle className="w-5 h-5 text-green-900" />
+            <span className="text-sm font-semibold text-green-950">
+              Курс завершён! {course.completion_percent}%
             </span>
           </div>
-        )}
-      </div>
 
-      <div className="bg-white w-full my-[30px] p-[20px] rounded-lg shadow-xs">
-        {course.completion_percent != null &&
-          course.completion_percent >= 90 && (
-            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-200 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-900" />
-              <span className="text-sm font-semibold text-green-950">
-                Курс завершён! {course.completion_percent}%
-              </span>
+          {course.is_enrolled && course.completion_percent >= 90 && (
+            <div className="mt-6 bg-amber-200 p-[30px] py-[40px] my-[20px] mx-[30px] rounded-lg rotate-3 ">
+              <div className="flex rounded-lg items-center bg-amber-500 justify-between p-[10px] -rotate-3">
+                <div>
+                  <p className="text-lg font-bold text-yellow-950">
+                    🎓 Поздравляем! Вы прошли курс на{" "}
+                    {course.completion_percent}%
+                  </p>
+                  <p className="text-sm text-yellow-900">
+                    Получите сертификат об окончании и отправьте его друзьям!
+                  </p>
+                  <p className="text-yellow-950 text-sm">
+                    Это бесплатно, за отправку сертификата +40 баллов
+                  </p>
+                </div>
+                <Link
+                  href={`/courses/${slug}/certificate`}
+                  className="px-4 py-2 bg-amber-400 text-white rounded-lg font-semibold hover:bg-amber-600 transition whitespace-nowrap"
+                >
+                  Получить сертификат
+                </Link>
+              </div>
             </div>
           )}
-
-        {course.is_enrolled && course.completion_percent >= 90 && (
-          <div className="mt-6 bg-amber-200 p-[30px] py-[40px] my-[20px] mx-[30px] rounded-lg rotate-3 ">
-            <div className="flex rounded-lg items-center bg-amber-500 justify-between p-[10px] -rotate-3">
-              <div>
-                <p className="text-lg font-bold text-yellow-950">
-                  🎓 Поздравляем! Вы прошли курс на {course.completion_percent}%
-                </p>
-                <p className="text-sm text-yellow-900">
-                  Получите сертификат об окончании и отправьте его друзьям!
-                </p>
-                <p className="text-yellow-950 text-sm">
-                  Это бесплатно, за отправку сертификата +40 баллов
-                </p>
-              </div>
-              <Link
-                href={`/courses/${slug}/certificate`}
-                className="px-4 py-2 bg-amber-400 text-white rounded-lg font-semibold hover:bg-amber-600 transition whitespace-nowrap"
-              >
-                Получить сертификат
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-
+        </div>
+      )}
       <div className="mb-[20px] w-full bg-white p-[20px] rounded-lg shadow-xs">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
         {course.about ? (
@@ -768,6 +819,15 @@ export default function CoursePromoPage() {
           </div>
         </div>
       </div>
+
+      {canWriteReview && !reviewStats?.user_review && (
+        <div className="mb-4 w-full inline-flex items-center gap-2 px-4 py-3 bg-purple-600 mt-[20px] rounded-lg">
+          <span className="text-sm font-semibold text-white">
+            Так держать! У вас {course.completion_percent}% — можно оставить
+            отзыв. Оставь отзыв и получи +40xp
+          </span>
+        </div>
+      )}
       {/* 🔹 Фильтры и сортировка */}
       <div className="mb-6 flex flex-wrap items-center gap-3 p-4 bg-white mt-[20px] rounded-lg shadow-xs w-full px-[20px]">
         <Filter className="w-4 h-4 text-gray-500" />
@@ -818,18 +878,17 @@ export default function CoursePromoPage() {
         </div>
       </div>
 
-      {/* 🔹 Форма отзыва - показываем только если нет отзыва */}
-      {!isEnrolled ? (
-        <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-600 mb-2">
+      {!isAuthenticated ? (
+        <div className="mb-6 p-1 bg-purple-600 w-full rounded-lg border border-purple-200">
+          <div className="text-center py-2">
+            <p className="text-sm text-white font-semibold">
               🔐 Чтобы оставить отзыв, сначала{" "}
-              <Link
-                href={`/courses/${slug}`}
-                className="text-purple-600 font-medium hover:underline"
+              <button
+                onClick={openLogin}
+                className="text-white ml-[10px] bg-purple-500 px-[20px] rounded-lg p-[10px] font-medium hover:underline"
               >
-                запишитесь на курс
-              </Link>
+                войдите в аккаунт
+              </button>
             </p>
           </div>
         </div>
@@ -852,11 +911,8 @@ export default function CoursePromoPage() {
         </div>
       ) : !reviewStats?.user_review ? (
         // Показываем форму только если нет отзыва
-        <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
+        <div className="mb-6 p-4 bg-white w-full rounded-xl ">
           <form onSubmit={handleSubmitReview}>
-            <p className="text-sm text-purple-800 mb-3 font-medium">
-              Оцените курс:
-            </p>
             <div className="mb-3">
               {renderStars(newReview.rating, true, (r) =>
                 setNewReview((prev) => ({ ...prev, rating: r })),
@@ -901,115 +957,179 @@ export default function CoursePromoPage() {
           filteredSortedReviews.map((review) => {
             const isCurrentUserReview =
               reviewStats?.user_review?.id === review.id;
+            const isEditingThisReview = isEditing && isCurrentUserReview;
 
             return (
               <div
                 key={review.id}
-                className={`p-4 bg-white shadow-xs rounded-lg p-[20px] ${isCurrentUserReview ? "border-2 border-purple-300 bg-purple-50/30" : ""}`}
+                className={`p-4 bg-white shadow-xs rounded-lg p-[20px] ${isCurrentUserReview && !isEditingThisReview ? "" : ""}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Link
-                      className="cursor-pointer"
-                      href={`/profile/${review.user_id}`}
-                    >
-                      <img
-                        src={`/avatars/${review.avatar_url}`}
-                        className="rounded-full cursor-pointer w-10 h-10 object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "/avatars/default_cat.jpg";
+                {isEditingThisReview ? (
+                  // Форма редактирования отзыва
+                  <form onSubmit={handleSubmitReview}>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-purple-800">
+                        Редактировать отзыв:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setNewReview({ rating: 5, comment: "" });
+                          setCommentError(null);
                         }}
-                      />
-                    </Link>
-                    <div>
-                      <div className="flex items-center gap-2">
+                        className="p-1 text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mb-3">
+                      {renderStars(newReview.rating, true, (r) =>
+                        setNewReview((prev) => ({ ...prev, rating: r })),
+                      )}
+                    </div>
+                    <textarea
+                      value={newReview.comment}
+                      onChange={(e) =>
+                        setNewReview((prev) => ({
+                          ...prev,
+                          comment: e.target.value,
+                        }))
+                      }
+                      placeholder="Отредактируйте ваш отзыв (минимум 50 слов)..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                      rows={4}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p
+                        className={`text-xs ${commentError ? "text-red-600" : "text-gray-500"}`}
+                      >
+                        {commentError || `${wordCount}/50 слов`}
+                      </p>
+                      <button
+                        type="submit"
+                        disabled={submittingReview || wordCount < 50}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                      >
+                        {submittingReview
+                          ? "Сохранение..."
+                          : "Сохранить изменения"}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  // Отображение отзыва
+                  <>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
                         <Link
-                          className="cursor-pointer"
+                          className="cursor-pointer block overflow-hidden rounded-full"
                           href={`/profile/${review.user_id}`}
                         >
-                          <p className="font-medium text-gray-900">
-                            {review.username}
-                          </p>
+                          <img
+                            src={`/avatars/${review.avatar_url}`}
+                            className="rounded-full cursor-pointer w-10 h-10 object-cover transition-transform duration-300 hover:scale-120"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "/avatars/default_cat.jpg";
+                            }}
+                          />
                         </Link>
-                        {isCurrentUserReview && (
-                          <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">
-                            Вы
-                          </span>
-                        )}
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              className="cursor-pointer"
+                              href={`/profile/${review.user_id}`}
+                            >
+                              <p className="font-medium hover:text-purple-700 duration-300 text-gray-900">
+                                {review.username}
+                              </p>
+                            </Link>
+                            {isCurrentUserReview && (
+                              <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">
+                                Вы
+                              </span>
+                            )}
+                          </div>
+                          {renderStars(review.rating)}
+                        </div>
                       </div>
-                      {renderStars(review.rating)}
+                      <p className="text-xs text-gray-500">
+                        {new Date(review.created_at).toLocaleDateString(
+                          "ru-RU",
+                        )}
+                      </p>
                     </div>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    {new Date(review.created_at).toLocaleDateString("ru-RU")}
-                  </p>
-                </div>
 
-                <p className="text-gray-700 mt-3 text-sm whitespace-pre-wrap">
-                  {review.comment}
-                </p>
+                    <p className="text-gray-700 mt-3 text-sm whitespace-pre-wrap">
+                      {review.comment}
+                    </p>
 
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
-                  <button
-                    onClick={() =>
-                      handleReaction(
-                        review.id,
-                        review.user_reaction === "like" ? null : "like",
-                      )
-                    }
-                    disabled={reactingReviewId === review.id}
-                    className={`flex items-center gap-1.5 text-sm transition ${
-                      review.user_reaction === "like"
-                        ? "text-gray-800 font-medium"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <ThumbsUp
-                      className={`w-4 h-4 ${review.user_reaction === "like" ? "fill-current" : ""}`}
-                    />
-                    <span>{review.likes}</span>
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleReaction(
-                        review.id,
-                        review.user_reaction === "dislike" ? null : "dislike",
-                      )
-                    }
-                    disabled={reactingReviewId === review.id}
-                    className={`flex items-center gap-1.5 text-sm transition ${
-                      review.user_reaction === "dislike"
-                        ? "text-gray-800 font-medium"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <ThumbsDown
-                      className={`w-4 h-4 ${review.user_reaction === "dislike" ? "fill-current" : ""}`}
-                    />
-                    <span>{review.dislikes}</span>
-                  </button>
-
-                  {/* Кнопки редактирования/удаления только для своего отзыва */}
-                  {isCurrentUserReview && (
-                    <div className="flex gap-2 ml-auto">
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
                       <button
-                        onClick={startEditing}
-                        className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-100 rounded transition"
-                        title="Редактировать"
+                        onClick={() =>
+                          handleReaction(
+                            review.id,
+                            review.user_reaction === "like" ? null : "like",
+                          )
+                        }
+                        disabled={reactingReviewId === review.id}
+                        className={`flex items-center gap-1.5 text-sm transition ${
+                          review.user_reaction === "like"
+                            ? "text-gray-800 font-medium"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <ThumbsUp
+                          className={`w-4 h-4 ${review.user_reaction === "like" ? "fill-current" : ""}`}
+                        />
+                        <span>{review.likes}</span>
                       </button>
                       <button
-                        onClick={handleDeleteReview}
-                        className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded transition"
-                        title="Удалить"
+                        onClick={() =>
+                          handleReaction(
+                            review.id,
+                            review.user_reaction === "dislike"
+                              ? null
+                              : "dislike",
+                          )
+                        }
+                        disabled={reactingReviewId === review.id}
+                        className={`flex items-center gap-1.5 text-sm transition ${
+                          review.user_reaction === "dislike"
+                            ? "text-gray-800 font-medium"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <ThumbsDown
+                          className={`w-4 h-4 ${review.user_reaction === "dislike" ? "fill-current" : ""}`}
+                        />
+                        <span>{review.dislikes}</span>
                       </button>
+
+                      {/* Кнопки редактирования/удаления только для своего отзыва */}
+                      {isCurrentUserReview && (
+                        <div className="flex gap-2 ml-auto">
+                          <button
+                            onClick={startEditing}
+                            className="p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-100 rounded transition"
+                            title="Редактировать"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleDeleteReview}
+                            className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded transition"
+                            title="Удалить"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             );
           })

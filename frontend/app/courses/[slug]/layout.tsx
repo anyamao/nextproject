@@ -1,13 +1,13 @@
 // courses/[slug]/layout.tsx
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, TableOfContents } from "lucide-react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import "../../globals.css";
 import CourseSidePanel from "../../../ui/CourseSidePanel";
-
+import useContactStore from "@/store/states";
 type CourseMeta = {
   title: string;
   slug: string;
@@ -22,9 +22,11 @@ export default function RootLayout({
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [enrolling, setEnrolling] = useState(false);
+
   const slug = params.slug as string;
   const isCertificatePage = pathname?.includes("/certificate");
-
+  const { isAuthenticated, openLogin } = useContactStore();
   const [meta, setMeta] = useState<CourseMeta | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -42,18 +44,39 @@ export default function RootLayout({
 
     if (slug) fetchMeta();
   }, [slug]);
+  const handleEnroll = async () => {
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
 
-  // Извлекаем slug урока из URL для хлебных крошек
+    if (!meta?.slug) return;
+
+    setEnrolling(true);
+    try {
+      await apiFetch(`/courses/${meta.slug}/enroll`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      // Обновляем метаданные после записи
+      const updatedMeta = await apiFetch(`/courses/${slug}/meta`);
+      setMeta(updatedMeta);
+    } catch (err: any) {
+      console.error("❌ Failed to enroll:", err);
+      alert(err.message || "Ошибка при записи");
+    } finally {
+      setEnrolling(false);
+    }
+  };
   const pathParts = pathname.split("/").filter(Boolean);
   const currentLessonSlug =
     pathParts.length > 2 ? pathParts[pathParts.length - 1] : null;
-
+  const isLessonPage = pathParts.length == 3; // например: /courses/slug/lesson-slug
   if (loading || !meta) {
     return (
       <div className="flex flex-col w-full h-full max-w-[1100px]">
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
-        </div>
+        <div className="flex justify-center py-20"></div>
       </div>
     );
   }
@@ -106,10 +129,19 @@ export default function RootLayout({
           )}
         </div>
       </div>
+      {isLessonPage && (
+        <div className="flex flex-row bg-gray-800 w-full rounded-lg mt-[20px] text-gray-100 items-center p-[20px] px-[30px]">
+          <p className="font-bold text-md">Структура курса</p>
+
+          <p className="text-sm ml-[10px]">
+            Тут вы можете подробнее ознакомиться со структурой уроков курса
+          </p>
+        </div>
+      )}
 
       {/* 🔹 Карточка курса с прогрессом */}
       <div
-        className={`bg-white rounded-lg w-full h-[70px] my-[20px] p-[10px]    ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
+        className={`bg-white rounded-lg w-full justify-between h-[70px] my-[20px] p-[10px]  px-[20px]   ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
       >
         <div className="flex flex-col">
           <p className="text-lg font-bold truncate">{meta.title}</p>
@@ -139,6 +171,16 @@ export default function RootLayout({
               </div>
             </div>
           </div>
+        )}
+
+        {!meta.is_enrolled && (
+          <button
+            onClick={handleEnroll}
+            disabled={enrolling}
+            className="flex p-[10px] items-center hover:bg-purple-600 cursor-pointer my-[5px] justify-center px-[20px] rounded-lg bg-purple-500 text-purple-100 disabled:opacity-50"
+          >
+            {enrolling ? "записываем..." : "записаться"}
+          </button>
         )}
       </div>
 

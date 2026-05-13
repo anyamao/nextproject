@@ -199,53 +199,6 @@ export default function CourseLessonsPage() {
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-4xl mx-auto">
       <div className="w-full mb-8">
-        <Link
-          href="/courses"
-          className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2 mb-4"
-        >
-          <ArrowLeft className="w-5 h-5" /> Все курсы
-        </Link>
-
-        <div className="mb-4 rounded-xl">
-          <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-            <span className="font-medium flex items-center gap-2">
-              Прогресс по курсу
-            </span>
-            <span className="text-gray-500">
-              {completedUnits}/{totalUnits}{" "}
-              {completedUnits == 0 ||
-              completedUnits / 10 == 0 ||
-              (completedUnits >= 5 && completedUnits <= 20) ||
-              completedUnits % 10 >= 5
-                ? "юнитов"
-                : completedUnits == 1
-                  ? "юнит"
-                  : "юнита"}
-              {totalUnits % 10 === 1 && totalUnits % 100 !== 11
-                ? ""
-                : totalUnits % 10 >= 2 &&
-                    totalUnits % 10 <= 4 &&
-                    (totalUnits % 100 < 10 || totalUnits % 100 >= 20)
-                  ? "а"
-                  : "ов"}{" "}
-              пройдено
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div
-              className={`rounded-full h-2 transition-all duration-700 ease-out ${
-                unitProgressPercent === 100 ? "bg-green-500" : "bg-purple-500"
-              }`}
-              style={{ width: `${unitProgressPercent}%` }}
-            />
-          </div>
-          {unitProgressPercent === 100 && (
-            <p className="text-center text-sm text-green-700 font-medium mt-2 flex items-center justify-center gap-1">
-              <Trophy className="w-4 h-4" /> Курс завершён! 🎉
-            </p>
-          )}
-        </div>
-
         <h1 className="text-3xl font-bold text-gray-900">
           {courseTitle || "Загрузка..."}
         </h1>
@@ -295,25 +248,6 @@ export default function CourseLessonsPage() {
                   </div>
                 )}
 
-                {/* 🔹 Бейдж завершения */}
-                {completionPercent != null && completionPercent >= 90 && (
-                  <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-full">
-                    <svg
-                      className="w-5 h-5 text-green-600"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-sm font-semibold text-green-800">
-                      Курс завершён! 🎉 {completionPercent}%
-                    </span>
-                  </div>
-                )}
                 <button
                   onClick={() => toggleUnit(unit.id)}
                   className="w-full flex items-center justify-between p-5 px-[20px] hover:bg-gray-50 transition"

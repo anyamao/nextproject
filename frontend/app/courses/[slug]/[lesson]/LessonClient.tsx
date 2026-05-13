@@ -76,36 +76,35 @@ export default function LessonClient({
       } | null;
     }>
   >([]);
+
+  // 🔥 Инициализируем unitLessons с текущим уроком, чтобы квадраты появились сразу
+  useEffect(() => {
+    if (lesson?.id && lessonSlug) {
+      setUnitLessons([
+        {
+          id: lesson.id,
+          slug: lessonSlug,
+          title: lesson.title,
+          test_id: testId ?? null,
+          unit: null, // Пока не знаем, потом обновим
+          is_completed: false,
+        },
+      ]);
+    }
+  }, [lesson?.id, lessonSlug, lesson?.title, testId]);
+
   useEffect(() => {
     async function loadUnitLessons() {
-      if (!subjectSlug || !lesson?.id) {
-        console.log(
-          "⚠️ [UnitLessons] Skipping: missing subjectSlug or lesson.id",
-        );
-        return;
-      }
+      if (!subjectSlug || !lesson?.id) return;
 
       try {
-        console.log(
-          "🔍 [UnitLessons] Fetching course:",
-          `/courses/${subjectSlug}`,
-        );
         const courseData = await apiFetch(`/courses/${subjectSlug}`);
 
-        // 🔥 Находим текущий урок внутри курса, чтобы получить его unit
+        // Находим текущий урок внутри курса, чтобы получить его unit
         const currentLesson = courseData.lessons?.find(
           (l: any) => l.id === lesson.id,
         );
-
-        console.log("✅ [UnitLessons] Current lesson from course:", {
-          id: currentLesson?.id,
-          unit: currentLesson?.unit,
-        });
-
-        if (!currentLesson?.unit?.id) {
-          console.log("⚠️ [UnitLessons] Current lesson has no unit");
-          return;
-        }
+        if (!currentLesson?.unit?.id) return;
 
         const allLessons = courseData.lessons || [];
 
@@ -114,12 +113,7 @@ export default function LessonClient({
           .filter((l: any) => l.unit?.id === currentLesson.unit.id)
           .sort((a: any, b: any) => a.id - b.id);
 
-        console.log(
-          "✅ [UnitLessons] Found unit lessons:",
-          currentUnitLessons.length,
-        );
-
-        // Проверяем статус завершения
+        // Проверяем статус завершения для каждого урока
         const lessonsWithStatus = await Promise.all(
           currentUnitLessons.map(async (l: any) => {
             let isCompleted = false;
@@ -139,11 +133,14 @@ export default function LessonClient({
                 console.warn(`⚠️ Could not fetch test result for ${l.test_id}`);
               }
             }
-            return { ...l, is_completed: isCompleted };
+            return {
+              ...l,
+              is_completed: isCompleted,
+              unit: currentLesson.unit, // 🔥 Добавляем unit к каждому уроку
+            };
           }),
         );
 
-        console.log("✅ [UnitLessons] Setting state:", lessonsWithStatus);
         setUnitLessons(lessonsWithStatus);
       } catch (err) {
         console.error("❌ [UnitLessons] Failed:", err);
@@ -151,7 +148,8 @@ export default function LessonClient({
     }
 
     loadUnitLessons();
-  }, [subjectSlug, lesson?.id]); // 🔥 Зависимости: subjectSlug и lesson.id
+  }, [subjectSlug, lesson?.id]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -342,7 +340,9 @@ export default function LessonClient({
           <div className="flex flex-row">
             {toast && <Toast message={toast} onClose={() => setToast(null)} />}
             {/* 🔹 Динамические квадраты уроков юнита */}
-            {unitLessons.length > 0 && ( // 🔥 Проверяем unitLessons, а не lesson.unit!
+
+            {/* 🔹 Динамические квадраты уроков юнита */}
+            {unitLessons.length > 0 && (
               <div className="flex flex-row items-center">
                 <div className="flex flex-row">
                   {unitLessons.map((unitLesson) => {
@@ -353,8 +353,12 @@ export default function LessonClient({
                       <Link
                         key={unitLesson.id}
                         href={`/courses/${subjectSlug}/${unitLesson.slug}`}
-                        className={`flex w-[25px] h-[25px] rounded-lg mx-[3px] items-center justify-center transition-all ${isCurrent ? "border-[2px] border-purple-600" : ""}
-${isCompleted ? "bg-green-400" : ""}
+                        className={`flex w-[25px] h-[25px] rounded-lg mx-[3px] items-center justify-center transition-all ${
+                          isCurrent
+                            ? "bg-gray-300 border-[2px] border-purple-500"
+                            : isCompleted
+                              ? "bg-green-400 border-[2px] border-green-500"
+                              : "bg-gray-300 border-[2px] border-transparent"
                         }`}
                         title={unitLesson.title}
                       >

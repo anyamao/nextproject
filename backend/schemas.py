@@ -397,6 +397,7 @@ class CommentOut(BaseModel):
     user_id: int
     username: str
     content: str
+    avatar_url: str | None = None
     parent_id: int | None
     created_at: datetime
     replies: list["CommentOut"] = []
