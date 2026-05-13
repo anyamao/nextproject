@@ -279,7 +279,7 @@ export default function CoursesContent() {
                 {/* 🔹 Бейдж "Пройдено" — показываем только если прогресс ≥90% */}
                 {course.is_enrolled &&
                   (course.completion_percent ?? 0) >= 90 && (
-                    <div className="absolute flex flex-row items-center top-48 right-3 bg-green-500 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
+                    <div className="absolute flex flex-row items-center top-48 right-3 bg-gray-900 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
                       <p>Пройдено</p>
                       <Check className="ml-[5px] w-4 h-4"></Check>
                     </div>
@@ -289,7 +289,7 @@ export default function CoursesContent() {
                   onClick={(e) => toggleFavorite(e, course.id)}
                   className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${
                     isFav
-                      ? "bg-red-500 text-white hover:bg-red-600"
+                      ? "bg-red-600 text-white hover:bg-red-600"
                       : "bg-white text-gray-400 hover:text-red-500 hover:bg-white"
                   }`}
                   title={

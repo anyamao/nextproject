@@ -454,7 +454,7 @@ export default function LessonClient({
         </div>
 
         <div className="flex md:flex-row flex-col items-center w-full mt-[15px] justify-between">
-          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg border-gray-200">
+          <div className="flex flex-row items-center  shadow-xs bg-white h-[50px] px-[10px] rounded-lg border-gray-200">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
               <p className="smaller-text text-gray-600 font-semibold">
                 Поделиться
@@ -472,7 +472,7 @@ export default function LessonClient({
           </div>
 
           {isAuthenticated ? (
-            <div className="p-[10px] bg-white rounded-lg mt-[10px] md:mt-[0px] h-[50px] flex flex-row items-center ">
+            <div className="p-[10px] bg-white shadow-xs rounded-lg mt-[10px] md:mt-[0px] h-[50px] flex flex-row items-center ">
               {loadingResult ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-200 border-t-purple-600" />
@@ -537,7 +537,7 @@ export default function LessonClient({
         )}
       </div>
 
-      <div className="flex flex-col bg-white px-[30px] p-[20px] rounded-lg w-full">
+      <div className="flex flex-col shadow-xs bg-white px-[30px] p-[20px] rounded-lg w-full">
         {testId && (
           <p className="ord-text text-gray-700 font-normal text-sm mb-[10px]">
             <strong>Молодец!</strong> Ты прочитал всю теорию по данному уроку.
@@ -607,7 +607,7 @@ export default function LessonClient({
       <div className="flex flex-row w-full items-center justify-between">
         {lesson?.id && <LessonReactions lessonId={lesson?.id} />}
 
-        <div className="flex flex-row bg-white p-[5px] px-[10px] rounded-lg items-center min-w-[90px] mr-[5px]">
+        <div className="flex shadow-xs  flex-row bg-white p-[5px] px-[10px] rounded-lg items-center min-w-[90px] mr-[5px]">
           <p className="smaller-text text-gray-600 font-semibold">Поделиться</p>
           <CopyLinkButton variant="icon" />
         </div>

@@ -25,7 +25,7 @@ from sqlalchemy import (
     text,
     inspect,
 )
-
+from pydantic import BaseModel, Field
 import os
 from sqlalchemy.dialects.postgresql import insert
 import json
@@ -37,6 +37,7 @@ from typing import Any, Dict, Literal, Optional
 import asyncpg
 from models import (
     User,
+    UserAchievement,
     PublicProfileOut,
     EgeSubject,
     EgeLesson,
@@ -129,6 +130,8 @@ from auth import (
 )
 from sqlalchemy.orm import selectinload, relationship, backref, declarative_base
 
+from sqlalchemy.exc import IntegrityError
+
 load_dotenv()
 
 
@@ -158,6 +161,96 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# backend/main.py — после импортов, перед эндпоинтами
+
+
+async def try_grant_reward(
+    user_id: int,
+    reward_type: str,
+    context_id: int | None,
+    amount: int,
+    db: AsyncSession,
+) -> bool:
+    """
+    Выдаёт награду, если ещё не получена.
+    Возвращает True если выдана, False если уже была.
+    """
+    # 1️⃣ Проверяем, не получал ли уже
+    check = await db.execute(
+        select(UserAchievement).where(
+            UserAchievement.user_id == user_id,
+            UserAchievement.reward_type == reward_type,
+            UserAchievement.context_id == context_id,
+        )
+    )
+    if check.scalar_one_or_none():
+        return False
+
+    # 2️⃣ Создаём запись
+    db.add(
+        UserAchievement(
+            user_id=user_id,
+            reward_type=reward_type,
+            context_id=context_id,
+        )
+    )
+
+    # 3️⃣ Начисляем токены
+    user = await db.get(User, user_id)
+    if user:
+        user.token_balance += amount
+
+    # 4️⃣ Сохраняем
+    await db.commit()
+    return True
+
+
+async def check_progress_milestones(
+    user_id: int, course_id: int, percent: float, db: AsyncSession
+) -> list[dict]:
+    """Проверяет пороги 75% и 90%, выдаёт награды если нужно"""
+    rewards = []
+
+    if percent >= 75:
+        if await try_grant_reward(user_id, "progress_75", course_id, 200, db):
+            rewards.append({"type": "progress_75", "amount": 200})
+
+    if percent >= 90:
+        if await try_grant_reward(user_id, "progress_90", course_id, 100, db):
+            rewards.append({"type": "progress_90", "amount": 100})
+
+    return rewards
+
+
+# backend/main.py
+
+from pydantic import BaseModel, Field
+
+
+class TokenRewardRequest(BaseModel):
+    amount: int = Field(..., ge=1, le=1000)
+    reason: str = Field(..., max_length=100)
+
+
+@app.post("/profile/balance/reward")
+async def reward_balance(
+    request: TokenRewardRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Начислить токены пользователю (для фронтенд-триггеров)"""
+
+    # 🔥 Здесь можно добавить дополнительную валидацию, если нужно
+    # Например, проверять reason, чтобы нельзя было накрутить
+
+    current_user.token_balance += request.amount
+    await db.commit()
+
+    return {
+        "token_balance": current_user.token_balance,
+        "rewarded": request.amount,
+        "reason": request.reason,
+    }
 
 
 @app.post("/auth/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -951,6 +1044,13 @@ async def create_course_review(
     db.add(new_review)
     await db.commit()
     await db.refresh(new_review)
+    await try_grant_reward(
+        current_user.id,
+        "review_written",
+        course_id,  # контекст: конкретный курс
+        50,
+        db,
+    )
 
     return ReviewOut(
         id=new_review.id,
@@ -1336,7 +1436,17 @@ async def enroll_in_course(
 
     db.add(UserCourseEnrollment(user_id=current_user.id, course_id=course.id))
     await db.commit()
-    return {"message": "Enrolled successfully"}
+    rewarded = await try_grant_reward(
+        current_user.id,
+        "first_enrollment",
+        None,  # глобальная награда
+        20,
+        db,
+    )
+    return {
+        "message": "Enrolled successfully",
+        "reward_granted": rewarded,  # 🔥 Флаг для фронтенда
+    }
 
 
 # backend/main.py
@@ -2213,12 +2323,24 @@ async def get_course_lessons(
         f"🟢 [DEBUG] Returning {len(lessons_out)} lessons, {len(units_with_counts)} units"
     )
 
-    # 6. Возвращаем обычный словарь (без Pydantic-валидации)
+    milestone_rewards = []
+    if current_user:
+        if completion_percent >= 75:
+            if await try_grant_reward(
+                current_user.id, "progress_75", subject.id, 200, db
+            ):
+                milestone_rewards.append({"type": "progress_75", "amount": 200})
+        if completion_percent >= 90:
+            if await try_grant_reward(
+                current_user.id, "progress_90", subject.id, 100, db
+            ):
+                milestone_rewards.append({"type": "progress_90", "amount": 100})
     return {
         "lessons": lessons_out,
         "units": units_with_counts,
         "is_enrolled": is_enrolled,
         "completion_percent": round(completion_percent, 1),
+        "rewards_granted": milestone_rewards,
     }
 
 
@@ -2583,11 +2705,26 @@ async def submit_test(
     )
     db.add(test_result)
     await db.commit()
+    print(
+        f"🔍 [DEBUG] Test {test_id}: score={score}, passed={passed}, passing_score={test.passing_score}"
+    )
+
+    reward_granted = False
+    if passed:
+        reward_granted = await try_grant_reward(
+            current_user.id,
+            "test_passed",
+            test_id,  # контекст: конкретный тест
+            30,
+            db,
+        )
+
     return TestSubmissionResult(
         score=round(score, 1),
         passed=passed,
         total_questions=total,
         correct_count=correct,
+        reward_granted=reward_granted,
     )
 
 
@@ -2621,10 +2758,26 @@ async def complete_test(
     )
     await db.execute(stmt)
     await db.commit()
+
+    # 🔥 ДОБАВЬ ЭТО: Награда за прохождение теста (первый раз для этого теста)
+    reward_granted = False
+    if result_.passed:  # только если тест пройден
+        reward_granted = await try_grant_reward(
+            current_user.id,
+            "test_passed",
+            test_id,  # контекст: конкретный тест
+            30,  # сумма
+            db,
+        )
+        print(
+            f"🎁 [DEBUG] Test {test_id} reward: granted={reward_granted}, user={current_user.id}"
+        )
+
     return TestResultOut(
         score=result_.score,
         passed=result_.passed,
         completed_at=datetime.now(timezone.utc),
+        reward_granted=reward_granted,  # 🔥 Новый флаг для фронтенда
     )
 
 

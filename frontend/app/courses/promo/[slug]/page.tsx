@@ -144,7 +144,6 @@ export default function CoursePromoPage() {
   const [commentError, setCommentError] = useState<string | null>(null);
   const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
   const { rewardTokens } = useTokens();
-  const [toast, setToast] = useState<string | null>(null);
   const [totalUnits, setTotalUnits] = useState(0);
   const [totalLessons, setTotalLessons] = useState(0);
   const [totalTests, setTotalTests] = useState(0);
@@ -154,7 +153,12 @@ export default function CoursePromoPage() {
   const [expandedCourseUnits, setExpandedCourseUnits] = useState<Set<number>>(
     new Set(),
   );
+  // 🔹 Рядом с существующим стейтом `toast` добавь:
 
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
   const toggleCourseUnit = (unitId: number) => {
     setExpandedCourseUnits((prev) => {
       const next = new Set(prev);
@@ -166,9 +170,11 @@ export default function CoursePromoPage() {
       return next;
     });
   };
-
-  const showToast = (message: string) => {
-    setToast(message);
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "success",
+  ) => {
+    setToast({ message, type });
   };
   useEffect(() => {
     const fetchData = async () => {
@@ -189,6 +195,13 @@ export default function CoursePromoPage() {
         // 🔥 ДОБАВЛЯЕМ: Отдельный запрос для получения структуры курса (юниты и уроки)
         try {
           const courseStructure = await apiFetch(`/courses/${slug}`);
+          if (courseStructure.rewards_granted?.length > 0) {
+            const total = courseStructure.rewards_granted.reduce(
+              (sum: number, r: { amount: number }) => sum + r.amount,
+              0,
+            );
+            showToast(`+${total} XP за прогресс! 🎉`, "success");
+          }
           console.log("✅ Course structure:", {
             units_count: courseStructure.units?.length || 0,
             lessons_count: courseStructure.lessons?.length || 0,
@@ -325,7 +338,6 @@ export default function CoursePromoPage() {
       });
       setIsEnrolled(true);
 
-      await rewardTokens(20, "first_course_enrolled");
       setToast("+20 токенов!");
       setTimeout(() => router.push(`/courses/${slug}`), 1000);
     } catch (err: any) {
@@ -392,7 +404,6 @@ export default function CoursePromoPage() {
       setNewReview({ rating: 5, comment: "" });
       setIsEditing(false);
     } catch (err: any) {
-      alert(err.message || "Ошибка");
     } finally {
       setSubmittingReview(false);
     }
@@ -668,12 +679,21 @@ export default function CoursePromoPage() {
                   <span>{formatDuration(course.duration_minutes)}</span>
                 </div>
               )}
+
               {course.enrolled_count !== undefined && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Users className="w-4 h-4" />
-                  <span>{course.enrolled_count}+ студентов</span>
+                  <span>
+                    {course.enrolled_count}+{" "}
+                    {course.enrolled_count === 1
+                      ? "студент"
+                      : course.enrolled_count >= 2 && course.enrolled_count <= 4
+                        ? "студента"
+                        : "студентов"}
+                  </span>
                 </div>
               )}
+
               {reviewStats?.average_rating != null && (
                 <div className="flex items-center gap-2">
                   {renderStars(Number(reviewStats.average_rating))}
@@ -719,7 +739,7 @@ export default function CoursePromoPage() {
 
           <button
             onClick={toggleFavorite}
-            className={`absolute top-4 right-4 z-10 p-2 rounded-full transition  ${course.is_favorite ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
+            className={`absolute top-4 right-4 z-10 p-2 rounded-full transition  ${course.is_favorite ? "bg-red-600 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
             title={
               course.is_favorite
                 ? "Убрать из избранного"
@@ -777,7 +797,7 @@ export default function CoursePromoPage() {
           )}
         </div>
       )}
-      <div className="mb-[20px] w-full bg-white p-[20px] rounded-lg shadow-xs">
+      <div className="my-[20px] w-full bg-white p-[20px] rounded-lg shadow-xs">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">О курсе</h2>
         {course.about ? (
           <div
@@ -796,7 +816,13 @@ export default function CoursePromoPage() {
           <p className="font-black text-3xl text-violet-900">
             {totalUnits || 0}
           </p>
-          <p className="font-semibold text-purple-800">Юнитов</p>
+          <p className="font-semibold text-purple-800">
+            {totalUnits === 1
+              ? "Юнит"
+              : totalUnits >= 2 && totalUnits <= 4
+                ? "Юнита"
+                : "Юнитов"}
+          </p>
           <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-300">
             Уроки структурированы по юнитам, четкий учебный план
           </p>
@@ -806,7 +832,13 @@ export default function CoursePromoPage() {
           <p className="font-black text-3xl text-violet-950">
             {totalLessons || 0}
           </p>
-          <p className="font-semibold text-purple-900">Уроков</p>
+          <p className="font-semibold text-purple-900">
+            {totalLessons === 1
+              ? "Урок"
+              : totalLessons >= 2 && totalLessons <= 4
+                ? "Урока"
+                : "Уроков"}
+          </p>
           <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-400">
             Закроем темы полностью, можно писать обратную связь
           </p>
@@ -816,7 +848,13 @@ export default function CoursePromoPage() {
           <p className="font-black text-3xl text-violet-900">
             {totalTests || 0}
           </p>
-          <p className="font-semibold text-purple-800">Тестов</p>
+          <p className="font-semibold text-purple-800">
+            {totalTests === 1
+              ? "Тест"
+              : totalTests >= 2 && totalTests <= 4
+                ? "Теста"
+                : "Тестов"}
+          </p>
           <p className="text-xs text-purple-700 mt-2 pt-2 border-t border-purple-300">
             Чтобы точно знать свои пробелы, сохраняется лучший результат
           </p>
@@ -826,13 +864,18 @@ export default function CoursePromoPage() {
           <p className="font-black text-3xl text-violet-950">
             {totalFlashcards || 0}
           </p>
-          <p className="font-semibold text-purple-900">Комплектов карточек</p>
+          <p className="font-semibold text-purple-900">
+            {totalFlashcards === 1
+              ? "Комплект карточек"
+              : totalFlashcards >= 2 && totalFlashcards <= 4
+                ? "Комплекта карточек"
+                : "Комплектов карточек"}
+          </p>
           <p className="text-xs text-purple-800 mt-2 pt-2 border-t border-purple-400">
             Повторяй в любое время в любом месте!
           </p>
         </div>
       </div>
-
       <div className="w-full bg-white p-5 rounded-lg shadow-xs mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Программа курса
@@ -849,10 +892,7 @@ export default function CoursePromoPage() {
               const isExpanded = expandedCourseUnits.has(unit.id);
 
               return (
-                <div
-                  key={unit.id}
-                  className="border border-gray-200 rounded-xl overflow-hidden"
-                >
+                <div key={unit.id} className="overflow-hidden rounded-lg">
                   <button
                     onClick={() => toggleCourseUnit(unit.id)}
                     className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
@@ -891,7 +931,7 @@ export default function CoursePromoPage() {
                       {unitLessons.map((lesson) => (
                         <div
                           key={lesson.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                          className="flex items-center justify-between p-3 bg-gray-100 rounded-lg "
                         >
                           <div className="flex-1">
                             <h4 className="text-sm font-medium text-gray-900">
@@ -1093,18 +1133,12 @@ export default function CoursePromoPage() {
           </div>
         </div>
       ) : !canWriteReview ? (
-        <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200">
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-600 mb-2">
+        <div className="mb-6 p-1 bg-purple-600 w-full rounded-lg border border-purple-200">
+          <div className="text-center py-2 flex flex-row justify-between px-[20px] items-center  ">
+            <p className="text-sm text-white font-semibold ">
               📚 Чтобы оставить отзыв, завершите минимум 75% курса
             </p>
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-              <div
-                className="bg-purple-500 h-2 rounded-full transition-all"
-                style={{ width: `${course.completion_percent}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-white ml-[10px] bg-purple-500 px-[20px] rounded-lg p-[10px] font-medium hover:underline">
               Ваш прогресс: {course.completion_percent}%
             </p>
           </div>

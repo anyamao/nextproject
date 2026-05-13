@@ -286,6 +286,36 @@ class CourseTeacher(Base):
     teacher = relationship("Teacher")
 
 
+# backend/models.py
+
+
+class UserAchievement(Base):
+    """Отслеживание полученных наград (защита от дюпов)"""
+
+    __tablename__ = "user_achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    reward_type = Column(
+        String(50), nullable=False
+    )  # Например: "test_passed", "enroll_first", "progress_75"
+    context_id = Column(
+        Integer, nullable=True
+    )  # ID теста, курса и т.д. (None для глобальных наград)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # 🔥 Уникальное ограничение: один юзер + тип + контекст = только одна запись
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "reward_type", "context_id", name="uq_user_achievement"
+        ),
+    )
+
+    user = relationship("User")
+
+
 class EgeLesson(Base):
     __tablename__ = "ege_lessons"
 

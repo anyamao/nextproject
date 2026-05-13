@@ -1,6 +1,6 @@
 // frontend/app/tests/[id]/TestClient.tsx
 "use client";
-
+import Toast from "@/components/Toast";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -53,6 +53,7 @@ export default function TestClient({
     solution?: string | null;
   } | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
@@ -117,11 +118,14 @@ export default function TestClient({
     );
   }, [test.id, subjectSlug, lessonSlug]);
 
+  // frontend/app/tests/[id]/TestClient.tsx — в handleNext:
+
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       return;
     }
+
     const returnTo = getTestReturnUrl(
       test.id,
       `/courses/${subjectSlug}/${lessonSlug}`,
@@ -134,7 +138,8 @@ export default function TestClient({
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        await apiFetch(`/tests/${test.id}/complete`, {
+        // 🔥 СОХРАНЯЕМ РЕЗУЛЬТАТ В ПЕРЕМЕННУЮ:
+        const result = await apiFetch(`/tests/${test.id}/complete`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -142,8 +147,21 @@ export default function TestClient({
           },
           body: JSON.stringify({ score, passed }),
         });
+
+        // 🔥 ТЕПЕРЬ МОЖНО ПРОВЕРИТЬ result.reward_granted:
+        if (result.reward_granted && passed) {
+          // Покажи тост (используй свой Toast-компонент или alert)
+          setToast("+30 XP за тест! 🎉");
+          setTimeout(() => setToast(null), 3000);
+          // Или если есть глобальный toast:
+          // window.dispatchEvent(new CustomEvent('show-toast', {
+          //   detail: { message: "+30 XP за тест! 🎉" }
+          // }));
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("❌ Failed to complete test:", err);
+    }
 
     sessionStorage.setItem(
       `test_${test.id}_result`,
@@ -154,9 +172,9 @@ export default function TestClient({
         passed,
       }),
     );
+
     window.location.href = `/tests/${test.id}/results?returnTo=${encodeURIComponent(returnTo)}`;
   };
-
   const handleRetry = () => {
     setCurrentAnswer("");
     setFeedback(null);

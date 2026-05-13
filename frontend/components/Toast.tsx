@@ -1,8 +1,8 @@
 // components/Toast.tsx
 "use client";
 
-import { useEffect } from "react";
-import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, CheckCircle, AlertCircle, Info, Sparkles } from "lucide-react";
 
 type ToastType = "success" | "error" | "info";
 
@@ -19,44 +19,96 @@ export default function Toast({
   onClose,
   duration = 3000,
 }: ToastProps) {
+  const [isExiting, setIsExiting] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onClose();
+      setIsExiting(true);
+      setTimeout(onClose, 300);
     }, duration);
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
   const config = {
     success: {
-      bg: "bg-green-500",
-      icon: <CheckCircle className="w-5 h-5" />,
-      border: "border-green-400",
+      bg: "from-emerald-500 to-emerald-600",
+      icon: <Sparkles className="w-5 h-5" />,
+      progressBg: "bg-emerald-300",
+      title: "Отлично!",
     },
     error: {
-      bg: "bg-red-500",
+      bg: "from-rose-500 to-rose-600",
       icon: <AlertCircle className="w-5 h-5" />,
-      border: "border-red-400",
+      progressBg: "bg-rose-300",
+      title: "Упс!",
     },
     info: {
-      bg: "bg-blue-500",
+      bg: "from-sky-500 to-sky-600",
       icon: <Info className="w-5 h-5" />,
-      border: "border-blue-400",
+      progressBg: "bg-sky-300",
+      title: "К сведению",
     },
   };
 
   return (
-    <div className="fixed top-20 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+    <div
+      className={`fixed top-50 right-4 z-50 transition-all duration-300 ${
+        isExiting ? "opacity-0 -translate-y-4" : "opacity-100 translate-y-0"
+      }`}
+    >
       <div
-        className={`${config[type].bg} text-white rounded-lg shadow-lg p-4 min-w-[300px] flex items-center justify-between gap-3 border ${config[type].border}`}
+        className={`bg-gradient-to-r ${config[type].bg} text-white rounded-xl shadow-2xl min-w-[340px] max-w-[420px] overflow-hidden`}
       >
-        <div className="flex items-center gap-2">
-          {config[type].icon}
-          <span className="text-sm font-medium">{message}</span>
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30" />
+
+          <div className="flex items-start justify-between gap-3 p-4 pl-5">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                {config[type].icon}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold tracking-wide">
+                  {config[type].title}
+                </p>
+                <p className="text-xs text-white/90 mt-0.5 leading-relaxed">
+                  {message}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsExiting(true);
+                setTimeout(onClose, 300);
+              }}
+              className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="w-full h-1 bg-white/20">
+            <div
+              className={`h-full ${config[type].progressBg} rounded-full transition-all duration-[3000ms] linear`}
+              style={{
+                width: "100%",
+                animation: "shrink 3s linear forwards",
+              }}
+            />
+          </div>
         </div>
-        <button onClick={onClose} className="hover:opacity-80 transition">
-          <X className="w-4 h-4" />
-        </button>
       </div>
+
+      <style>{`
+        @keyframes shrink {
+          from {
+            width: 100%;
+          }
+          to {
+            width: 0%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

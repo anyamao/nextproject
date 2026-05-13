@@ -46,7 +46,7 @@ export default function ResultsContent({
 
   if (!result) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-6 text-center">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center  p-6 text-center">
         <X className="w-16 h-16 text-red-400 mb-4" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Результат не найден
@@ -78,8 +78,8 @@ export default function ResultsContent({
   const finalReturnTo = getTestReturnUrl(testId, "/ege/math-profile");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto text-center">
+    <div className="min-h-screen w-full bg-gray-100 py-12 px-4">
+      <div className="max-w-[550px] mx-auto text-center">
         <div
           className={`inline-flex items-center gap-3 px-6 py-3 rounded-full mb-8 ${
             result.passed

@@ -1,40 +1,39 @@
 // frontend/hooks/useTokens.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
-// frontend/hooks/useTokens.ts
+// frontend/hooks/useTokens.ts — упрощаем
 
 export function useTokens() {
   const { tokenBalance, setTokenBalance } = useContactStore();
-  const [loading, setLoading] = useState(true);
 
-  // 🔥 Загружаем баланс с сервера при маунте и при изменении токена
-  useEffect(() => {
-    async function fetchBalance() {
+  // Загрузка баланса с сервера
+  const fetchBalance = useCallback(async () => {
+    try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setTokenBalance(0); // ← Сбрасываем если нет токена
-        setLoading(false);
+        setTokenBalance(0);
         return;
       }
-
-      try {
-        const data = await apiFetch("/profile/balance", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTokenBalance(data.token_balance ?? 0);
-      } catch (err) {
-        console.error("❌ Failed to fetch balance:", err);
-        setTokenBalance(0); // ← Сбрасываем при ошибке
-      } finally {
-        setLoading(false);
-      }
+      const data = await apiFetch("/profile/balance", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTokenBalance(data.token_balance ?? 0);
+    } catch (err) {
+      console.error("❌ Failed to fetch balance:", err);
     }
+  }, [setTokenBalance]);
 
+  useEffect(() => {
     fetchBalance();
-  }, []); // ← Запускаем при маунте
+  }, [fetchBalance]);
 
-  return { balance: tokenBalance, loading };
+  return {
+    balance: tokenBalance,
+    loading: false,
+    fetchBalance,
+    // 🔥 Убираем rewardTokens — награды теперь только на бэкенде!
+  };
 }

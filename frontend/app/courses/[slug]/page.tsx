@@ -235,7 +235,7 @@ export default function CourseLessonsPage() {
             return (
               <div
                 key={unit.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+                className="bg-white rounded-lg shadow-xs overflow-hidden"
               >
                 {unit.progress && (
                   <div className="mt-3 flex items-center gap-3 px-4">
@@ -330,11 +330,10 @@ export default function CourseLessonsPage() {
                           )}
                         </div>
                       ) : (
-                        // ✅ Открытый урок (твой оригинальный код)
                         <Link
                           key={lesson.id}
                           href={`/courses/${slug}/${lesson.slug}`}
-                          className="group block p-4 bg-white shadow-xs relative rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm hover:bg-white transition-all"
+                          className="group block p-4  shadow-xs relative rounded-lg border-[1px] border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all"
                         >
                           {lesson.is_completed === true && (
                             <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full border border-green-300 z-10">

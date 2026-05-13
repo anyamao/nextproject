@@ -332,27 +332,44 @@ export default function CommentsSection({
                 )}
 
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-gray-600">
                     <button
                       onClick={() => handleReaction(comment.id, "like")}
-                      className={`flex items-center gap-1 text-sm transition ${
-                        comment.user_reaction === "like"
-                          ? "text-green-600 font-semibold"
-                          : "text-gray-500 hover:text-green-600"
-                      }`}
+                      className={`flex items-center gap-1 text-sm transition 
+                      `}
                     >
-                      <ThumbsUp className="text-gray-500 w-[15px] h-[15px]" />{" "}
+                      <ThumbsUp
+                        className={`text-gray-500 w-[15px] h-[15px]    ${
+                          comment.user_reaction === "like"
+                            ? "text-purple-700 fill-purple-700 font-semibold"
+                            : "text-gray-500 hover:text-gray-700"
+                        } `}
+                      />{" "}
                       {comment.likes || 0}
                     </button>
                     <button
                       onClick={() => handleReaction(comment.id, "dislike")}
-                      className={`flex items-center gap-1 text-sm transition ${
-                        comment.user_reaction === "dislike"
-                          ? "text-red-600 font-semibold"
-                          : "text-gray-500 hover:text-red-600"
-                      }`}
+                      className={`flex items-center gap-1 text-sm transition 
+                      `}
                     >
-                      <ThumbsDown className="text-gray-500 w-[15px] h-[15px]" />{" "}
+                      <ThumbsDown
+                        className={`text-gray-500
+
+
+
+
+${
+  comment.user_reaction === "dislike"
+    ? "text-purple-700 fill-purple-700 font-semibold"
+    : "text-gray-500 hover:text-gray-700"
+} 
+
+
+
+
+
+w-[15px] h-[15px]`}
+                      />{" "}
                       {comment.dislikes || 0}
                     </button>
                   </div>

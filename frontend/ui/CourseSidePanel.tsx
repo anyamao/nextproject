@@ -282,7 +282,7 @@ export default function CourseSidePanel() {
 
   return (
     <div
-      className={`h-full rounded-lg flex-1 bg-white ${isCertificatePage ? "hidden" : "flex flex-col"} rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
+      className={`h-full rounded-lg shadow-xs flex-1 bg-white ${isCertificatePage ? "hidden" : "flex flex-col"} rounded-lg p-[10px] max-w-[240px] w-full transition-transform duration-300 ${
         isAnimatingOut
           ? "-translate-x-full"
           : isAnimatingIn
@@ -290,7 +290,7 @@ export default function CourseSidePanel() {
             : "-translate-x-full"
       }`}
     >
-      <div className="rounded-lg border-b border-gray-200 flex items-center justify-between z-10">
+      <div className=" border-b border-gray-200 flex items-center justify-between z-10">
         <h2 className="text-sm font-semibold text-gray-500">
           Содержание курса
         </h2>
@@ -400,7 +400,7 @@ export default function CourseSidePanel() {
                             <Link
                               key={lesson.id}
                               href={`/courses/${courseSlug}/${lesson.slug}`}
-                              className={`group block p-2  rounded-lg transition-all relative ${
+                              className={`group block p-2 hover:bg-gray-200 rounded-lg transition-all relative ${
                                 lesson.slug === currentLessonSlug
                                   ? " border-l-[4px] border-l-purple-500 bg-gray-100"
                                   : "bg-white "

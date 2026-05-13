@@ -130,7 +130,7 @@ export default function RootLayout({
         </div>
       </div>
       {isLessonPage && (
-        <div className="flex flex-row bg-gray-800 w-full rounded-lg mt-[20px] text-gray-100 items-center p-[20px] px-[30px]">
+        <div className="flex flex-row bg-gray-700 w-full rounded-lg mt-[20px] text-gray-100 items-center p-[20px] px-[30px]">
           <p className="font-bold text-md">Структура курса</p>
 
           <p className="text-sm ml-[10px]">
@@ -141,7 +141,7 @@ export default function RootLayout({
 
       {/* 🔹 Карточка курса с прогрессом */}
       <div
-        className={`bg-white rounded-lg w-full justify-between h-[70px] my-[20px] p-[10px]  px-[20px]   ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
+        className={`bg-white rounded-lg w-full justify-between shadow-xs h-[70px] my-[20px] p-[10px]  px-[20px]   ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
       >
         <div className="flex flex-col">
           <p className="text-lg font-bold truncate">{meta.title}</p>

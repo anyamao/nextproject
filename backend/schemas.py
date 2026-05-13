@@ -277,6 +277,8 @@ class TestSubmissionResult(BaseModel):
     total_questions: int
     correct_count: int
 
+    reward_granted: bool = False  # 🔥 Добавь это поле
+
 
 class TestSubmission(BaseModel):
     answers: dict[str, str]
@@ -291,6 +293,7 @@ class TestResultOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     score: int
     passed: bool
+    reward_granted: bool = False  # 🔥 Добавь это поле!
     completed_at: datetime
 
 

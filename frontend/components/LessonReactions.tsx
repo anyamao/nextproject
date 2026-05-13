@@ -78,7 +78,7 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
       <button
         onClick={() => handleReaction("like")}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+        className={`flex items-center shadow-xs gap-2 px-4 py-2 rounded-full transition-all ${
           myReaction === "like"
             ? "bg-gray-800 text-gray-200 "
             : "bg-white text-gray-600 hover:bg-gray-50"
@@ -91,7 +91,7 @@ export default function LessonReactions({ lessonId }: { lessonId: number }) {
       <button
         onClick={() => handleReaction("dislike")}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 ml-[10px] rounded-full transition-all ${
+        className={`flex items-center shadow-xs gap-2 px-4 py-2 ml-[10px] rounded-full transition-all ${
           myReaction === "dislike"
             ? "bg-gray-800  text-gray-200 shadow-sm"
             : "bg-white text-gray-600 hover:bg-gray-50"
