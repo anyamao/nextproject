@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -13,6 +12,7 @@ import {
   Trophy,
   Lock,
 } from "lucide-react";
+import Toast from "@/components/Toast";
 
 type CourseUnit = {
   id: number;
@@ -51,12 +51,16 @@ export default function CourseLessonsPage() {
   const [completionPercent, setCompletionPercent] = useState<number | null>(
     null,
   );
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [units, setUnits] = useState<CourseUnit[]>([]);
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<Set<number>>(new Set([1]));
-
+  const [notifiedCompletion, setNotifiedCompletion] = useState(false);
   useEffect(() => {
     async function fetchData() {
       try {
@@ -178,7 +182,18 @@ export default function CourseLessonsPage() {
     },
     {} as Record<number, Lesson[]>,
   );
+  useEffect(() => {
+    if (completionPercent === null || loading || notifiedCompletion) return;
 
+    // 🔥 Если курс завершён на 75%+ — показываем тост
+    if (completionPercent >= 75) {
+      setToast({
+        message: "🎓 Курс завершён! +300 XP",
+        type: "success",
+      });
+      setNotifiedCompletion(true); // 🔥 Чтобы не показать снова
+    }
+  }, [completionPercent, loading, notifiedCompletion]);
   const unitsWithProgress = units.map((unit) => {
     const unitLessons = lessonsByUnit[unit.id] || [];
     const lessonsWithTests = unitLessons.filter((l) => l.test_id);

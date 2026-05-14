@@ -18,7 +18,7 @@ import { getTestReturnUrl } from "@/lib/test-return";
 import LevelUpNotification from "@/components/LevelUpNotification";
 import { useLevelCheck } from "@/hooks/useLevelCheck";
 import { getAchievements } from "@/hooks/useAchievements";
-
+import useContactStore from "@/store/states";
 type Question = {
   id: number;
   question_text: string;
@@ -149,6 +149,8 @@ export default function TestClient({
 
   // frontend/app/tests/[id]/TestClient.tsx — в handleNext:
 
+  // frontend/app/tests/[id]/TestClient.tsx
+
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -167,7 +169,7 @@ export default function TestClient({
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        // 🔥 СОХРАНЯЕМ РЕЗУЛЬТАТ В ПЕРЕМЕННУЮ:
+        // 🔥 ОДИН запрос к бэкенду:
         const result = await apiFetch(`/tests/${test.id}/complete`, {
           method: "POST",
           headers: {
@@ -177,64 +179,43 @@ export default function TestClient({
           body: JSON.stringify({ score, passed }),
         });
 
-        try {
-          const token = localStorage.getItem("token");
-          if (token) {
-            const result = await apiFetch(`/tests/${test.id}/complete`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ score, passed }),
-            });
-            if (passed && score >= 75) {
-              const newStats = await checkLevelUp("test");
-              // 🔥 Обнови статистику в сторе если нужно
-            }
-
-            // 🔥 Если тест пройден на 75%+ — обновляем статистику достижений
-            if (passed && score >= 75) {
-              // Обновляем статистику тестов
-              const testStats = await apiFetch("/profile/test-stats");
-
-              // Обновляем основную статистику
-              const achievements = await apiFetch("/profile/achievements");
-
-              // 🔥 Если у тебя есть глобальный стейт достижений — обнови его
-              // Например, через контекст или Zustand:
-              // useAchievementStore.getState().setStats({ ... });
-
-              // Или просто покажи уведомление:
-              setToast(
-                "🎉 Тест пройден! Твой уровень обновится на странице профиля!",
-              );
-              setTimeout(() => setToast(null), 4000);
-            }
-
-            if (result.reward_granted) {
-              setToast("+30 XP за тест! 🎉");
-              setTimeout(() => setToast(null), 3000);
-            }
-          }
-        } catch (err) {
-          console.error("❌ Failed to complete test:", err);
+        // 🔥 ПРОВЕРКА уровня (если тест пройден на 75%+)
+        if (passed && score >= 75) {
+          await checkLevelUp("test");
         }
-        // 🔥 ТЕПЕРЬ МОЖНО ПРОВЕРИТЬ result.reward_granted:
-        if (result.reward_granted && passed) {
-          // Покажи тост (используй свой Toast-компонент или alert)
+        if (result.new_balance !== undefined) {
+          useContactStore.getState().setTokenBalance(result.new_balance);
+        } else {
+          // Если бэкенд не вернул new_balance — перечитаем отдельно
+          const balanceData = await apiFetch("/profile/balance", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          useContactStore
+            .getState()
+            .setTokenBalance(balanceData.token_balance ?? 0);
+        }
+        // 🔥 ПОКАЗЫВАЕМ ТОСТЫ ДО редиректа:
+
+        // 1. Тост за прохождение теста на 75%+
+        if (passed && score >= 75) {
+          // 🔥 Ждём 1.5 секунды перед редиректом, чтобы тост успел показаться
+          await new Promise((resolve) => setTimeout(resolve, 1));
+        }
+
+        // 2. Тост за награду (если бэкенд выдал)
+        if (result.reward_granted) {
           setToast("+30 XP за тест! 🎉");
-          setTimeout(() => setToast(null), 3000);
-          // Или если есть глобальный toast:
-          // window.dispatchEvent(new CustomEvent('show-toast', {
-          //   detail: { message: "+30 XP за тест! 🎉" }
-          // }));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
     } catch (err) {
       console.error("❌ Failed to complete test:", err);
+      // 🔥 Показываем ошибку тоже
+      setToast("❌ Ошибка при сохранении результата");
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
+    // 🔥 Сохраняем результат в sessionStorage
     sessionStorage.setItem(
       `test_${test.id}_result`,
       JSON.stringify({
@@ -245,8 +226,10 @@ export default function TestClient({
       }),
     );
 
+    // 🔥 Редирект ПОСЛЕ показа тоста
     window.location.href = `/tests/${test.id}/results?returnTo=${encodeURIComponent(returnTo)}`;
   };
+
   const handleRetry = () => {
     setCurrentAnswer("");
     setFeedback(null);
@@ -315,7 +298,7 @@ export default function TestClient({
                 </h1>
               </div>
               <div className="w-full flex justify-end h-[30px] ">
-                <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border border-gray-300">
+                <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-xs ">
                   {currentIndex + 1} / {questions.length}
                 </span>
               </div>
@@ -337,8 +320,8 @@ export default function TestClient({
             / {questions.length}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
+          <div className="bg-white rounded-lg  border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b-[1px] border-b-gray-200">
               <div className="flex flex-col md:flex-row  items-start gap-3">
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-sm">
                   {currentIndex + 1}
@@ -390,7 +373,7 @@ export default function TestClient({
               {feedback && (
                 <div className="flex flex-col">
                   <div
-                    className={`p-4 rounded-xl border-2 ${
+                    className={`p-4 rounded-lg border-2 ${
                       feedback.correct
                         ? "bg-green-50 border-green-200"
                         : "bg-red-50 border-red-200"
@@ -441,8 +424,22 @@ export default function TestClient({
                 </div>
               )}
             </div>
+            {toast && (
+              <Toast
+                message={toast}
+                type="success"
+                onClose={() => setToast(null)}
+              />
+            )}
+            <LevelUpNotification
+              isVisible={showLevelUp}
+              onClose={() => setShowLevelUp(false)}
+              oldLevel={levelUpData.oldLevel}
+              newLevel={levelUpData.newLevel}
+              achievementType={levelUpData.type}
+            />
 
-            <div className="px-6 py-2  flex items-center justify-between">
+            <div className="px-6 py-2 mb-[20px]  flex items-center justify-between">
               <button
                 onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                 disabled={currentIndex === 0}

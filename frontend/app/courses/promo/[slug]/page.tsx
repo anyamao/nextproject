@@ -842,9 +842,6 @@ export default function CoursePromoPage() {
                   <p className="text-sm text-yellow-900">
                     Получите сертификат об окончании и отправьте его друзьям!
                   </p>
-                  <p className="text-yellow-950 text-sm">
-                    Это бесплатно, за отправку сертификата +40 баллов
-                  </p>
                 </div>
                 <Link
                   href={`/courses/${slug}/certificate`}
@@ -1130,7 +1127,16 @@ export default function CoursePromoPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <MessageSquare className="w-5 h-5" /> Отзывы (
           {reviewStats?.total_reviews || 0})
+          {/* 🔥 Средний рейтинг, если есть отзывы */}
+          {reviewStats?.average_rating != null &&
+            reviewStats.total_reviews > 0 && (
+              <span className="flex items-center gap-1 text-sm text-gray-600 ml-2">
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                {Number(reviewStats.average_rating).toFixed(1)}
+              </span>
+            )}
         </h2>
+
         <div className="flex flex-row items-center justify-between">
           {reviewStats && (
             <div className="mb-6 p-6 max-w-[390px] min-w-[390px] rotate-2 bg-gray-100 rounded-xl">
@@ -1316,7 +1322,7 @@ export default function CoursePromoPage() {
             return (
               <div
                 key={review.id}
-                className={`p-4 bg-white shadow-xs rounded-lg p-[20px] ${isCurrentUserReview && !isEditingThisReview ? "" : ""}`}
+                className={`p-4  w-full bg-white min-w-[500px] shadow-xs rounded-lg p-[20px] ${isCurrentUserReview && !isEditingThisReview ? "" : ""}`}
               >
                 {isEditingThisReview ? (
                   <form onSubmit={handleSubmitReview}>

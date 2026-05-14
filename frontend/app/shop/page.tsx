@@ -101,23 +101,31 @@ export default function ShopPage() {
       price: item.price,
       onConfirm: async () => {
         try {
+          // 🔥 1. Покупка
           await apiFetch(`/shop/items/${item.id}/buy`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          const itemsData = await apiFetch("/shop/items");
+          // 🔥 2. Перезагружаем ВСЕ данные с ?t=timestamp чтобы обойти кэш
+          const timestamp = Date.now();
+
+          const [itemsData, balanceData, profileData] = await Promise.all([
+            apiFetch(`/shop/items?t=${timestamp}`),
+            apiFetch(`/profile/balance?t=${timestamp}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            apiFetch(`/profile?t=${timestamp}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
+
           setItems(itemsData);
-
-          const balanceData = await apiFetch("/profile/balance", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
           setUserBalance(balanceData.token_balance ?? 0);
-
-          const profileData = await apiFetch("/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
           setUser(profileData);
+          useContactStore
+            .getState()
+            .setTokenBalance(balanceData.token_balance ?? 0);
 
           setToast({
             message: `Вы купили "${item.name}"! 🎉`,
@@ -134,7 +142,6 @@ export default function ShopPage() {
       },
     });
   };
-
   const handleEquip = async (item: ShopItem) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -262,31 +269,23 @@ export default function ShopPage() {
           </div>
           <div className="grid grid-cols-2 gap-y-2 gap-x-4">
             <div className="flex items-center gap-2">
-              <span className="text-white/90 text-sm">Запись на курс</span>
+              <span className="text-white/90 text-sm">Тест на 75%</span>
             </div>
             <div className="text-right">
-              <span className=" text-white font-semibold text-sm">+30 XP</span>
+              <span className="text-white font-semibold text-sm">+30 XP</span>
             </div>
-
             <div className="flex items-center gap-2">
-              <span className="text-white/90 text-sm">Тест на 75%</span>
+              <span className="text-white/90 text-sm"> Курс на 75%</span>
             </div>
             <div className="text-right">
               <span className="text-white font-semibold text-sm">+300 XP</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-white/90 text-sm">Тест на 90%</span>
-            </div>
-            <div className="text-right">
-              <span className="text-white font-semibold text-sm">+40 XP</span>
-            </div>
-
-            <div className="flex items-center gap-2">
               <span className="text-white/90 text-sm">Оставить отзыв</span>
             </div>
             <div className="text-right">
-              <span className="text-white font-semibold text-sm">+30 XP</span>
+              <span className="text-white font-semibold text-sm">+50 XP</span>
             </div>
           </div>
         </div>

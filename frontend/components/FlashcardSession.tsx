@@ -305,7 +305,7 @@ export default function FlashcardSession({
               isFlipped ? "[transform:rotateY(180deg)]" : ""
             }`}
           >
-            <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-3xl shadow-xl border-2 border-purple-100 p-8 flex flex-col items-center justify-center text-center">
+            <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-lg shadow-xs border-2 border-purple-100 p-8 flex flex-col items-center justify-center text-center">
               <div
                 className="text-[28px] font-semibold text-purple-800 leading-relaxed question-content"
                 dangerouslySetInnerHTML={{
@@ -323,7 +323,7 @@ export default function FlashcardSession({
               </p>
             </div>
 
-            <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-3xl shadow-xl border-2 border-purple-200 p-8 flex flex-col items-center justify-center text-center">
+            <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-lg shadow-sm border-2 border-purple-200 p-8 flex flex-col items-center justify-center text-center">
               <div
                 className="text-[28px] font-semibold  font-medium text-purple-800 leading-relaxed question-content"
                 dangerouslySetInnerHTML={{

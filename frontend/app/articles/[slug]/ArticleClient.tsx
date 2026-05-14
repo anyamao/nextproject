@@ -163,7 +163,7 @@ export default function ArticleClient({ article }: { article: Article }) {
             className="hover:underline "
             href={`/articles?topic=${encodeURIComponent(article.topic)}`}
           >
-            {topicTitle || article.topic} /
+            {topicTitle || article.topic} / {article.title}
           </Link>
         </div>
 
@@ -174,7 +174,7 @@ export default function ArticleClient({ article }: { article: Article }) {
               className="text-black hover:text-purple-600 transition flex items-center gap-2"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Все статьи в теме</span>
+              <span>Все статьи </span>
             </Link>
           </div>
           <div className="w-full justify-end">
@@ -188,7 +188,7 @@ export default function ArticleClient({ article }: { article: Article }) {
         </div>
 
         <div className="flex flex-col md:flex-row items-center mb-[40px] w-full mt-[15px] justify-between">
-          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-sm border-[1px] border-gray-200">
+          <div className="flex flex-row items-center bg-white h-[50px] px-[10px] rounded-lg shadow-xs ">
             <div className="flex flex-row items-center px-[7px] py-[3px] min-w-[90px]">
               <p className="smaller-text text-gray-600">Поделиться</p>
               <CopyLinkButton variant="icon" />
@@ -204,7 +204,7 @@ export default function ArticleClient({ article }: { article: Article }) {
           </div>
 
           <div className="h-[50px] mt-[10px] md:mt-[0px] items-center flex flex-row ">
-            <span className="px-3 py-1 bg-purple-100 h-[30px] text-purple-700 text-sm rounded-full font-medium">
+            <span className="px-3 py-1 bg-purple-300 h-[30px] text-purple-900 text-sm rounded-full font-medium">
               {article.topic}
             </span>
             <Calendar className="w-[15px] text-gray-500 mx-[5px] h-[15px]" />
@@ -213,6 +213,19 @@ export default function ArticleClient({ article }: { article: Article }) {
             </span>
           </div>
         </div>
+        {/* 🔥 Изображение текущей статьи */}
+        {article.image && (
+          <div className="w-full mb-6 rounded-lg overflow-hidden bg-gray-100 h-[300px] sm:h-[350px] md:h-[400px]">
+            <img
+              src={`/${article.image}`}
+              alt={article.title}
+              className="w-full h-full object-cover object-center"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
+        )}
 
         {article.content ? (
           <article
@@ -229,12 +242,11 @@ export default function ArticleClient({ article }: { article: Article }) {
           {article.id && <ArticleStats slug={article.slug} />}
         </div>
       </div>
-      {/* 🔥 БЛОК "ПОХОЖИЕ СТАТЬИ" - с изображениями */}
+
       {!loadingRelated && relatedArticles.length > 0 && (
-        <div className="w-full mt-8">
+        <div className="w-full mt-8 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-purple-600" />
               Похожие статьи
             </h2>
             <Link
@@ -246,14 +258,13 @@ export default function ArticleClient({ article }: { article: Article }) {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {relatedArticles.map((rel) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+            {relatedArticles.slice(0, 3).map((rel) => (
               <Link
                 key={rel.id}
                 href={`/articles/${rel.slug}`}
-                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-300 transition-all duration-300"
+                className="group bg-white rounded-lg shadow-xs overflow-hidden transition-all duration-300 hover:shadow-md"
               >
-                {/* 🔥 Изображение статьи (если есть) */}
                 {rel.image && (
                   <div className="h-32 bg-gray-100 overflow-hidden">
                     <img
@@ -266,23 +277,20 @@ export default function ArticleClient({ article }: { article: Article }) {
                     />
                   </div>
                 )}
-
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
-                      {rel.topic}
-                    </span>
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(rel.created_at)}
-                    </span>
-                  </div>
+                <div className="p-3">
                   <h3 className="font-semibold text-gray-900 text-sm group-hover:text-purple-700 line-clamp-2 min-h-[40px]">
                     {rel.title}
                   </h3>
-                  <div className="mt-3 flex items-center text-xs text-purple-600 font-medium">
-                    Читать
-                    <ChevronRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition" />
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        {formatDate(rel.created_at)}
+                      </span>
+                    </div>
+                    <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full truncate max-w-[100px]">
+                      {rel.topic}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -290,6 +298,7 @@ export default function ArticleClient({ article }: { article: Article }) {
           </div>
         </div>
       )}
+
       {article.id && (
         <div className="mt-8 w-full">
           <CommentsSection articleId={article.id} />

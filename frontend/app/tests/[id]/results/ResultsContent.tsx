@@ -83,8 +83,8 @@ export default function ResultsContent({
         <div
           className={`inline-flex items-center gap-3 px-6 py-3 rounded-full mb-8 ${
             result.passed
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
+              ? "bg-green-300 text-green-900 "
+              : "bg-red-300 text-red-900 "
           }`}
         >
           <span className="font-semibold">
@@ -92,8 +92,8 @@ export default function ResultsContent({
           </span>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 mb-8">
-          <div className="text-7xl font-bold mb-2 bg-gradient-to-r from-purple-500 to-blue-600 bg-clip-text text-transparent">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-100 p-8 mb-8">
+          <div className="text-7xl font-bold mb-2 text-purple-700 bg-purple-700  bg-clip-text text-transparent">
             {result.score}%
           </div>
           <p className="text-gray-600 text-lg mb-6">

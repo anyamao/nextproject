@@ -15,7 +15,6 @@ function Mainnav() {
     useContactStore();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const { balance, loading } = useTokens();
   const handleSearch = () => {
     if (searchQuery.trim()) {
       // Перенаправляем на страницу курсов с поисковым запросом
@@ -52,7 +51,7 @@ function Mainnav() {
           </div>
 
           <div
-            className={`flex flex-row flex-1 border-[1px] justify-between items-center px-[5px]  rounded-lg h-[35px] mx-[10px] ${
+            className={` flex-row flex-1 border-[1px] justify-between items-center px-[5px] hidden md:flex rounded-lg h-[35px] mx-[10px] ${
               searchQuery.trim() ? "border-gray-400 " : "border-gray-300"
             }`}
           >
