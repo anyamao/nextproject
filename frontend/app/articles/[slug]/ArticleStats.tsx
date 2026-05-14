@@ -78,10 +78,10 @@ export default function ArticleStats({ slug }: { slug: string }) {
         <button
           onClick={() => handleReaction("like")}
           disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 cursor-pointer  rounded-full  transition-all ${
             myReaction === "like"
-              ? "bg-green-100 border-green-300 text-green-700 shadow-sm"
-              : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+              ? "bg-gray-800 text-gray-100 "
+              : "bg-white  text-gray-600 hover:bg-gray-50"
           }`}
         >
           <ThumbsUp className="w-4 h-4" />
@@ -91,9 +91,9 @@ export default function ArticleStats({ slug }: { slug: string }) {
         <button
           onClick={() => handleReaction("dislike")}
           disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 cursor-pointer rounded-full transition-all ${
             myReaction === "dislike"
-              ? "bg-red-100 border-red-300 text-red-700 shadow-sm"
+              ? "bg-gray-800 text-gray-100"
               : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
           }`}
         >
@@ -105,7 +105,7 @@ export default function ArticleStats({ slug }: { slug: string }) {
       <div className="flex items-center gap-2 text-gray-500">
         <Eye className="w-4 h-4" />
         <span className="text-sm font-medium">
-          {(views ?? 0).toLocaleString("ru-RU")} прочтений
+          {(views ?? 0).toLocaleString("ru-RU")}
         </span>
       </div>
     </div>

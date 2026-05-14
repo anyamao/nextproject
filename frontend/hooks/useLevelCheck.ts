@@ -2,20 +2,16 @@
 "use client";
 
 import { useCallback } from "react";
-import {
-  getAchievements,
-  type UserAchievementStats,
-} from "@/hooks/useAchievements";
+import { getAchievements, type UserStats } from "@/hooks/useAchievements";
 
 type UseLevelCheckProps = {
-  currentStats: UserAchievementStats;
+  currentStats: UserStats; // ← Было: UserAchievementStats
   onLevelUp: (
     oldLevel: string,
     newLevel: string,
     type: "test" | "course",
   ) => void;
 };
-
 export function useLevelCheck({ currentStats, onLevelUp }: UseLevelCheckProps) {
   const checkLevelUp = useCallback(
     async (achievementType: "test" | "course") => {
@@ -31,7 +27,7 @@ export function useLevelCheck({ currentStats, onLevelUp }: UseLevelCheckProps) {
 
         const backendData = await response.json();
 
-        const newStats: UserAchievementStats = {
+        const newStats: UserStats = {
           testsPassed75: backendData.tests_passed_75 ?? 0,
           coursesCompleted75: backendData.courses_completed_75 ?? 0,
           itemsPurchased: backendData.items_purchased ?? 0,

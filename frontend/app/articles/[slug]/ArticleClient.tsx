@@ -23,6 +23,7 @@ type Article = {
   slug: string;
   content: string | null;
   time_minutes: number | null;
+  image: string | null;
   created_at: string;
 };
 
@@ -228,23 +229,45 @@ export default function ArticleClient({ article }: { article: Article }) {
           {article.id && <ArticleStats slug={article.slug} />}
         </div>
       </div>
-
-      {/* 🔥 БЛОК "ПОХОЖИЕ СТАТЬИ" */}
+      {/* 🔥 БЛОК "ПОХОЖИЕ СТАТЬИ" - с изображениями */}
       {!loadingRelated && relatedArticles.length > 0 && (
-        <div className="w-full mt-8 bg-gray-50 rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-purple-600" />
-            Похожие статьи
-          </h2>
+        <div className="w-full mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-purple-600" />
+              Похожие статьи
+            </h2>
+            <Link
+              href={`/articles?topic=${encodeURIComponent(article.topic.toLowerCase())}`}
+              className="text-purple-600 text-sm font-medium hover:text-purple-700 transition flex items-center gap-1"
+            >
+              Все статьи в теме
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {relatedArticles.map((rel) => (
               <Link
                 key={rel.id}
                 href={`/articles/${rel.slug}`}
-                className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm transition flex flex-col justify-between"
+                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-300 transition-all duration-300"
               >
-                <div>
+                {/* 🔥 Изображение статьи (если есть) */}
+                {rel.image && (
+                  <div className="h-32 bg-gray-100 overflow-hidden">
+                    <img
+                      src={`/${rel.image}`}
+                      alt={rel.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
                       {rel.topic}
@@ -254,32 +277,19 @@ export default function ArticleClient({ article }: { article: Article }) {
                       {formatDate(rel.created_at)}
                     </span>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-2">
+                  <h3 className="font-semibold text-gray-900 text-sm group-hover:text-purple-700 line-clamp-2 min-h-[40px]">
                     {rel.title}
                   </h3>
-                </div>
-
-                <div className="mt-3 flex items-center text-sm text-purple-600 font-medium">
-                  Читать
-                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition" />
+                  <div className="mt-3 flex items-center text-xs text-purple-600 font-medium">
+                    Читать
+                    <ChevronRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition" />
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
-
-          {/* 🔥 Кнопка "Все статьи в этой теме" */}
-          <div className="mt-6 text-center">
-            <Link
-              href={`/articles?topic=${encodeURIComponent(article.topic.toLowerCase())}`}
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-purple-600 transition"
-            >
-              Смотреть все статьи в теме "{article.topic}"
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
         </div>
       )}
-
       {article.id && (
         <div className="mt-8 w-full">
           <CommentsSection articleId={article.id} />

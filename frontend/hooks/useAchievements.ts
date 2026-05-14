@@ -3,7 +3,7 @@
 
 import { ACHIEVEMENT_RULES, calculateLevel } from "@/lib/achievements";
 
-type UserStats = {
+export type UserStats = {
   testsPassed75: number;
   coursesCompleted75: number;
   itemsPurchased: number;

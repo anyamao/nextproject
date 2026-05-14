@@ -454,6 +454,7 @@ export default function CoursePromoPage() {
         "Вы действительно хотите удалить свой отзыв? Это действие нельзя отменить.",
       onConfirm: async () => {
         try {
+          if (!reviewStats.user_review) return;
           await apiFetch(`/reviews/${reviewStats.user_review.id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },

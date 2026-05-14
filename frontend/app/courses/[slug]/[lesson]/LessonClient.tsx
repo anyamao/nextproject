@@ -44,7 +44,7 @@ type TestResult = {
 };
 
 interface LessonClientProps {
-  lesson: Lesson;
+  lesson: Lesson | null;
   subjectSlug: string;
   lessonSlug: string;
   testId: number | null;
@@ -265,10 +265,14 @@ export default function LessonClient({
   }, [testId]);
 
   useEffect(() => {
+    if (!lesson) return;
     async function fetchFlashcardStats() {
+      const lessonId = lesson?.id;
+      if (!lessonId) return;
+
       try {
         const stats = await apiFetch(
-          `/lessons/${lesson.id}/flashcards/stats`,
+          `/lessons/${lessonId}/flashcards/stats`,
           {},
         );
         setFlashcardStats(stats);
@@ -285,7 +289,7 @@ export default function LessonClient({
       try {
         const courses: Array<{ id: number; title: string; slug: string }> =
           await apiFetch("/courses/subjects");
-
+        if (!lesson) return;
         const currentCourse = courses.find((c) => c.slug === subjectSlug);
         if (currentCourse) {
           setCourseTitle(currentCourse.title);
