@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getTestReturnUrl } from "@/lib/test-return";
+import LevelUpNotification from "@/components/LevelUpNotification";
+import { useLevelCheck } from "@/hooks/useLevelCheck";
+import { getAchievements } from "@/hooks/useAchievements";
 
 type Question = {
   id: number;
@@ -54,11 +57,37 @@ export default function TestClient({
   } | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [levelUpData, setLevelUpData] = useState({
+    oldLevel: "",
+    newLevel: "",
+    type: "test" as "test" | "course",
+  });
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
-
+  const currentAchievements = getAchievements({
+    testsPassed75: 0, // 🔥 Загрузи из стора или передай как проп
+    coursesCompleted75: 0,
+    itemsPurchased: 0,
+    hasCustomAvatar: false,
+  });
+  const { checkLevelUp } = useLevelCheck({
+    currentStats: {
+      testsPassed75: currentAchievements.main.isCatMode
+        ? 0 // 🔥 Здесь должны быть реальные данные
+        : 0,
+      coursesCompleted75: currentAchievements.main.isCatMode
+        ? currentAchievements.main.currentLevel.threshold
+        : 0,
+      itemsPurchased: 0,
+      hasCustomAvatar: false,
+    },
+    onLevelUp: (oldLevel, newLevel, type) => {
+      setLevelUpData({ oldLevel, newLevel, type });
+      setShowLevelUp(true);
+    },
+  });
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const returnToParam = urlParams.get("returnTo");
@@ -159,6 +188,10 @@ export default function TestClient({
               },
               body: JSON.stringify({ score, passed }),
             });
+            if (passed && score >= 75) {
+              const newStats = await checkLevelUp("test");
+              // 🔥 Обнови статистику в сторе если нужно
+            }
 
             // 🔥 Если тест пройден на 75%+ — обновляем статистику достижений
             if (passed && score >= 75) {
@@ -234,7 +267,13 @@ export default function TestClient({
               Решение:
             </span>
           </div>
-
+          <LevelUpNotification
+            isVisible={showLevelUp}
+            onClose={() => setShowLevelUp(false)}
+            oldLevel={levelUpData.oldLevel}
+            newLevel={levelUpData.newLevel}
+            achievementType={levelUpData.type}
+          />
           <ChevronDown
             className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
               isExpanded ? "rotate-180" : ""

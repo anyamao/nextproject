@@ -78,46 +78,62 @@ export const MAIN_LEVEL_RULE: AchievementRule = {
       description: "Пройди 54 теста на 75%",
     },
   ],
-  // После завершения курса → переход в "Кот"
-  courseCompletionThreshold: 1, // после 1 курса на 75%
+  courseCompletionThreshold: 1,
   catLevels: [
     {
       level: 1,
       threshold: 1,
-      title: "Кот 1lv",
+      title: "Кот 1 уровня",
       description: "Пройди 1 курс на 75%",
     },
     {
       level: 2,
       threshold: 2,
-      title: "Кот 2lv",
+      title: "Кот 2 уровня",
       description: "Пройди 2 курса на 75%",
     },
     {
       level: 3,
       threshold: 3,
-      title: "Кот 3lv",
+      title: "Кот 3 уровня",
       description: "Пройди 3 курса на 75%",
     },
-    // Можно добавить больше...
+    {
+      level: 4,
+      threshold: 4,
+      title: "Кот 4 уровня",
+      description: "Пройди 4 курса на 75%",
+    },
+    {
+      level: 5,
+      threshold: 5,
+      title: "Кот 5 уровня",
+      description: "Пройди 5 курсов на 75%",
+    },
+    {
+      level: 6,
+      threshold: 6,
+      title: "Кот 6 уровня",
+      description: "Пройди 6 курсов на 75%",
+    },
   ],
 };
 
-// 🔹 Достижение "Уничтожитель тестов"
 export const TEST_DESTROYER_RULE: AchievementRule = {
   id: "test_destroyer",
   name: "Уничтожитель тестов",
   description: "Проходи тесты на 75% и выше!",
   icon: "🎯",
   color: "bg-emerald-500",
-  levels: Array.from({ length: 10 }, (_, i) => ({
+
+  // 🔥 ИЗМЕНЕНО: каждый тест = новый уровень
+  levels: Array.from({ length: 20 }, (_, i) => ({
     level: i + 1,
-    threshold: (i + 1) * 5, // 5, 10, 15, 20...
+    threshold: i, // 0, 1, 2, 3... (каждый тест = уровень)
     title: `Уничтожитель тестов ${i + 1}lv`,
-    description: `Пройди ${(i + 1) * 5} тестов на 75%`,
+    description: `Пройди ${i + 1} тест${i === 0 ? "" : i < 4 ? "а" : "ов"} на 75%`,
   })),
 };
-
 // 🔹 Достижение "Умный кот" (за курсы)
 export const SMART_CAT_RULE: AchievementRule = {
   id: "smart_cat",
@@ -209,10 +225,12 @@ export function calculateLevel(
   let progress = 100;
   if (nextLevel) {
     const range = nextLevel.threshold - current.threshold;
-    const progressValue = currentValue - current.threshold;
-    progress = Math.min(100, Math.round((progressValue / range) * 100));
+    if (range > 0) {
+      const progressValue =
+        Math.min(currentValue, nextLevel.threshold) - current.threshold;
+      progress = Math.min(100, Math.round((progressValue / range) * 100));
+    }
   }
-
   return {
     currentLevel: current,
     nextLevel,

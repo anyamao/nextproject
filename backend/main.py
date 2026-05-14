@@ -309,15 +309,17 @@ async def get_test_stats(
 # backend/main.py
 
 
+# backend/main.py
+
+
 @app.get("/profile/achievements")
 async def get_user_achievements(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Получить статистику для расчёта достижений"""
+    """Простая статистика для достижений"""
 
-    # 🔹 Импортируем нужные модели (если ещё не импортированы)
-    from models import EgeSubject, CourseUnit, EgeLesson, TestResult
+    from models import EgeSubject, CourseUnit, EgeLesson, TestResult, UserInventory
 
     # 🔹 1. Тесты, пройденные на 75%+
     tests_75 = await db.execute(
@@ -328,7 +330,7 @@ async def get_user_achievements(
     )
     tests_passed_75 = tests_75.scalar() or 0
 
-    # 🔹 2. Курсы (EgeSubject), завершённые на 75%+
+    # 🔹 2. Курсы (предметы), завершённые на 75%+
     enrollments = await db.execute(
         select(UserCourseEnrollment).where(
             UserCourseEnrollment.user_id == current_user.id
@@ -337,69 +339,46 @@ async def get_user_achievements(
     user_enrollments = enrollments.scalars().all()
 
     courses_completed_75 = 0
-
     for enrollment in user_enrollments:
-        # 🔥 enrollment.course_id → это EgeSubject.id
         subject = await db.get(EgeSubject, enrollment.course_id)
         if not subject:
-            print(f"⚠️ Subject {enrollment.course_id} not found")
             continue
 
-        # 🔥 Находим все юниты этого предмета
-        course_units = await db.execute(
+        # Юниты предмета
+        units = await db.execute(
             select(CourseUnit.id).where(CourseUnit.subject_id == subject.id)
         )
-        unit_ids = [row[0] for row in course_units.all()]
-
+        unit_ids = [row[0] for row in units.all()]
         if not unit_ids:
-            print(f"⚠️ Subject {subject.id} ({subject.slug}) has no units")
             continue
 
-        # 🔥 Находим все уроки этих юнитов
-        course_lessons = await db.execute(
+        # Уроки юнитов
+        lessons = await db.execute(
             select(EgeLesson.id).where(EgeLesson.unit_id.in_(unit_ids))
         )
-        lesson_ids = [row[0] for row in course_lessons.all()]
-
+        lesson_ids = [row[0] for row in lessons.all()]
         if not lesson_ids:
-            print(f"⚠️ Subject {subject.id} has no lessons")
             continue
 
-        total_lessons = len(lesson_ids)
-
-        # 🔥 Считаем уроки, где пользователь прошёл тест на 75%+
+        # Пройденные тесты
         completed = await db.execute(
             select(func.count(func.distinct(TestResult.test_id))).where(
                 TestResult.user_id == current_user.id,
                 TestResult.test_id.in_(
                     select(EgeLesson.test_id).where(
-                        EgeLesson.id.in_(lesson_ids),
-                        EgeLesson.test_id.isnot(None),  # Только уроки с тестами
+                        EgeLesson.id.in_(lesson_ids), EgeLesson.test_id.isnot(None)
                     )
                 ),
                 TestResult.score >= 75,
             )
         )
         completed_count = completed.scalar() or 0
+        total = len(lesson_ids)
 
-        # 🔥 Рассчитываем процент завершённых уроков
-        if total_lessons > 0:
-            progress = (completed_count / total_lessons) * 100
-            print(
-                f"🔍 [DEBUG] Subject {subject.id} ({subject.slug}): {completed_count}/{total_lessons} = {progress:.1f}%"
-            )
+        if total > 0 and (completed_count / total) >= 0.75:
+            courses_completed_75 += 1
 
-            if progress >= 75:
-                courses_completed_75 += 1
-                print(f"✅ Subject {subject.id} COUNTED as completed")
-            else:
-                print(f"ℹ️ Subject {subject.id} NOT counted ({progress:.1f}% < 75%)")
-        else:
-            print(f"⚠️ Subject {subject.id} has no lessons with tests")
-
-    print(f"🔍 [DEBUG] FINAL courses_completed_75: {courses_completed_75}")
-
-    # 🔹 3. Купленные товары
+    # 🔹 3. Купленные товары (просто счёт)
     purchased = await db.execute(
         select(func.count()).where(UserInventory.user_id == current_user.id)
     )
@@ -410,7 +389,7 @@ async def get_user_achievements(
         current_user.avatar_url and current_user.avatar_url != "default_cat.jpg"
     )
 
-    # 🔥 Возвращаем в snake_case
+    # 🔥 Возвращаем простые числа
     return {
         "tests_passed_75": tests_passed_75,
         "courses_completed_75": courses_completed_75,

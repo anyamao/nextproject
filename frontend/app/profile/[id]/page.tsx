@@ -5,7 +5,14 @@ import AvatarWithOverlay from "@/components/AvatarWithOverlay";
 import { useEffect, useState, useMemo } from "react"; // 🔥 Добавь useMemo
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Coins, Trophy, PawPrint, BookOpen } from "lucide-react";
+import {
+  ArrowLeft,
+  Coins,
+  Check,
+  Trophy,
+  PawPrint,
+  BookOpen,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getAchievements } from "@/hooks/useAchievements";
 import AchievementCard from "@/components/AchievementCard";
@@ -53,7 +60,7 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   // 🔥 Стейт для статистики достижений
   const [achievementStats, setAchievementStats] =
     useState<UserAchievementStats>({
@@ -135,7 +142,18 @@ export default function PublicProfilePage() {
       });
   }, [profile?.id]);
   // 🔹 После загрузки статистики:
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setCurrentUserId(parsed.id);
+      } catch {}
+    }
+  }, []);
 
+  // 🔹 Флаг: это мой профиль?
+  const isMyProfile = currentUserId === userId;
   // 🔹 Логирование расчёта достижений:
   useEffect(() => {
     if (achievements) {
@@ -231,32 +249,38 @@ export default function PublicProfilePage() {
               </div>
             </div>
           </div>
-
           {/* 🔹 Блок основного уровня */}
-          <div className="mb-6 p-5 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+          <div className="mb-6 p-5 bg-purple-100 rounded-lg">
             <div className="flex items-center gap-4">
-              <div className="text-4xl">{achievements.main.icon}</div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-purple-950">
                   {achievements.main.currentLevel.title}
                 </h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  {achievements.main.currentLevel.description}
-                </p>
 
-                {achievements.main.nextLevel && (
+                {/* 🔥 Описание и галочка только для моего профиля */}
+                {isMyProfile && (
+                  <div className="w-full mt-[5px] bg-purple-200 rounded-lg p-[10px] flex flex-row items-center">
+                    <p className="text-purple-800 text-xs font-semibold mt-1">
+                      {achievements.main.currentLevel.description}
+                    </p>
+                    <Check className="w-4 h-4 text-purple-700 ml-[10px]" />
+                  </div>
+                )}
+
+                {/* 🔥 Прогресс и подсказка только для моего профиля */}
+                {isMyProfile && achievements.main.nextLevel && (
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <div className="flex justify-between text-xs text-purple-900 font-semibold mb-1">
                       <span>До {achievements.main.nextLevel.title}</span>
                       <span>{100 - achievements.main.progress}%</span>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 rounded-full transition-all"
                         style={{ width: `${achievements.main.progress}%` }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-purple-700 mt-1">
                       {achievements.main.isCatMode
                         ? `Пройдите ещё ${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75} курс${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 < 5 ? "а" : "ов"} на 75%`
                         : `Пройдите ещё ${achievements.main.nextLevel.threshold - achievementStats.testsPassed75} тест${achievements.main.nextLevel.threshold - achievementStats.testsPassed75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.testsPassed75 < 5 ? "а" : "ов"} на 75%`}
@@ -346,44 +370,137 @@ export default function PublicProfilePage() {
       <div className="mt-[20px] w-full">
         <div className="w-full mb-[20px] shadow-xs bg-white rounded-lg p-[10px] px-[20px]">
           <h2 className="text-md font-semibold text-gray-800 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
             Достижения
           </h2>
-        </div>
+          {/* 🔹 Секция достижений — отдельные карточки */}
+          <div className="w-full mt-[10px] grid grid-cols-2 mb-[20px] sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* 🔹 Уничтожитель тестов */}
+            <div className="bg-emerald-500 rounded-lg p-[10px] px-[20px] w-[300px]">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {achievements.test_destroyer.currentLevel.title}
+                    </h3>
+                    {/* 🔥 Показывай описание только если это мой профиль */}
+                    {isMyProfile && (
+                      <p className="text-emerald-100 text-sm">
+                        {achievements.test_destroyer.currentLevel.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* 🔹 Умный кот (курсы) */}
+              {isMyProfile && achievements.test_destroyer.nextLevel && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-emerald-100 mb-1">
+                    <span>
+                      До {achievements.test_destroyer.nextLevel.title}
+                    </span>
+                    <span>{100 - achievements.test_destroyer.progress}%</span>
+                  </div>
+                  <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all"
+                      style={{
+                        width: `${achievements.test_destroyer.progress}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-emerald-100 mt-2">
+                    Пройдите ещё 1 тест на 75%
+                  </p>
+                </div>
+              )}
+            </div>
+            {/* 🔹 Умный кот (курсы) */}
+            <div className="bg-violet-500 rounded-lg p-[10px] px-[20px] w-[300px]">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {achievements.smart_cat.currentLevel.title}
+                    </h3>
+                    {isMyProfile && (
+                      <p className="text-blue-100 text-sm">
+                        {achievements.smart_cat.currentLevel.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {isMyProfile &&
+                  achievements.smart_cat.currentLevel.level > 1 && (
+                    <div className="flex items-center gap-1 text-white/90 text-sm">
+                      <Check className="w-4 h-4" />
+                      <span>Разблокировано</span>
+                    </div>
+                  )}
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <AchievementCard
-            icon={achievements.test_destroyer.icon}
-            title={achievements.test_destroyer.currentLevel.title}
-            description={achievements.test_destroyer.currentLevel.description}
-            color="bg-emerald-500"
-            currentLevel={achievements.test_destroyer.currentLevel.level}
-            nextLevel={achievements.test_destroyer.nextLevel?.level || null}
-            progress={achievements.test_destroyer.progress}
-            isUnlocked={achievements.test_destroyer.currentLevel.level > 1}
-          />
+              {isMyProfile && achievements.smart_cat.nextLevel && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-blue-100 mb-1">
+                    <span>До {achievements.smart_cat.nextLevel.title}</span>
+                    <span>{100 - achievements.smart_cat.progress}%</span>
+                  </div>
+                  <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all"
+                      style={{ width: `${achievements.smart_cat.progress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-blue-100 mt-2">
+                    Завершите ещё 1 курс на 75%
+                  </p>
+                </div>
+              )}
+            </div>
 
-          <AchievementCard
-            icon={achievements.smart_cat.icon}
-            title={achievements.smart_cat.currentLevel.title}
-            description={achievements.smart_cat.currentLevel.description}
-            color="bg-blue-500"
-            currentLevel={achievements.smart_cat.currentLevel.level}
-            nextLevel={achievements.smart_cat.nextLevel?.level || null}
-            progress={achievements.smart_cat.progress}
-            isUnlocked={achievements.smart_cat.currentLevel.level > 1}
-          />
+            {/* 🔹 Модный котик (покупки) */}
+            <div className="bg-pink-500 rounded-lg p-[10px] px-[20px] w-[300px]">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {achievements.fashion_cat.currentLevel.title}
+                    </h3>
+                    {isMyProfile && (
+                      <p className="text-pink-100 text-sm">
+                        {achievements.fashion_cat.currentLevel.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {isMyProfile &&
+                  achievements.fashion_cat.currentLevel.level > 1 && (
+                    <div className="flex items-center gap-1 text-white/90 text-sm">
+                      <Check className="w-4 h-4" />
+                      <span>Разблокировано</span>
+                    </div>
+                  )}
+              </div>
 
-          <AchievementCard
-            icon={achievements.fashion_cat.icon}
-            title={achievements.fashion_cat.currentLevel.title}
-            description={achievements.fashion_cat.currentLevel.description}
-            color="bg-pink-500"
-            currentLevel={achievements.fashion_cat.currentLevel.level}
-            nextLevel={achievements.fashion_cat.nextLevel?.level || null}
-            progress={achievements.fashion_cat.progress}
-            isUnlocked={achievements.fashion_cat.currentLevel.level > 1}
-          />
+              {isMyProfile && achievements.fashion_cat.nextLevel && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-pink-100 mb-1">
+                    <span>До {achievements.fashion_cat.nextLevel.title}</span>
+                    <span>{100 - achievements.fashion_cat.progress}%</span>
+                  </div>
+                  <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all"
+                      style={{ width: `${achievements.fashion_cat.progress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-pink-100 mt-2">
+                    Купите ещё 1 товар в магазине
+                  </p>
+                </div>
+              )}
+            </div>
+            {/* 🔹 Модный котик (покупки) */}
+          </div>
         </div>
       </div>
     </main>
