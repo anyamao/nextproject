@@ -1,9 +1,24 @@
+// frontend/app/articles/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Clock, Tag, Search } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import {
+  Search,
+  BookOpen,
+  Clock,
+  Filter,
+  Tag,
+  ChevronRight,
+  Heart,
+  Eye,
+  ThumbsUp,
+  ThumbsDown,
+  Calendar,
+  ArrowUpDown,
+} from "lucide-react";
 
 type Article = {
   id: number;
@@ -12,92 +27,164 @@ type Article = {
   topic: string;
   time_minutes: number | null;
   image: string | null;
+  content: string | null;
+  created_at: string;
+  // 🔥 Статистика (загружается с бэкенда)
+  view_count?: number;
+  likes?: number;
+  dislikes?: number;
 };
 
 const TOPICS = [
-  "Все",
-  "Забота о себе",
-  "Программирование",
-  "Продуктивность",
-  "Образование",
-  "Наука",
+  { value: "", label: "Все", icon: Filter },
+  { value: "Продуктивность", label: "Продуктивность", icon: Tag },
+  { value: "Забота о себе", label: "Забота о себе", icon: Heart },
+  { value: "Программирование", label: "Программирование", icon: BookOpen },
+  { value: "Образование", label: "Образование", icon: BookOpen },
+  { value: "Наука", label: "Наука", icon: BookOpen },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Сначала новые" },
+  { value: "oldest", label: "Сначала старые" },
 ];
 
 export default function ArticlesPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const searchQueryFromUrl = searchParams.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(searchQueryFromUrl);
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [activeTopic, setActiveTopic] = useState("Все");
-  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
+  // Синхронизация поиска из URL
+  useEffect(() => {
+    const newSearchQuery = searchParams.get("search") || "";
+    setSearchQuery(newSearchQuery);
+  }, [searchParams]);
+
+  // Загрузка статей + статистики
   useEffect(() => {
     async function fetchArticles() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (activeTopic !== "Все") {
-          params.append("topic", activeTopic);
-        }
-        if (searchQuery.trim()) {
-          params.append("search", searchQuery.trim());
-        }
+        if (selectedTopic) params.append("topic", selectedTopic);
+        if (searchQuery) params.append("search", searchQuery);
+        params.append("with_stats", "true"); // 🔥 Запрос статистики
 
         const queryString = params.toString();
         const url = `/articles${queryString ? `?${queryString}` : ""}`;
 
         const data = await apiFetch(url);
         setArticles(data);
+        setFilteredArticles(data);
       } catch (err) {
+        console.error("Failed to fetch articles", err);
       } finally {
         setLoading(false);
       }
     }
     fetchArticles();
-  }, [activeTopic, searchQuery]);
+  }, [selectedTopic, searchQuery]);
 
+  // Фильтрация + сортировка на клиенте
   useEffect(() => {
-    let result = articles;
+    let result = [...articles];
 
-    if (activeTopic !== "Все") {
-      result = result.filter((a) => a.topic === activeTopic);
-    }
-
-    if (searchQuery.trim()) {
+    // 🔹 Фильтр по поиску
+    if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((a) => a.title.toLowerCase().includes(query));
+      result = result.filter(
+        (a) =>
+          a.title.toLowerCase().includes(query) ||
+          a.content?.toLowerCase().includes(query),
+      );
     }
+
+    // 🔹 Фильтр по теме
+    if (selectedTopic) {
+      result = result.filter((a) => a.topic === selectedTopic);
+    }
+
+    // 🔹 Сортировка по дате
+    result.sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
 
     setFilteredArticles(result);
-  }, [articles, activeTopic, searchQuery]);
+  }, [articles, searchQuery, selectedTopic, sortOrder]);
+
+  // 🔹 Обработчик поиска с обновлением URL
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
+    router.push(`/articles?${params.toString()}`, { scroll: false });
+  };
+
+  // 🔹 Форматирование времени чтения
+  const formatTime = (minutes: number | null) => {
+    if (!minutes) return "—";
+    if (minutes < 60) return `${minutes} мин`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}ч ${m}мин` : `${h}ч`;
+  };
+
+  // 🔹 Форматирование даты
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // 🔹 Форматирование чисел (1 234 → "1.2 тыс.")
+  const formatNumber = (num: number | undefined) => {
+    if (num === undefined) return "0";
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(".0", "") + " тыс.";
+    }
+    return num.toLocaleString("ru-RU");
+  };
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-5xl mx-auto">
-      <div className="w-full mb-6">
-        <Link
-          href="/"
-          className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2"
-        >
-          <ArrowLeft className="w-5 h-5" /> На главную
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mt-4">Статьи</h1>
+    <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 w-full max-w-[1400px] mx-auto mt-[40px]">
+      {/* 🔹 Заголовок */}
+      <div className="w-full mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900">Статьи</h1>
         <p className="text-gray-600 mt-2">
           Полезные материалы для развития и вдохновения
         </p>
       </div>
 
+      {/* 🔹 Поиск, фильтры и сортировка */}
       <div className="w-full mb-8 space-y-4">
+        {/* Поиск */}
         <div className="relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Поиск статей..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition"
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => handleSearchChange("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               ✕
@@ -105,62 +192,75 @@ export default function ArticlesPage() {
           )}
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2">
-          {TOPICS.map((topic) => (
-            <button
-              key={topic}
-              onClick={() => setActiveTopic(topic)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
-                activeTopic === topic
-                  ? "bg-purple-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+        {/* Фильтры + Сортировка */}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {/* Темы */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {TOPICS.map((topic) => {
+              const Icon = topic.icon;
+              const isActive = selectedTopic === topic.value;
+
+              return (
+                <button
+                  key={topic.value || "all"}
+                  onClick={() => setSelectedTopic(topic.value)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                    isActive
+                      ? "bg-gray-800 text-gray-100 shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {topic.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Разделитель */}
+          <div className="hidden sm:block w-px h-6 bg-gray-300" />
+
+          {/* Сортировка */}
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4 text-gray-500" />
+            <select
+              value={sortOrder}
+              onChange={(e) =>
+                setSortOrder(e.target.value as "newest" | "oldest")
+              }
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none bg-white"
             >
-              {topic === "Все" ? <Tag className="w-4 h-4" /> : null}
-              {topic}
-            </button>
-          ))}
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* 🔹 Лоадер */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
         </div>
-      ) : filteredArticles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {filteredArticles.map((article) => (
-            <Link
-              key={article.id}
-              href={`/articles/${article.slug}`}
-              className="group block p-5 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all"
-            >
-              <span className="inline-block px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md mb-3 font-medium">
-                {article.topic}
-              </span>
-              <h2 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-2">
-                {article.title}
-              </h2>
-              {article.time_minutes && (
-                <div className="flex items-center gap-1 text-gray-500 text-sm mt-3">
-                  <Clock className="w-3 h-3" /> {article.time_minutes} мин
-                </div>
-              )}
-            </Link>
-          ))}
-        </div>
-      ) : (
+      ) : filteredArticles.length === 0 ? (
+        /* 🔹 Пустое состояние */
         <div className="text-center py-20 bg-gray-50 rounded-2xl w-full">
+          <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">
-            {searchQuery || activeTopic !== "Все"
+            {searchQuery || selectedTopic
               ? "Статьи не найдены. Попробуйте изменить фильтры."
               : "Статей пока нет"}
           </p>
-          {(searchQuery || activeTopic !== "Все") && (
+          {(searchQuery || selectedTopic) && (
             <button
               onClick={() => {
                 setSearchQuery("");
-                setActiveTopic("Все");
+                setSelectedTopic("");
+                setSortOrder("newest");
+                router.push("/articles");
               }}
               className="text-purple-600 hover:underline mt-2"
             >
@@ -168,13 +268,104 @@ export default function ArticlesPage() {
             </button>
           )}
         </div>
+      ) : (
+        /* 🔹 Сетка статей */
+        <div className="grid grid-cols-1 justify-between md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          {filteredArticles.map((article) => (
+            <Link
+              key={article.id}
+              href={`/articles/${article.slug}`}
+              className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
+            >
+              {/* 🔹 Обложка статьи */}
+              {article.image ? (
+                <div className="h-65 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
+                  <img
+                    src={`/${article.image}`}
+                    alt={article.title}
+                    className="w-[120%] h-[140%] mt-[-20px] ml-[15px] object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      (
+                        e.target as HTMLImageElement
+                      ).parentElement?.classList.add("hidden");
+                    }}
+                  />
+                </div>
+              ) : (
+                /* Заглушка если нет обложки */
+                <div className="h-40 -mx-6 -mt-6 rounded-t-2xl bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+                  <BookOpen className="w-12 h-12 text-purple-300" />
+                </div>
+              )}
+
+              {/* 🔹 Контент карточки */}
+              <div className="p-5">
+                {/* Тема + Дата */}
+                <div className="flex items-start justify-between mb-3">
+                  <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                    {article.topic}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(article.created_at)}
+                  </span>
+                </div>
+
+                {/* Заголовок */}
+                <h2 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-2">
+                  {article.title}
+                </h2>
+
+                {/* 🔹 Мета: время + статистика */}
+                <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                  {/* Время чтения */}
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(article.time_minutes)}</span>
+                  </div>
+
+                  {/* Просмотры */}
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Eye className="w-4 h-4" />
+                    <span>{formatNumber(article.view_count)}</span>
+                  </div>
+
+                  {/* Лайки / Дизлайки */}
+                  {(article.likes ?? 0) > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-green-600">
+                      <ThumbsUp className="w-4 h-4" />
+                      <span>{formatNumber(article.likes)}</span>
+                    </div>
+                  )}
+                  {(article.dislikes ?? 0) > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-red-600">
+                      <ThumbsDown className="w-4 h-4" />
+                      <span>{formatNumber(article.dislikes)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 🔹 Кнопка "Читать" */}
+                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                  <span className="text-sm font-semibold text-purple-600 group-hover:text-purple-700 flex items-center gap-1">
+                    Читать
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       )}
 
-      {!loading && (searchQuery || activeTopic !== "Все") && (
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Показано {filteredArticles.length} из {articles.length} статей
-        </p>
-      )}
+      {/* 🔹 Статистика фильтрации */}
+      {!loading &&
+        filteredArticles.length > 0 &&
+        (searchQuery || selectedTopic || sortOrder !== "newest") && (
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Показано {filteredArticles.length} из {articles.length} статей
+          </p>
+        )}
     </main>
   );
 }

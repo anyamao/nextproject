@@ -121,7 +121,7 @@ export default function PublicProfilePage() {
 
             {/* Статус */}
             {profile.status && (
-              <p className="text-purple-600 text-sm mt-2 italic">
+              <p className="text-gray-800 text-sm mt-2 italic">
                 {profile.status}
               </p>
             )}

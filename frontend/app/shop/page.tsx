@@ -29,7 +29,6 @@ export default function ShopPage() {
   const [userBalance, setUserBalance] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Состояние для превью "Примерить"
   const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
 
   const [toast, setToast] = useState<{
@@ -51,13 +50,11 @@ export default function ShopPage() {
     itemId: 0,
   });
 
-  // Загрузка данных
   useEffect(() => {
     async function fetchData() {
       try {
         const token = localStorage.getItem("token");
 
-        // Баланс
         if (token) {
           const balanceData = await apiFetch("/profile/balance", {
             headers: { Authorization: `Bearer ${token}` },
@@ -65,7 +62,6 @@ export default function ShopPage() {
           setUserBalance(balanceData.token_balance ?? 0);
         }
 
-        // Товары с флагами owned/equipped
         const itemsData = await apiFetch("/shop/items");
         setItems(itemsData);
       } catch (err) {
@@ -78,7 +74,6 @@ export default function ShopPage() {
     fetchData();
   }, []);
 
-  // Покупка товара
   const handleBuy = (item: ShopItem) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -111,7 +106,6 @@ export default function ShopPage() {
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          // Обновляем список и баланс
           const itemsData = await apiFetch("/shop/items");
           setItems(itemsData);
 
@@ -120,7 +114,6 @@ export default function ShopPage() {
           });
           setUserBalance(balanceData.token_balance ?? 0);
 
-          // Обновляем профиль в сторе (для аватара)
           const profileData = await apiFetch("/profile", {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -142,7 +135,6 @@ export default function ShopPage() {
     });
   };
 
-  // Экипировка/снятие (сохраняется на сервере)
   const handleEquip = async (item: ShopItem) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -151,7 +143,6 @@ export default function ShopPage() {
     }
 
     try {
-      // item_id=0 для снятия
       const equipItemId = item.is_equipped ? 0 : item.id;
 
       await apiFetch(`/shop/items/${equipItemId}/equip`, {
@@ -159,11 +150,9 @@ export default function ShopPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Обновляем список
       const itemsData = await apiFetch("/shop/items");
       setItems(itemsData);
 
-      // Обновляем профиль
       const profileData = await apiFetch("/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -180,14 +169,11 @@ export default function ShopPage() {
     }
   };
 
-  // 🔹 "Примерить" — только превью, без сохранения
   const handlePreview = (item: ShopItem) => {
     if (item.is_owned) {
-      // Если уже куплено — просто экипируем
       handleEquip(item);
       return;
     }
-    // Временный превью
     setPreviewItem(item);
     setToast({
       message: `Примеряете "${item.name}" (не сохраняется)`,
@@ -195,23 +181,13 @@ export default function ShopPage() {
     });
   };
 
-  // Закрыть превью
   const closePreview = () => {
     setPreviewItem(null);
   };
 
-  const showToast = (
-    message: string,
-    type: "success" | "error" | "info" = "success",
-  ) => {
-    setToast({ message, type });
-  };
-
-  // 🔹 Разделяем товары на купленные и доступные
   const ownedItems = items.filter((item) => item.is_owned);
   const availableItems = items.filter((item) => !item.is_owned);
 
-  // 🔹 Определяем, какое изображение показывать для превью
   const getPreviewOverlay = () => {
     if (previewItem) return previewItem.image;
     return user?.equipped_item?.image || null;
@@ -226,7 +202,7 @@ export default function ShopPage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto">
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1400px] mx-auto">
       {toast && (
         <Toast
           message={toast.message}
@@ -246,8 +222,7 @@ export default function ShopPage() {
         type="warning"
       />
 
-      {/* Header */}
-      <div className="w-full mb-8">
+      <div className="w-full mb-8 max-w-[1100px]">
         <Link
           href="/"
           className="text-gray-600 hover:text-purple-600 transition flex items-center gap-2 mb-4"
@@ -255,49 +230,86 @@ export default function ShopPage() {
           <ArrowLeft className="w-5 h-5" /> На главную
         </Link>
         <div className="flex items-center gap-3">
-          <ShoppingBag className="w-8 h-8 text-purple-600" />
           <h1 className="text-3xl font-bold text-gray-900">Магазин</h1>
         </div>
-        <p className="text-gray-600 mt-2">
-          Покупайте украшения за XP, заработанные на платформе
-        </p>
       </div>
 
-      {/* Баланс */}
-      <div className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-xl p-4 mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-white" />
-          <span className="text-white font-semibold">Ваш баланс:</span>
+      <div className="w-full flex flex-col md:flex-row gap-6 mb-8 max-w-[1100px]">
+        <div className="flex-1 bg-purple-200 rounded-lg p-6 ">
+          <div className="flex flex-col items-center text-center">
+            <span className="text-purple-700 font-medium text-sm uppercase tracking-wide">
+              Ваш баланс
+            </span>
+            <div className="mt-2">
+              <span className="text-purple-900 font-black text-4xl">
+                {userBalance}
+              </span>
+              <span className="text-purple-700 font-semibold text-lg ml-1">
+                XP
+              </span>
+            </div>
+            <p className="text-purple-600 text-xs mt-2">
+              Продолжайте учиться, чтобы зарабатывать больше!
+            </p>
+          </div>
         </div>
-        <div className="bg-white/20 rounded-lg px-4 py-2">
-          <span className="text-white font-bold text-xl">{userBalance}</span>
-          <span className="text-white/90 text-sm ml-1">XP</span>
+
+        <div className="flex-1 bg-purple-700 rounded-lg text-xs p-6 ">
+          <div className="flex items-center gap-1 mb-1 ">
+            <p className="font-bold text-white text-base">
+              Как заработать токены?
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+            <div className="flex items-center gap-2">
+              <span className="text-white/90 text-sm">Запись на курс</span>
+            </div>
+            <div className="text-right">
+              <span className=" text-white font-semibold text-sm">+30 XP</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-white/90 text-sm">Тест на 75%</span>
+            </div>
+            <div className="text-right">
+              <span className="text-white font-semibold text-sm">+300 XP</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-white/90 text-sm">Тест на 90%</span>
+            </div>
+            <div className="text-right">
+              <span className="text-white font-semibold text-sm">+40 XP</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-white/90 text-sm">Оставить отзыв</span>
+            </div>
+            <div className="text-right">
+              <span className="text-white font-semibold text-sm">+30 XP</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 🔹 СЕКЦИЯ 1: Текущая аватарка + купленные предметы */}
-      <div className="w-full bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+      {/* Секция 1: Текущая аватарка + купленные предметы */}
+      <div className="w-full bg-white rounded-lg shadow-xs max-w-[1100px] p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-600" />
           Ваша аватарка
         </h2>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* 🔹 Превью аватара */}
           <div className="flex flex-col items-center">
             <div className="relative">
               <AvatarWithOverlay
                 baseAvatar={user?.avatar_url || "default_cat.jpg"}
                 overlayImage={getPreviewOverlay()}
                 alt={user?.username || "Avatar"}
-                size="lg"
-                className="w-24 h-24"
+                className="w-60 h-60"
               />
 
-              {/* 🔹 Индикатор превью */}
               {previewItem && (
-                <div className="absolute -top-2 -right-2 bg-amber-400 text-white text-xs px-2 py-1 rounded-full font-medium shadow-md flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
+                <div className="absolute -top-4 cursor-pointer -right-2 bg-amber-400 text-white text-xs px-2 py-1 rounded-full font-medium shadow-md flex items-center gap-1">
                   Примерка
                   <button
                     onClick={closePreview}
@@ -318,8 +330,7 @@ export default function ShopPage() {
             </p>
           </div>
 
-          {/* 🔹 Купленные предметы */}
-          <div className="flex-1">
+          <div className="flex-1 lg:ml-[20px]">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Ваши предметы ({ownedItems.length})
             </h3>
@@ -330,19 +341,18 @@ export default function ShopPage() {
                 купить первый! 🛍️
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {ownedItems.map((item) => (
                   <div
                     key={item.id}
                     className={`relative p-3 rounded-xl border transition ${
                       item.is_equipped && !previewItem
-                        ? "border-green-400 bg-green-50"
+                        ? "border-pink-300 border-[2px]"
                         : previewItem?.id === item.id
                           ? "border-amber-400 bg-amber-50"
-                          : "border-gray-200 hover:border-purple-300"
+                          : "border-gray-200 bg-gray-100 hover:border-pink-300"
                     }`}
                   >
-                    {/* Изображение предмета */}
                     <div className="aspect-square bg-gray-50 rounded-lg flex items-center justify-center mb-2">
                       <img
                         src={`/shop-items/${item.image}`}
@@ -355,7 +365,6 @@ export default function ShopPage() {
                       {item.name}
                     </p>
 
-                    {/* Кнопки управления */}
                     <div className="flex gap-1 mt-2">
                       {item.is_equipped && !previewItem ? (
                         <button
@@ -376,14 +385,13 @@ export default function ShopPage() {
                       ) : (
                         <button
                           onClick={() => handleEquip(item)}
-                          className="flex-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-lg hover:bg-green-200 transition"
+                          className="flex-1 px-2 py-1 bg-purple-300 text-purple-800 text-xs rounded-lg hover:bg-purple-400 transition"
                         >
                           Экипировать
                         </button>
                       )}
                     </div>
 
-                    {/* Бейдж статуса */}
                     {item.is_equipped && !previewItem && (
                       <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                         ✓
@@ -401,11 +409,8 @@ export default function ShopPage() {
           </div>
         </div>
       </div>
-
-      {/* 🔹 СЕКЦИЯ 2: Доступные товары */}
       <div className="w-full">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5 text-purple-600" />
           Доступные товары ({availableItems.length})
         </h2>
 
@@ -417,14 +422,13 @@ export default function ShopPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
             {availableItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group"
+                className="rounded-lg bg-pink-300 shadow-xs transition-all duration-300 group"
               >
-                {/* Изображение с превью */}
-                <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-8 relative">
+                <div className="aspect-square bg-white m-[15px] rounded-lg flex flex-col items-center justify-center p-3 relative">
                   <img
                     src={`/shop-items/${item.image}`}
                     alt={item.name}
@@ -434,21 +438,20 @@ export default function ShopPage() {
                     }}
                   />
 
-                  {/* 🔹 Кнопка "Примерить" в углу */}
                   <button
                     onClick={() => handlePreview(item)}
-                    className="absolute top-3 right-3 p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition opacity-0 group-hover:opacity-100"
+                    className="p-2 ml-[50%] hover:bg-yellow-500 text-yellow-900 duration-300 rounded-lg bg-yellow-400"
                     title="Примерить на аватар"
                   >
-                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <p className="text-xs font-bold">Примерить</p>
                   </button>
                 </div>
 
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <div className="p-5 pt-[0px]">
+                  <h3 className="text-xl font-bold text-pink-950 mb-2">
                     {item.name}
                   </h3>
-                  <p className="text-gray-500 text-sm mb-4">
+                  <p className="text-pink-800 text-sm mb-4">
                     {item.description}
                   </p>
 
@@ -463,17 +466,11 @@ export default function ShopPage() {
                     <button
                       onClick={() => handleBuy(item)}
                       disabled={userBalance < item.price}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-purple-700 w-[150px] h-[50px] hover:bg-purple-800 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Купить
                     </button>
                   </div>
-
-                  {/* 🔹 Подсказка про примерку */}
-                  <p className="text-xs text-gray-400 mt-3 text-center">
-                    💡 Нажмите на ✨ в углу картинки, чтобы примерить перед
-                    покупкой
-                  </p>
                 </div>
               </div>
             ))}

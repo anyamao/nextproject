@@ -3178,7 +3178,11 @@ async def format_comment_with_stats(
         elif val is False:
             user_reaction = "dislike"
     equipped_item = None
-    if comment.user and comment.user.equipped_item_id and comment.user.equipped_item:
+    if (
+        comment.user
+        and hasattr(comment.user, "equipped_item")
+        and comment.user.equipped_item
+    ):
         equipped_item = {
             "id": comment.user.equipped_item.id,
             "name": comment.user.equipped_item.name,
@@ -3249,17 +3253,24 @@ async def get_article_comments(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
+    # backend/main.py — в get_article_comments
+
     result = await db.execute(
         select(Comment)
         .where(Comment.article_id == article_id, Comment.parent_id.is_(None))
         .options(
-            selectinload(Comment.user),
-            selectinload(Comment.replies).selectinload(Comment.user),
+            # 🔥 КЛЮЧЕВОЕ: цепочка предзагрузки equipped_item
+            selectinload(Comment.user).selectinload(
+                User.equipped_item
+            ),  # ← Добавь это!
+            # 🔥 То же самое для ответов:
+            selectinload(Comment.replies)
+            .selectinload(Comment.user)
+            .selectinload(User.equipped_item),  # ← И это!
         )
         .order_by(Comment.created_at.asc())
     )
     comments = result.scalars().all()
-
     formatted = []
     for c in comments:
         c_data = await format_comment_with_stats(c, db, current_user)
@@ -3269,6 +3280,275 @@ async def get_article_comments(
         formatted.append(c_data)
 
     return formatted
+
+
+# backend/main.py
+@app.get("/articles/{slug}", response_model=ArticleOut)
+async def get_article_by_slug(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    """Получить статью по слагам"""
+
+    # 🔍 Ищем статью
+    article = await db.execute(select(Article).where(Article.slug == slug))
+    article = article.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # В @app.get("/articles/{slug}") замени try/except на:
+
+    if current_user:
+        try:
+            today = datetime.now().date()  # 🔥 naive date, совместимо с БД
+
+            # Проверяем, не записывали ли уже сегодня
+            existing = await db.execute(
+                select(ArticleView).where(
+                    ArticleView.article_id == article.id,
+                    ArticleView.user_id == current_user.id,
+                    func.date(ArticleView.viewed_at) == today,
+                )
+            )
+
+            if not existing.scalar_one_or_none():
+                db.add(
+                    ArticleView(
+                        article_id=article.id,
+                        user_id=current_user.id,
+                        viewed_at=datetime.now(),
+                    )
+                )
+                await db.commit()
+                print(
+                    f"✅ View recorded for user {current_user.id}, article {article.id}"
+                )
+        except Exception as e:
+            print(f"⚠️ View record failed: {e}")
+            await db.rollback()  # 🔥 Обязательно откатываем при ошибке!
+
+    # 🔥 Возвращаем статью
+    return ArticleOut(
+        id=article.id,
+        title=article.title,
+        slug=article.slug,
+        topic=article.topic,
+        content=article.content,
+        time_minutes=article.time_minutes,
+        image=article.image,
+        created_at=article.created_at,
+    )
+
+
+# backend/main.py
+
+
+# 🔹 1. Лайк/дизлайк статьи
+@app.post("/articles/{slug}/reaction")
+async def react_to_article(
+    slug: str,
+    reaction_data: dict,  # {"reaction_type": "like" | "dislike" | null}
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Поставить или убрать реакцию на статью"""
+
+    article = await db.execute(select(Article).where(Article.slug == slug))
+    article = article.scalar_one_or_none()
+    if not article:
+        raise HTTPException(404, "Article not found")
+
+    reaction_type = reaction_data.get("reaction_type")
+
+    # Ищем существующую реакцию
+    existing = await db.execute(
+        select(ArticleReaction).where(
+            ArticleReaction.user_id == current_user.id,
+            ArticleReaction.article_id == article.id,
+        )
+    )
+    existing_reaction = existing.scalar_one_or_none()
+
+    # Если reaction_type = null → удаляем реакцию
+    if not reaction_type:
+        if existing_reaction:
+            await db.delete(existing_reaction)
+            await db.commit()
+        return {"message": "Reaction removed"}
+
+    # Если реакция уже есть
+    if existing_reaction:
+        if existing_reaction.reaction_type == reaction_type:
+            # Тот же тип → убираем (toggle)
+            await db.delete(existing_reaction)
+            await db.commit()
+            return {"message": "Reaction removed"}
+        else:
+            # Другой тип → меняем
+            existing_reaction.reaction_type = reaction_type
+            await db.commit()
+            return {"message": f"Reaction changed to {reaction_type}"}
+    else:
+        # Новая реакция
+        db.add(
+            ArticleReaction(
+                user_id=current_user.id,
+                article_id=article.id,
+                reaction_type=reaction_type,
+            )
+        )
+        await db.commit()
+        return {"message": f"Reaction set to {reaction_type}"}
+
+
+# backend/main.py
+
+
+@app.get("/articles/{slug}/stats")
+async def get_article_stats(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    """Получить полную статистику статьи: просмотры + лайки + реакция пользователя"""
+
+    article = await db.execute(select(Article).where(Article.slug == slug))
+    article = article.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(404, "Article not found")
+
+    # 🔥 Считаем просмотры (уникальные юзеры в день)
+    view_count = (
+        await db.execute(
+            select(func.count(func.distinct(ArticleView.user_id))).where(
+                ArticleView.article_id == article.id
+            )
+        )
+    ).scalar() or 0
+
+    # 🔥 Считаем лайки/дизлайки
+    likes = (
+        await db.execute(
+            select(func.count()).where(
+                ArticleReaction.article_id == article.id,
+                ArticleReaction.reaction_type == "like",
+            )
+        )
+    ).scalar() or 0
+
+    dislikes = (
+        await db.execute(
+            select(func.count()).where(
+                ArticleReaction.article_id == article.id,
+                ArticleReaction.reaction_type == "dislike",
+            )
+        )
+    ).scalar() or 0
+
+    # 🔥 Реакция текущего пользователя
+    user_reaction = None
+    if current_user:
+        ur = await db.execute(
+            select(ArticleReaction.reaction_type).where(
+                ArticleReaction.user_id == current_user.id,
+                ArticleReaction.article_id == article.id,
+            )
+        )
+        user_reaction = ur.scalar_one_or_none()
+
+    print(
+        f"🔍 [DEBUG] Stats for article {article.id}: views={view_count}, likes={likes}, dislikes={dislikes}, user_reaction={user_reaction}"
+    )
+
+    return {
+        "view_count": view_count,
+        "likes": likes,
+        "dislikes": dislikes,
+        "user_reaction": user_reaction,
+    }
+
+
+@app.post("/articles/{slug}/view")
+async def record_article_view(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
+    """Записать просмотр статьи"""
+
+    article = await db.execute(select(Article).where(Article.slug == slug))
+    article = article.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(404, "Article not found")
+
+    # Если пользователь авторизован — записываем персональный просмотр
+    if current_user:
+        today = datetime.now(timezone.utc).date()
+        existing = await db.execute(
+            select(ArticleView).where(
+                ArticleView.article_id == article.id,
+                ArticleView.user_id == current_user.id,
+                func.date(ArticleView.viewed_at) == today,
+            )
+        )
+        if not existing.scalar_one_or_none():
+            db.add(
+                ArticleView(
+                    article_id=article.id,
+                    user_id=current_user.id,
+                    viewed_at=datetime.now(),
+                )
+            )
+    else:
+        # Для анонимов — просто увеличиваем счётчик
+        article.view_count = (article.view_count or 0) + 1
+
+    await db.commit()
+
+    return {"message": "View recorded"}
+
+
+# backend/main.py
+# backend/main.py — в @app.get("/articles/{slug}/views")
+
+
+# backend/main.py
+
+
+@app.get("/articles/{slug}/views")
+async def get_article_views(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Получить количество просмотров статьи"""
+
+    article = await db.execute(select(Article).where(Article.slug == slug))
+    article = article.scalar_one_or_none()
+
+    if not article:
+        raise HTTPException(404, "Article not found")
+
+    # 🔥 Вычисляем счётчик ОДИН РАЗ и сохраняем в переменную
+    unique_views_count = (
+        await db.execute(
+            select(func.count(func.distinct(ArticleView.user_id))).where(
+                ArticleView.article_id == article.id
+            )
+        )
+    ).scalar() or 0
+
+    print(
+        f"🔍 [DEBUG] Article {article.id} views: {unique_views_count}"
+    )  # ← Для отладки
+
+    return {
+        "view_count": unique_views_count,  # ← Используем переменную
+        "unique_views": unique_views_count,  # ← И здесь ту же переменную
+    }
 
 
 @app.post("/comments", response_model=CommentOut, status_code=status.HTTP_201_CREATED)

@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Heart,
   UserPlus,
+  X,
 } from "lucide-react";
 import useContactStore from "@/store/states";
 import { useTokens } from "@/hooks/useTokens";
@@ -33,20 +34,18 @@ type MyCourse = {
   duration_minutes: number | null;
   certificate_available: boolean;
   completion_percent: number;
-  is_favorite: boolean; // ❤️ Сердечко (бэкенд)
-  is_enrolled: boolean; // ✅ Записан на курс
+  is_favorite: boolean;
+  is_enrolled: boolean;
   teachers?: Array<{ id: number; full_name: string }>;
   total_units?: number;
   completed_units?: number;
 };
 
-type TabType = "enrolled" | "wishlist"; // 🔥 Вкладки: "Прохожу" / "Хочу пройти"
+type TabType = "enrolled" | "wishlist";
 
-// 🔹 Хук для локального закрепления курсов (Pin)
 function usePinnedCourses() {
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
 
-  // Загрузка из localStorage при маунте
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem("pinned_courses");
@@ -58,7 +57,6 @@ function usePinnedCourses() {
     }
   }, []);
 
-  // Сохранение в localStorage при изменении
   useEffect(() => {
     if (typeof window === "undefined") return;
     localStorage.setItem("pinned_courses", JSON.stringify([...pinnedIds]));
@@ -86,18 +84,17 @@ export default function MyCoursesPage() {
   const searchParams = useSearchParams();
   const { isAuthenticated, openLogin } = useContactStore();
   const { balance } = useTokens();
-  const { togglePin, isPinned } = usePinnedCourses(); // 🔥 Хук для пинов
+  const { togglePin, isPinned } = usePinnedCourses();
 
   const [courses, setCourses] = useState<MyCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>("enrolled"); // 🔥 Активная вкладка
+  const [activeTab, setActiveTab] = useState<TabType>("enrolled");
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [unenrolling, setUnenrolling] = useState<number | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Закрытие меню при клике вне
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -115,7 +112,6 @@ export default function MyCoursesPage() {
 
       console.log("🔵 [MyCourses] Fetching courses...");
       try {
-        // 🔥 Загружаем ВСЕ курсы: и записанные, и в избранном
         const data = await apiFetch(`/courses/my?include_wishlist=true`);
         console.log("🟢 [MyCourses] Loaded:", data.length, "courses");
 
@@ -140,9 +136,7 @@ export default function MyCoursesPage() {
     fetchMyCourses();
   }, [isAuthenticated]);
 
-  // 🔹 Фильтрация по вкладке + поиску
   const filteredCourses = courses.filter((course) => {
-    // Поиск по названию
     if (
       searchQuery &&
       !course.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -150,15 +144,13 @@ export default function MyCoursesPage() {
       return false;
     }
 
-    // Фильтр по вкладке
     if (activeTab === "enrolled") {
-      return course.is_enrolled; // Только записанные
+      return course.is_enrolled;
     } else {
-      return course.is_favorite && !course.is_enrolled; // В избранном, но не записан
+      return course.is_favorite && !course.is_enrolled;
     }
   });
 
-  // 🔹 Сортировка: закреплённые (Pin) всегда первыми
   const sortedCourses = [...filteredCourses].sort((a, b) => {
     const aPinned = isPinned(a.id);
     const bPinned = isPinned(b.id);
@@ -167,7 +159,6 @@ export default function MyCoursesPage() {
     return 0;
   });
 
-  // Переключение сердечка (синхронизация с бэкендом)
   const toggleFavorite = async (
     e: React.MouseEvent,
     courseId: number,
@@ -208,7 +199,6 @@ export default function MyCoursesPage() {
     }
   };
 
-  // 🔹 Локальное закрепление курса (Pin) — НЕ синхронизируется с бэкендом
   const handleTogglePin = (e: React.MouseEvent, courseId: number) => {
     e.preventDefault();
     e.stopPropagation();
@@ -216,7 +206,6 @@ export default function MyCoursesPage() {
     togglePin(courseId);
   };
 
-  // Выход из курса
   const handleUnenroll = async (courseId: number, courseSlug: string) => {
     console.log("🔴 [Unenroll] === BUTTON CLICKED ===", {
       courseId,
@@ -249,7 +238,6 @@ export default function MyCoursesPage() {
 
       console.log("🟢 [Unenroll] Server response:", response);
 
-      // Удаляем курс из списка
       setCourses((prev) => {
         const filtered = prev.filter((c) => c.id !== courseId);
         console.log(
@@ -273,7 +261,10 @@ export default function MyCoursesPage() {
     }
   };
 
-  // Форматирование времени
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
     if (minutes < 60) return `${minutes} мин`;
@@ -282,7 +273,6 @@ export default function MyCoursesPage() {
     return m > 0 ? `${h}ч ${m}мин` : `${h}ч`;
   };
 
-  // Прогресс в юнитах
   const getUnitProgress = (course: MyCourse) => {
     const total =
       course.total_units ??
@@ -293,7 +283,6 @@ export default function MyCoursesPage() {
     return { completed: Math.min(completed, total), total };
   };
 
-  // Заглушка для неавторизованных
   if (!isAuthenticated) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
@@ -317,7 +306,6 @@ export default function MyCoursesPage() {
     );
   }
 
-  // Лоадер
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
@@ -328,7 +316,6 @@ export default function MyCoursesPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto">
-      {/* 🔹 Заголовок */}
       <div className="w-full mb-8">
         <Link
           href="/courses"
@@ -342,15 +329,36 @@ export default function MyCoursesPage() {
         </p>
       </div>
 
-      {/* 🔹 Вкладки + Поиск */}
-      <div className="w-full mb-6 space-y-4">
-        {/* Вкладки */}
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="w-full mb-6 flex flex-row h-[50px] items-center justify-between space-y-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-3 bottom-0 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={
+              activeTab === "enrolled"
+                ? "Поиск по пройденным..."
+                : "Поиск по желаемым..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-3 bottom-0.5 rounded-lg hover:bg-gray-200 p-[1px] -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 bg-gray-100 p-1 mb-[20px] rounded-xl w-fit">
           <button
             onClick={() => setActiveTab("enrolled")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               activeTab === "enrolled"
-                ? "bg-white text-purple-700 shadow-sm"
+                ? "bg-gray-800 text-gray-200 "
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -363,7 +371,7 @@ export default function MyCoursesPage() {
             onClick={() => setActiveTab("wishlist")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               activeTab === "wishlist"
-                ? "bg-white text-purple-700 shadow-sm"
+                ? "bg-gray-800 text-gray-200"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -374,25 +382,8 @@ export default function MyCoursesPage() {
             </span>
           </button>
         </div>
-
-        {/* Поиск */}
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={
-              activeTab === "enrolled"
-                ? "Поиск по пройденным..."
-                : "Поиск по желаемым..."
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none transition"
-          />
-        </div>
       </div>
 
-      {/* 🔹 Список курсов */}
       {sortedCourses.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-2xl w-full">
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -423,11 +414,9 @@ export default function MyCoursesPage() {
               <div
                 key={course.id}
                 onClick={() => router.push(`/courses/${course.slug}`)}
-                className="group block bg-white rounded-xl border border-gray-200 shadow-xs hover:shadow-lg hover:border-purple-300 transition-all overflow-hidden relative cursor-pointer"
+                className="group block bg-white rounded-lg shadow-xs  hover:border-purple-300 transition-all overflow-hidden relative cursor-pointer"
               >
-                {/* 🔹 Кнопки управления */}
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-2 pointer-events-none">
-                  {/* 📌 Pin (локальное закрепление) */}
                   <button
                     onClick={(e) => handleTogglePin(e, course.id)}
                     className={`p-2 rounded-full transition shadow-sm pointer-events-auto ${
@@ -444,7 +433,6 @@ export default function MyCoursesPage() {
                     )}
                   </button>
 
-                  {/* ❤️ Favorite (сердечко — синхронизация с бэкендом) */}
                   <button
                     onClick={(e) => toggleFavorite(e, course.id, course.slug)}
                     className={`p-2 rounded-full transition shadow-sm pointer-events-auto ${
@@ -462,11 +450,8 @@ export default function MyCoursesPage() {
                       className={`w-4 h-4 ${course.is_favorite ? "fill-current" : ""}`}
                     />
                   </button>
-
-                  {/* ⋮ Меню действий */}
                 </div>
 
-                {/* 🔹 Обложка */}
                 {course.image && (
                   <div className="h-40 bg-gray-100 overflow-hidden pointer-events-none">
                     <img
@@ -482,7 +467,6 @@ export default function MyCoursesPage() {
                   </div>
                 )}
 
-                {/* 🔹 Контент */}
                 <div className="p-4 pointer-events-none">
                   <div className="flex items-start justify-between mb-2">
                     {course.category && (
@@ -507,7 +491,6 @@ export default function MyCoursesPage() {
                     </p>
                   )}
 
-                  {/* 🔹 Прогресс бар (только для записанных курсов) */}
                   {course.is_enrolled && (
                     <div className="mt-4 pt-3 border-t border-gray-100">
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
@@ -531,7 +514,6 @@ export default function MyCoursesPage() {
                     </div>
                   )}
 
-                  {/* 🔹 Мета-информация */}
                   <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
                     {course.duration_minutes && (
                       <div className="flex items-center gap-1">

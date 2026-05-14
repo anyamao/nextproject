@@ -43,6 +43,10 @@ class User(Base):
         nullable=True,
         default=None,
     )
+    article_reactions = relationship(
+        "ArticleReaction", back_populates="user", cascade="all, delete-orphan"
+    )
+
     equipped_item = relationship("ShopItem", foreign_keys=[equipped_item_id])
     # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
     inventory = relationship(
@@ -695,6 +699,15 @@ class Article(Base):
     time_minutes = Column(Integer, nullable=True)
     image = Column(String(500), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    reactions = relationship(
+        "ArticleReaction", back_populates="article", cascade="all, delete-orphan"
+    )
+    views = relationship(
+        "ArticleView", back_populates="article", cascade="all, delete-orphan"
+    )
+    views = relationship(
+        "ArticleView", back_populates="article", cascade="all, delete-orphan"
+    )
 
 
 class ArticleView(Base):
@@ -712,11 +725,13 @@ class ArticleView(Base):
     )
     viewed_at = Column(DateTime, server_default=func.now())
     user = relationship("User", back_populates="article_views")
-    article = relationship("Article")
-
+    article = relationship("Article", back_populates="views")
     __table_args__ = (
         UniqueConstraint("user_id", "article_id", name="uq_user_article_view"),
     )
+
+
+# backend/models.py
 
 
 class ArticleReaction(Base):
@@ -724,22 +739,20 @@ class ArticleReaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     article_id = Column(
-        Integer,
-        ForeignKey("articles.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
+        Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False
     )
-    is_like = Column(Boolean, nullable=False)
+    reaction_type = Column(String(10), nullable=False)  # "like" или "dislike"
     created_at = Column(DateTime, server_default=func.now())
-    user = relationship("User", back_populates="article_reactions")
-    article = relationship("Article")
 
     __table_args__ = (
-        UniqueConstraint("user_id", "article_id", name="uq_user_article_reaction"),
+        UniqueConstraint("user_id", "article_id", name="uq_article_reaction"),
     )
+
+    user = relationship("User", back_populates="article_reactions")
+    article = relationship("Article", back_populates="reactions")
 
 
 class TestResult(Base):
