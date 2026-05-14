@@ -1,4 +1,3 @@
-// frontend/app/courses/CoursesContent.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,10 +28,10 @@ type Course = {
   certificate_available?: boolean;
   duration_minutes?: number | null;
   enrolled_count?: number;
-  rating?: number | null; // 1-5, или null если нет оценок
-  is_favorite?: boolean; // Для отображения сердца
+  rating?: number | null;
+  is_favorite?: boolean;
   completion_percent?: number | null;
-  is_enrolled?: boolean; // 🔥 Добавь это поле
+  is_enrolled?: boolean;
 };
 
 const CATEGORIES = [
@@ -49,17 +48,37 @@ export default function CoursesContent() {
   const router = useRouter();
 
   const searchQueryFromUrl = searchParams.get("search") || "";
+  const categoryFromUrl = searchParams.get("category") || "";
+
   const [searchQuery, setSearchQuery] = useState(searchQueryFromUrl);
+  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // 🔥 Синхронизация с URL при изменении категории
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (selectedCategory) {
+      params.set("category", selectedCategory);
+    } else {
+      params.delete("category");
+    }
+    router.push(`/courses?${params.toString()}`, { scroll: false });
+  }, [selectedCategory, router, searchParams]);
+
+  // 🔥 Синхронизация поиска с URL
   useEffect(() => {
     const newSearchQuery = searchParams.get("search") || "";
     setSearchQuery(newSearchQuery);
+  }, [searchParams]);
+
+  // 🔥 Синхронизация категории из URL
+  useEffect(() => {
+    const newCategory = searchParams.get("category") || "";
+    setSelectedCategory(newCategory);
   }, [searchParams]);
 
   useEffect(() => {
@@ -102,9 +121,7 @@ export default function CoursesContent() {
 
     setFilteredCourses(result);
   }, [courses, searchQuery, selectedCategory]);
-  // frontend/app/courses/CoursesContent.tsx
 
-  // 🔥 Загрузи избранное с явной типизацией:
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -114,16 +131,15 @@ export default function CoursesContent() {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((data: Array<{ course_id: number }>) => {
-          // 🔥 Явный тип!
           const favIds = new Set<number>(data.map((f) => f.course_id));
           setFavorites(favIds);
         })
         .catch(() => {});
     }
   }, []);
-  // 🔥 Функция добавления/удаления из избранного:
+
   const toggleFavorite = async (e: React.MouseEvent, courseId: number) => {
-    e.preventDefault(); // 🔥 Чтобы не переходить по ссылке карточки
+    e.preventDefault();
     e.stopPropagation();
 
     const token = localStorage.getItem("token");
@@ -140,7 +156,6 @@ export default function CoursesContent() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 🔥 Обновляем локальный стейт
       setFavorites((prev) => {
         const next = new Set(prev);
         if (isFav) next.delete(courseId);
@@ -152,7 +167,6 @@ export default function CoursesContent() {
     }
   };
 
-  // 🔥 Форматирование времени:
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return "—";
     if (minutes < 60) return `${minutes} мин`;
@@ -161,7 +175,6 @@ export default function CoursesContent() {
     return mins > 0 ? `${hours}ч ${mins}мин` : `${hours}ч`;
   };
 
-  // 🔥 Рендер звёзд рейтинга:
   const renderRating = (rating: number | null | undefined) => {
     if (rating === null || rating === undefined) return null;
 
@@ -185,6 +198,7 @@ export default function CoursesContent() {
       </div>
     );
   };
+
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     const params = new URLSearchParams(searchParams.toString());
@@ -194,6 +208,10 @@ export default function CoursesContent() {
       params.delete("search");
     }
     router.push(`/courses?${params.toString()}`, { scroll: false });
+  };
+
+  const handleCategoryChange = (categoryValue: string) => {
+    setSelectedCategory(categoryValue);
   };
 
   return (
@@ -225,7 +243,7 @@ export default function CoursesContent() {
             return (
               <button
                 key={cat.value || "all"}
-                onClick={() => setSelectedCategory(cat.value)}
+                onClick={() => handleCategoryChange(cat.value)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
                   isActive
                     ? "bg-gray-800 text-gray-100 shadow-md"
@@ -276,7 +294,6 @@ export default function CoursesContent() {
                 href={`/courses/promo/${course.slug}`}
                 className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
               >
-                {/* 🔹 Бейдж "Пройдено" — показываем только если прогресс ≥90% */}
                 {course.is_enrolled &&
                   (course.completion_percent ?? 0) >= 90 && (
                     <div className="absolute flex flex-row items-center top-48 right-3 bg-gray-900 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
@@ -311,7 +328,6 @@ export default function CoursesContent() {
                   </svg>
                 </button>
 
-                {/* 🔹 Обложка курса */}
                 {course.image && (
                   <div className="h-65 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
                     <img
@@ -327,9 +343,7 @@ export default function CoursesContent() {
                   </div>
                 )}
 
-                {/* 🔹 Контент карточки */}
                 <div className="p-5">
-                  {/* Категория + Сертификат */}
                   <div className="flex items-start justify-between mb-3">
                     {course.category && (
                       <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
@@ -355,7 +369,6 @@ export default function CoursesContent() {
                     )}
                   </div>
 
-                  {/* Заголовок и описание */}
                   <h2 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-1">
                     {course.title}
                   </h2>
@@ -365,11 +378,8 @@ export default function CoursesContent() {
                     </p>
                   )}
 
-                  {/* 🔹 Мета-информация: время, студенты, рейтинг */}
                   <div className="flex flex-row justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                    {/* Время */}
                     <div className="flex flex-row items-center">
-                      {" "}
                       {course.duration_minutes && (
                         <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
                           <svg
@@ -388,7 +398,6 @@ export default function CoursesContent() {
                           <span>{formatDuration(course.duration_minutes)}</span>
                         </div>
                       )}
-                      {/* Записанные */}
                       {course.enrolled_count !== undefined && (
                         <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
                           <svg
@@ -407,9 +416,7 @@ export default function CoursesContent() {
                           <span>{course.enrolled_count}+</span>
                         </div>
                       )}
-                      {/* Рейтинг (только если есть) */}
                       {renderRating(course.rating)}
-                      {/* 🔹 Кнопка: Записаться или Продолжить */}
                     </div>
                     {course.is_enrolled ? (
                       <Link

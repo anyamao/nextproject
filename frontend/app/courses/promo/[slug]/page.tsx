@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Filter,
   Calendar,
+  ChevronRight,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
@@ -133,7 +134,7 @@ export default function CoursePromoPage() {
   });
 
   const { isAuthenticated, openLogin } = useContactStore();
-
+  const [similarCourses, setSimilarCourses] = useState<PromoCourse[]>([]);
   const [course, setCourse] = useState<PromoCourse | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
@@ -588,6 +589,28 @@ export default function CoursePromoPage() {
     </div>
   );
 
+  // 🔹 Загрузка похожих курсов (той же категории)
+  useEffect(() => {
+    async function fetchSimilarCourses() {
+      if (!course?.category) return;
+
+      try {
+        const params = new URLSearchParams();
+        params.append("category", course.category);
+        params.append("limit", "4");
+
+        const data = await apiFetch(`/courses/subjects?${params.toString()}`);
+        // Исключаем текущий курс из результатов
+        const filtered = data.filter((c: PromoCourse) => c.id !== course.id);
+        setSimilarCourses(filtered.slice(0, 4));
+      } catch (err) {
+        console.error("❌ Failed to fetch similar courses:", err);
+      }
+    }
+
+    fetchSimilarCourses();
+  }, [course?.category, course?.id]);
+
   useEffect(() => {
     console.log(
       "🔍 [Render] course:",
@@ -758,7 +781,7 @@ export default function CoursePromoPage() {
                     disabled={enrolling || !course?.slug}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4  bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition disabled:opacity-50"
                   >
-                    {enrolling ? "Записываем..." : "Записаться на курс"}
+                    {enrolling ? "Записываем..." : "Записаться "}
                   </button>
 
                   <Link
@@ -1041,7 +1064,68 @@ export default function CoursePromoPage() {
         </div>
       )}
 
-      <div className="w-full mt-8 bg-white rounded-lg shadow-xs p-[30px]">
+      {course?.category && similarCourses.length > 0 && (
+        <div className="w-full mt-8 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              Похожие курсы
+            </h2>
+            <Link
+              href={`/courses?category=${encodeURIComponent(course.category)}`}
+              className="text-purple-600 text-sm font-medium hover:text-purple-700 transition flex items-center gap-1"
+            >
+              Все курсы {course.category}
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {similarCourses.map((similarCourse) => (
+              <Link
+                key={similarCourse.id}
+                href={`/courses/promo/${similarCourse.slug}`}
+                className="group bg-white rounded-lg shadow-xs max-w-[300px]  overflow-hidden transition-all duration-300"
+              >
+                {similarCourse.image && (
+                  <div className="h-32 bg-gray-100 overflow-hidden">
+                    <img
+                      src={`/${similarCourse.image}`}
+                      alt={similarCourse.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="p-3">
+                  <h3 className="font-semibold text-gray-900 text-sm group-hover:text-purple-700 line-clamp-1">
+                    {similarCourse.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        {formatDuration(similarCourse.duration_minutes)}
+                      </span>
+                    </div>
+                    {similarCourse.rating && similarCourse.rating > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                        <span className="text-xs text-gray-600">
+                          {similarCourse.rating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="w-full mt-5 bg-white rounded-lg shadow-xs p-[30px]">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <MessageSquare className="w-5 h-5" /> Отзывы (
           {reviewStats?.total_reviews || 0})
