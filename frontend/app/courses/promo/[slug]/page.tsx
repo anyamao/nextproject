@@ -422,6 +422,7 @@ export default function CoursePromoPage() {
             comment: newReview.comment.trim(),
           }),
         });
+        showToast("+50 XP за отзыв! 💬", "success");
       }
       const data = await apiFetch(`/courses/${course.id}/reviews`);
       setReviews(data.reviews || []);
@@ -431,7 +432,6 @@ export default function CoursePromoPage() {
       setIsEditing(false);
 
       // 🔥 Показываем тост за успешный отзыв
-      showToast("+50 XP за отзыв! 💬", "success");
     } catch (err: any) {
       alert(err.message || "Ошибка");
     } finally {
@@ -1132,7 +1132,7 @@ export default function CoursePromoPage() {
           {reviewStats?.total_reviews || 0})
         </h2>
         <div className="flex flex-row items-center justify-between">
-          {reviewStats && reviewStats.total_reviews > 0 && (
+          {reviewStats && (
             <div className="mb-6 p-6 max-w-[390px] min-w-[390px] rotate-2 bg-gray-100 rounded-xl">
               <h3 className="text-sm font-semibold text-gray-900 -rotate-2 mb-3">
                 Распределение оценок
