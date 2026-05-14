@@ -354,6 +354,9 @@ class ArticleOut(BaseModel):
     content: str | None
     time_minutes: int | None
     image: str | None
+    view_count: int = 0
+    likes: int = 0
+    dislikes: int = 0
     created_at: datetime
 
 

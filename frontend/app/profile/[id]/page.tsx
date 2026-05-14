@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Coins, Trophy, PawPrint, BookOpen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
+import CatLevelProgress from "@/components/CatLevelProgress";
 type CompletedCourse = {
   id: number;
   title: string;
@@ -114,7 +114,6 @@ export default function PublicProfilePage() {
             size="xxxl"
           />
 
-          {/* Информация */}
           <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
             <p className="text-gray-500 text-sm mt-1">@{profile.username}</p>
@@ -143,6 +142,18 @@ export default function PublicProfilePage() {
                 <span>{profile.token_balance} токенов</span>
               </div>
             </div>
+          </div>
+
+          <div className="h-full items-center  flex flex-col">
+            <p className="font-semibold text-purple-950 mb-[10px]">
+              Ваш уровень
+            </p>
+
+            <div className="bg-purple-200 text-purple-900  outline-[3px] outline-purple-400 rounded-full p-[20px]">
+              <p className="font-bold text-xl">Котенок 1lv</p>
+            </div>
+            <p>До следующего уровня </p>
+            <p>Пройдите еще 3 урока</p>
           </div>
         </div>
 
@@ -217,6 +228,27 @@ export default function PublicProfilePage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className=" mt-[20px] w-full">
+        <div className="w-full mb-[20px] shadow-xs bg-white text-white rounded-lg p-[10px] px-[20px]">
+          <h2 className="text-md  font-semibold text-gray-800  flex items-center gap-2">
+            Достижения
+          </h2>
+        </div>
+        <div className="w-full items-center flex flex-row justify-between">
+          <div className="bg-emerald-500">
+            Уничтожитель тестов 1lv Прошел на 75% 5 тестов! (потом по 5 тестов
+            новый lvl)
+          </div>
+          <div className="bg-emerald-800">
+            Умный кот 1lv Прошел 1 курс на 75% (каждый курс повышается lvl)
+          </div>
+          <div className="bg-purple-500">
+            Модный котик 1lvl Купили 1 товар! (далее каждые 3 купленых товара
+            повышение lvl)
+          </div>
+        </div>
       </div>
     </main>
   );

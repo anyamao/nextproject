@@ -40,6 +40,7 @@ from models import (
     UserAchievement,
     PublicProfileOut,
     EgeSubject,
+    UserArticleFavorite,
     EgeLesson,
     EgeTest,
     ShopItem,
@@ -2626,12 +2627,19 @@ ARTICLE_TOPICS_LIST = [
 ]
 
 
+# backend/main.py
+
+
 @app.get("/articles", response_model=list[ArticleOut])
 async def get_articles(
     topic: str | None = None,
     search: str | None = None,
+    with_stats: bool = False,  # 🔥 Новый параметр
     db: AsyncSession = Depends(get_db),
 ):
+    """Получить список статей с опциональной статистикой"""
+
+    # 🔹 Базовый запрос
     query = select(Article)
 
     if topic and topic != "Все":
@@ -2640,16 +2648,105 @@ async def get_articles(
     if search:
         query = query.where(Article.title.ilike(f"%{search}%"))
 
+    # Сортировка по умолчанию: новые сверху
     query = query.order_by(Article.created_at.desc())
 
     result = await db.execute(query)
-    return result.scalars().all()
+    articles = result.scalars().all()
+
+    # 🔥 Если запрошена статистика — считаем для каждой статьи
+    if with_stats:
+        articles_with_stats = []
+
+        for article in articles:
+            # 👁 Просмотры: уникальные юзеры в день
+            views = await db.execute(
+                select(func.count(func.distinct(ArticleView.user_id))).where(
+                    ArticleView.article_id == article.id
+                )
+            )
+            view_count = views.scalar() or 0
+
+            # 👍 Лайки
+            likes = await db.execute(
+                select(func.count()).where(
+                    ArticleReaction.article_id == article.id,
+                    ArticleReaction.reaction_type == "like",
+                )
+            )
+
+            # 👎 Дизлайки
+            dislikes = await db.execute(
+                select(func.count()).where(
+                    ArticleReaction.article_id == article.id,
+                    ArticleReaction.reaction_type == "dislike",
+                )
+            )
+
+            # 🔥 Создаём объект с доп. полями
+            article_data = {
+                "id": article.id,
+                "title": article.title,
+                "slug": article.slug,
+                "topic": article.topic,
+                "content": article.content,
+                "time_minutes": article.time_minutes,
+                "image": article.image,
+                "created_at": article.created_at,
+                # 🔥 Статистика:
+                "view_count": view_count,
+                "likes": likes.scalar() or 0,
+                "dislikes": dislikes.scalar() or 0,
+            }
+            articles_with_stats.append(article_data)
+
+        return articles_with_stats
+
+    # 🔹 Без статистики — возвращаем как есть
+    return articles
 
 
 # backend/main.py
 
 
 # backend/main.py
+# 🔹 Переключить избранное
+@app.post("/articles/{article_id}/favorite")
+async def toggle_article_favorite(
+    article_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    existing = await db.execute(
+        select(UserArticleFavorite).where(
+            UserArticleFavorite.user_id == current_user.id,
+            UserArticleFavorite.article_id == article_id,
+        )
+    )
+    fav = existing.scalar_one_or_none()
+
+    if fav:
+        await db.delete(fav)
+        await db.commit()
+        return {"is_favorite": False, "message": "Removed from favorites"}
+    else:
+        db.add(UserArticleFavorite(user_id=current_user.id, article_id=article_id))
+        await db.commit()
+        return {"is_favorite": True, "message": "Added to favorites"}
+
+
+# 🔹 Получить список ID избранных статей
+@app.get("/articles/favorites")
+async def get_user_article_favorites(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(UserArticleFavorite.article_id).where(
+            UserArticleFavorite.user_id == current_user.id
+        )
+    )
+    return {"favorite_ids": [row[0] for row in result.all()]}
 
 
 @app.post("/lessons/{lesson_id}/complete")

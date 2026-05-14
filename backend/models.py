@@ -688,6 +688,23 @@ class LessonReaction(Base):
     )
 
 
+class UserArticleFavorite(Base):
+    __tablename__ = "user_article_favorites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    article_id = Column(
+        Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "article_id", name="uq_user_article_fav"),
+    )
+
+
 class Article(Base):
     __tablename__ = "articles"
 
