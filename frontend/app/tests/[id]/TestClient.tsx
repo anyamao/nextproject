@@ -148,6 +148,45 @@ export default function TestClient({
           body: JSON.stringify({ score, passed }),
         });
 
+        try {
+          const token = localStorage.getItem("token");
+          if (token) {
+            const result = await apiFetch(`/tests/${test.id}/complete`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ score, passed }),
+            });
+
+            // 🔥 Если тест пройден на 75%+ — обновляем статистику достижений
+            if (passed && score >= 75) {
+              // Обновляем статистику тестов
+              const testStats = await apiFetch("/profile/test-stats");
+
+              // Обновляем основную статистику
+              const achievements = await apiFetch("/profile/achievements");
+
+              // 🔥 Если у тебя есть глобальный стейт достижений — обнови его
+              // Например, через контекст или Zustand:
+              // useAchievementStore.getState().setStats({ ... });
+
+              // Или просто покажи уведомление:
+              setToast(
+                "🎉 Тест пройден! Твой уровень обновится на странице профиля!",
+              );
+              setTimeout(() => setToast(null), 4000);
+            }
+
+            if (result.reward_granted) {
+              setToast("+30 XP за тест! 🎉");
+              setTimeout(() => setToast(null), 3000);
+            }
+          }
+        } catch (err) {
+          console.error("❌ Failed to complete test:", err);
+        }
         // 🔥 ТЕПЕРЬ МОЖНО ПРОВЕРИТЬ result.reward_granted:
         if (result.reward_granted && passed) {
           // Покажи тост (используй свой Toast-компонент или alert)

@@ -392,31 +392,30 @@ export default function ArticlesPage() {
                   {article.title}
                 </h2>
 
-                <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatTime(article.time_minutes)}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Eye className="w-4 h-4" />
-                    <span>{formatNumber(article.view_count)}</span>
-                  </div>
-                  {(article.likes ?? 0) > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-green-600">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span>{formatNumber(article.likes)}</span>
+                <div className="flex flex-wrap justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex flex-row items-center">
+                    <div className="flex items-center gap-1 text-xs mr-[10px] text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatTime(article.time_minutes)}</span>
                     </div>
-                  )}
-                  {(article.dislikes ?? 0) > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-red-600">
-                      <ThumbsDown className="w-4 h-4" />
-                      <span>{formatNumber(article.dislikes)}</span>
+                    <div className="flex items-center gap-1  mr-[10px]  text-xs text-gray-500">
+                      <Eye className="w-4 h-4" />
+                      <span>{formatNumber(article.view_count)}</span>
                     </div>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                  <span className="text-sm font-semibold text-purple-600 group-hover:text-purple-700 flex items-center gap-1">
+                    {(article.likes ?? 0) > 0 && (
+                      <div className="flex items-center gap-1 text-xs  mr-[10px]  text-gray-500">
+                        <ThumbsUp className="w-4 h-4" />
+                        <span>{formatNumber(article.likes)}</span>
+                      </div>
+                    )}
+                    {(article.dislikes ?? 0) > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <ThumbsDown className="w-4 h-4" />
+                        <span>{formatNumber(article.dislikes)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold  text-purple-600 group-hover:text-purple-700 flex items-center gap-1">
                     Читать
                     <ChevronRight className="w-4 h-4" />
                   </span>

@@ -273,13 +273,12 @@ export default function FlashcardSession({
           {isLastCard ? (
             <button
               onClick={handleComplete}
-              className="p-3 rounded-xl transition flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-md"
+              className="p-3 rounded-lg transition flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white shadow-md"
               title="Завершить повторение (→)"
             >
-              <span className="text-sm font-medium hidden sm:inline">
+              <span className="text-sm font-semibold hidden sm:inline">
                 Завершить
               </span>
-              <CheckCircle className="w-5 h-5" />
             </button>
           ) : (
             <button
@@ -308,7 +307,7 @@ export default function FlashcardSession({
           >
             <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-3xl shadow-xl border-2 border-purple-100 p-8 flex flex-col items-center justify-center text-center">
               <div
-                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                className="text-[28px] font-semibold text-purple-800 leading-relaxed question-content"
                 dangerouslySetInnerHTML={{
                   __html: currentCard.front || "",
                 }}
@@ -326,14 +325,15 @@ export default function FlashcardSession({
 
             <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white rounded-3xl shadow-xl border-2 border-purple-200 p-8 flex flex-col items-center justify-center text-center">
               <div
-                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                className="text-[28px] font-semibold  font-medium text-purple-800 leading-relaxed question-content"
                 dangerouslySetInnerHTML={{
                   __html: currentCard.back || "",
                 }}
               />
 
               <div
-                className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                className="text-[2
+                0px] font-semibold text-gray-700 leading-relaxed question-content"
                 dangerouslySetInnerHTML={{
                   __html: currentCard.front || "",
                 }}
@@ -341,7 +341,7 @@ export default function FlashcardSession({
 
               {currentCard.example && (
                 <div
-                  className="text-lg font-medium text-gray-900 leading-relaxed question-content"
+                  className="text-lg font-medium text-gray-800 mt-[10px] border-t-[1px] border-gray-300 leading-relaxed question-content"
                   dangerouslySetInnerHTML={{
                     __html: currentCard.example || "",
                   }}
