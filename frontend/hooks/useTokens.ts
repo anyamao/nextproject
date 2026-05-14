@@ -1,39 +1,52 @@
 // frontend/hooks/useTokens.ts
-"use client";
-
-import { useCallback, useEffect } from "react";
-import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
-// frontend/hooks/useTokens.ts — упрощаем
+import { useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 export function useTokens() {
   const { tokenBalance, setTokenBalance } = useContactStore();
 
-  // Загрузка баланса с сервера
-  const fetchBalance = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setTokenBalance(0);
-        return;
-      }
-      const data = await apiFetch("/profile/balance", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTokenBalance(data.token_balance ?? 0);
-    } catch (err) {
-      console.error("❌ Failed to fetch balance:", err);
-    }
-  }, [setTokenBalance]);
-
+  // 🔥 Авто-обновление при маунте + при фокусе окна
   useEffect(() => {
+    const fetchBalance = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const data = await apiFetch("/profile/balance", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        setTokenBalance(data.token_balance ?? 0);
+      } catch {}
+    };
+
     fetchBalance();
-  }, [fetchBalance]);
+
+    // 🔥 Обновлять при возврате на вкладку (если награда пришла в фоне)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchBalance();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [setTokenBalance]);
 
   return {
     balance: tokenBalance,
     loading: false,
-    fetchBalance,
-    // 🔥 Убираем rewardTokens — награды теперь только на бэкенде!
+    refresh: () => {
+      // 🔥 Ручное обновление по запросу
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiFetch("/profile/balance", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        }).then((data) => setTokenBalance(data.token_balance ?? 0));
+      }
+    },
   };
 }

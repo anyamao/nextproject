@@ -223,7 +223,7 @@ export default function CoursePromoPage() {
               (sum: number, r: { amount: number }) => sum + r.amount,
               0,
             );
-            showToast(`+${total} XP за прогресс! 🎉`, "success");
+            showToast(`+${total} лапок за прогресс! 🎉`, "success");
           }
 
           console.log("✅ Course structure:", {
@@ -363,7 +363,7 @@ export default function CoursePromoPage() {
 
       // 🔥 Показываем тост только если бэкенд выдал награду
       if (response.reward_granted) {
-        showToast("+20 XP за первую запись! 🎉", "success");
+        showToast("+20 лапок за первую запись! 🎉", "success");
       }
 
       setTimeout(() => router.push(`/courses/${slug}`), 1000);
@@ -422,7 +422,7 @@ export default function CoursePromoPage() {
             comment: newReview.comment.trim(),
           }),
         });
-        showToast("+50 XP за отзыв! 💬", "success");
+        showToast("+50 лапок за отзыв! 💬", "success");
       }
       const data = await apiFetch(`/courses/${course.id}/reviews`);
       setReviews(data.reviews || []);
@@ -652,7 +652,7 @@ export default function CoursePromoPage() {
   const filteredSortedReviews = getFilteredAndSortedReviews();
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto">
+    <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[540px] md:max-w-[1200px] mx-auto">
       <div className="w-full mb-6">
         <Link
           href="/courses"
@@ -671,8 +671,8 @@ export default function CoursePromoPage() {
         />
       )}
 
-      <div className="bg-white rounded-lg shadow-xs overflow-hidden w-full">
-        <div className="relative flex flex-row p-[20px]">
+      <div className="bg-white rounded-lg  shadow-xs overflow-hidden w-full">
+        <div className="relative flex md:flex-row flex-col items-center p-[20px]">
           {course.image && (
             <div className="h-64 w-[370px] bg-gray-100 overflow-hidden">
               <img
@@ -708,7 +708,7 @@ export default function CoursePromoPage() {
             type="danger"
           />
 
-          <div className=" ml-[30px]">
+          <div className=" ml-[30px] mt-[10px] lg:mt-[0px]">
             <div className="flex items-start justify-between mb-4">
               {course.category && (
                 <span className="inline-block px-3 py-1 text-xs font-medium rounded-lg bg-purple-100 text-purple-700">
@@ -798,7 +798,7 @@ export default function CoursePromoPage() {
 
           <button
             onClick={toggleFavorite}
-            className={`absolute top-4 right-4 z-10 p-2 rounded-full transition  ${course.is_favorite ? "bg-red-600 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
+            className={`absolute top-4  right-4 z-10 p-2 rounded-full transition  ${course.is_favorite ? "bg-red-600 text-white hover:bg-red-600" : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"}`}
             title={
               course.is_favorite
                 ? "Убрать из избранного"
@@ -869,8 +869,8 @@ export default function CoursePromoPage() {
         )}
       </div>
 
-      <div className="flex flex-row gap-4 w-full mb-8">
-        <div className="flex-1 bg-purple-200 rounded-lg p-5 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full mb-8">
+        <div className="bg-purple-200 rounded-lg p-5 text-center">
           <p className="font-black text-3xl text-violet-900">
             {totalUnits || 0}
           </p>
@@ -886,7 +886,7 @@ export default function CoursePromoPage() {
           </p>
         </div>
 
-        <div className="flex-1 bg-purple-300 rounded-lg p-5 text-center">
+        <div className="bg-purple-300 rounded-lg p-5 text-center">
           <p className="font-black text-3xl text-violet-950">
             {totalLessons || 0}
           </p>
@@ -902,7 +902,7 @@ export default function CoursePromoPage() {
           </p>
         </div>
 
-        <div className="flex-1 bg-purple-200 rounded-lg p-5 text-center">
+        <div className="bg-purple-200 rounded-lg p-5 text-center">
           <p className="font-black text-3xl text-violet-900">
             {totalTests || 0}
           </p>
@@ -918,7 +918,7 @@ export default function CoursePromoPage() {
           </p>
         </div>
 
-        <div className="flex-1 bg-purple-300 rounded-lg p-5 text-center">
+        <div className="bg-purple-300 rounded-lg p-5 text-center">
           <p className="font-black text-3xl text-violet-950">
             {totalFlashcards || 0}
           </p>
@@ -934,7 +934,6 @@ export default function CoursePromoPage() {
           </p>
         </div>
       </div>
-
       <div className="w-full bg-white p-5 rounded-lg shadow-xs mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Программа курса
@@ -1137,7 +1136,7 @@ export default function CoursePromoPage() {
             )}
         </h2>
 
-        <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col md:flex-row items-center justify-between">
           {reviewStats && (
             <div className="mb-6 p-6 max-w-[390px] min-w-[390px] rotate-2 bg-gray-100 rounded-xl">
               <h3 className="text-sm font-semibold text-gray-900 -rotate-2 mb-3">
@@ -1172,7 +1171,7 @@ export default function CoursePromoPage() {
             </div>
           )}
 
-          <div className="bg-cyan-600 h-full p-[20px] rounded-lg flex-1 ml-[30px]">
+          <div className="bg-cyan-600 h-full p-[20px] rounded-lg flex-1 md:ml-[30px]">
             <p className="text-white font-semibold text-lg">
               Давайте улучшать курс вместе!
             </p>

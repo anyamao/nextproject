@@ -309,7 +309,7 @@ export default function PublicProfilePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {profile.completed_courses.map((course) => (
               <Link
                 key={course.id}
@@ -362,7 +362,7 @@ export default function PublicProfilePage() {
             Достижения
           </h2>
 
-          <div className="w-full mt-[10px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="w-full mt-[10px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* 🔹 Уничтожитель тестов */}
             <div className="bg-emerald-500 rounded-lg p-4">
               <div className="flex items-start justify-between">

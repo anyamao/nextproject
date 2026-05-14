@@ -221,23 +221,25 @@ export default function ArticlesPage() {
       </div>
 
       <div className="w-full mb-8 space-y-4">
-        <div className="relative max-w-md mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Поиск статей..."
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          )}
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center gap-3 w-full border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-purple-400 transition  pl-3 pr-3">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Поиск статей..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="flex-1 py-3 outline-none bg-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => handleSearchChange("")}
+                className="text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -260,7 +262,7 @@ export default function ArticlesPage() {
                       scroll: false,
                     });
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition ${
                     isActive
                       ? "bg-gray-800 text-gray-100 shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"

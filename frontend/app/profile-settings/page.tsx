@@ -297,7 +297,7 @@ export default function ProfileSettingsPage() {
           />
         </div>
 
-        <div className="bg-purple-500 rotate-2 my-[30px] p-8 rounded-lg shadow-xs">
+        <div className="bg-purple-500 rotate-2 my-[30px] md:p-8 p-2  rounded-lg shadow-xs">
           <div className="flex flex-col -rotate-2 p-[20px] rounded-lg  bg-purple-200">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Обо мне

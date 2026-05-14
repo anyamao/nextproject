@@ -84,9 +84,12 @@ export default function AvatarSelector({
           <p className="text-sm font-medium text-gray-900">Выбран аватар:</p>
           <p className="text-xs text-gray-500">{selectedAvatar}</p>
         </div>
-        <div className="bg-purple-300 p-[10px] text-xs rounded-lg text-purple-900">
+        <div className="bg-purple-300 hidden md:block p-[10px] text-xs rounded-lg text-purple-900">
           Сохранить на кнопку снизу
         </div>
+      </div>
+      <div className="bg-purple-300 flex flex max-w-[200px] md:hidden p-[10px] text-xs rounded-lg text-purple-900">
+        Сохранить на кнопку снизу
       </div>
     </div>
   );

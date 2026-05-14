@@ -329,30 +329,31 @@ export default function MyCoursesPage() {
         </p>
       </div>
 
-      <div className="w-full mb-6 flex flex-row h-[50px] items-center justify-between space-y-4">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 bottom-0 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={
-              activeTab === "enrolled"
-                ? "Поиск по пройденным..."
-                : "Поиск по желаемым..."
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-3 bottom-0.5 rounded-lg hover:bg-gray-200 p-[1px] -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+      <div className="w-full mb-6 flex flex-col mb-[70px] md:mb-[20px] md:flex-row h-[50px] items-center justify-between space-y-4">
+        <div className="flex-1 min-w-[200px] max-w-md">
+          <div className="flex items-center gap-2 w-full border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-purple-400 transition  px-3">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder={
+                activeTab === "enrolled"
+                  ? "Поиск по пройденным..."
+                  : "Поиск по желаемым..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 py-2.5 outline-none bg-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
-
         <div className="flex items-center gap-2 bg-gray-100 p-1 mb-[20px] rounded-xl w-fit">
           <button
             onClick={() => setActiveTab("enrolled")}

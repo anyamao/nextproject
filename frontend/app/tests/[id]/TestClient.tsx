@@ -204,7 +204,7 @@ export default function TestClient({
 
         // 2. Тост за награду (если бэкенд выдал)
         if (result.reward_granted) {
-          setToast("+30 XP за тест! 🎉");
+          setToast("+30 лапок за тест! 🎉");
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }

@@ -88,7 +88,7 @@ export default function ShopPage() {
 
     if (userBalance < item.price) {
       setToast({
-        message: `Недостаточно XP! Нужно ${item.price}, у вас ${userBalance}`,
+        message: `Недостаточно лапок! Нужно ${item.price}, у вас ${userBalance}`,
         type: "error",
       });
       return;
@@ -223,7 +223,7 @@ export default function ShopPage() {
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         onConfirm={confirmDialog.onConfirm}
         title="Подтверждение покупки"
-        message={`Вы действительно хотите купить "${confirmDialog.itemName || ""}" за ${confirmDialog.price} XP?`}
+        message={`Вы действительно хотите купить "${confirmDialog.itemName || ""}" за ${confirmDialog.price} лапок?`}
         confirmText="Купить"
         cancelText="Отмена"
         type="warning"
@@ -252,7 +252,7 @@ export default function ShopPage() {
                 {userBalance}
               </span>
               <span className="text-purple-700 font-semibold text-lg ml-1">
-                XP
+                лапок
               </span>
             </div>
             <p className="text-purple-600 text-xs mt-2">
@@ -264,7 +264,7 @@ export default function ShopPage() {
         <div className="flex-1 bg-purple-700 rounded-lg text-xs p-6 ">
           <div className="flex items-center gap-1 mb-1 ">
             <p className="font-bold text-white text-base">
-              Как заработать токены?
+              Как заработать лапки?
             </p>
           </div>
           <div className="grid grid-cols-2 gap-y-2 gap-x-4">
@@ -272,20 +272,26 @@ export default function ShopPage() {
               <span className="text-white/90 text-sm">Тест на 75%</span>
             </div>
             <div className="text-right">
-              <span className="text-white font-semibold text-sm">+30 XP</span>
+              <span className="text-white font-semibold text-sm">
+                +30 лапок
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-white/90 text-sm"> Курс на 75%</span>
             </div>
             <div className="text-right">
-              <span className="text-white font-semibold text-sm">+300 XP</span>
+              <span className="text-white font-semibold text-sm">
+                +100 лапок
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-white/90 text-sm">Оставить отзыв</span>
             </div>
             <div className="text-right">
-              <span className="text-white font-semibold text-sm">+50 XP</span>
+              <span className="text-white font-semibold text-sm">
+                +50 лапок
+              </span>
             </div>
           </div>
         </div>
@@ -459,7 +465,7 @@ export default function ShopPage() {
                       <span className="text-amber-700 font-bold text-lg">
                         {item.price}
                       </span>
-                      <span className="text-amber-600 text-sm ml-1">XP</span>
+                      <span className="text-amber-600 text-sm ml-1">лапок</span>
                     </div>
 
                     <button

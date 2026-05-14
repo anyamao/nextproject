@@ -26,6 +26,7 @@ function Mainnav() {
     }
   };
   const tokenBalance = useContactStore((state) => state.tokenBalance);
+  const { balance } = useTokens();
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -86,7 +87,7 @@ function Mainnav() {
               <div className="flex hidden sm:block items-center justify-center p-[7px] bg-yellow-500 rounded-full mr-[13px] ">
                 <span className="text-xs font-bold text-white flex items-center gap-1">
                   <PawPrint className="w-4 h-4" />
-                  {tokenBalance}
+                  {balance}
                 </span>
               </div>
 
