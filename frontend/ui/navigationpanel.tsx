@@ -27,30 +27,25 @@ function NavigationPanel() {
     null,
   );
 
-  // Данные из API
   const [courses, setCourses] = useState<Course[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingArticles, setLoadingArticles] = useState(true);
 
-  // Группировка курсов по категориям
   const [groupedCourses, setGroupedCourses] = useState<
     Record<string, Course[]>
   >({});
 
-  // Группировка статей по темам (topic)
   const [groupedArticles, setGroupedArticles] = useState<
     Record<string, Article[]>
   >({});
 
-  // Загрузка курсов из API (существующий эндпоинт)
   useEffect(() => {
     async function fetchCourses() {
       try {
         const data = await apiFetch("/courses/subjects");
         setCourses(data);
 
-        // Группируем курсы по категориям
         const grouped: Record<string, Course[]> = {};
         data.forEach((course: Course) => {
           const category = course.category || "Другие";
@@ -61,7 +56,6 @@ function NavigationPanel() {
         });
         setGroupedCourses(grouped);
       } catch (err) {
-        console.error("Failed to fetch courses for navigation:", err);
       } finally {
         setLoadingCourses(false);
       }
@@ -70,14 +64,12 @@ function NavigationPanel() {
     fetchCourses();
   }, []);
 
-  // Загрузка статей из API (существующий эндпоинт)
   useEffect(() => {
     async function fetchArticles() {
       try {
         const data = await apiFetch("/articles");
         setArticles(data);
 
-        // Группируем статьи по темам (topic)
         const grouped: Record<string, Article[]> = {};
         data.forEach((article: Article) => {
           const topic = article.topic || "Другие";
@@ -88,7 +80,6 @@ function NavigationPanel() {
         });
         setGroupedArticles(grouped);
       } catch (err) {
-        console.error("Failed to fetch articles for navigation:", err);
       } finally {
         setLoadingArticles(false);
       }
@@ -97,7 +88,6 @@ function NavigationPanel() {
     fetchArticles();
   }, []);
 
-  // Handle animation on open/close
   useEffect(() => {
     if (navigationState) {
       setShouldRender(true);
@@ -118,12 +108,10 @@ function NavigationPanel() {
 
   if (!shouldRender) return null;
 
-  // Получаем список категорий, в которых есть хотя бы один курс
   const availableCourseCategories = Object.keys(groupedCourses).filter(
     (cat) => groupedCourses[cat]?.length > 0,
   );
 
-  // Получаем список тем, в которых есть хотя бы одна статья
   const availableArticleTopics = Object.keys(groupedArticles).filter(
     (topic) => groupedArticles[topic]?.length > 0,
   );
@@ -131,7 +119,6 @@ function NavigationPanel() {
   return (
     <main>
       <div className="fixed inset-0 z-40">
-        {/* Затемнение фона */}
         <div
           className={`absolute inset-0 bg-black/50 transition-all duration-300 ${
             isAnimatingOut
@@ -143,7 +130,6 @@ function NavigationPanel() {
           onClick={toggleNavigation}
         />
 
-        {/* Панель навигации - выезжает сверху */}
         <div
           className={`absolute top-0 left-0 mt-[10px] right-0 bg-white shadow-lg z-50 transition-all duration-300 ${
             isAnimatingOut
@@ -177,7 +163,6 @@ function NavigationPanel() {
             </div>
 
             <div className="flex flex-row gap-[60px] mt-[40px] min-h-[300px]">
-              {/* Левая колонка - основные пункты */}
               <div className="flex flex-col border-r border-gray-200 pr-[40px] min-w-[150px]">
                 <div
                   onMouseEnter={() => setActiveItem("courses")}
@@ -213,9 +198,7 @@ function NavigationPanel() {
                 </div>
               </div>
 
-              {/* Правая колонка - контент, который меняется при наведении */}
               <div className="flex-1 mt-[20px]">
-                {/* Контент для "Курсы" */}
                 {activeItem === "courses" && (
                   <div className="flex flex-row flex-wrap gap-[40px] animate-in fade-in slide-in-from-right-5 duration-300">
                     {loadingCourses ? (
@@ -259,7 +242,6 @@ function NavigationPanel() {
                   </div>
                 )}
 
-                {/* Контент для "Статьи" */}
                 {activeItem === "articles" && (
                   <div className="flex flex-row flex-wrap gap-[40px] animate-in fade-in slide-in-from-right-5 duration-300">
                     {loadingArticles ? (
@@ -305,7 +287,6 @@ function NavigationPanel() {
                   </div>
                 )}
 
-                {/* По умолчанию показываем приветствие */}
                 {activeItem === null && (
                   <div className="flex items-center justify-center h-full text-gray-400 animate-in fade-in duration-300">
                     <p>Наведите на пункт меню, чтобы увидеть список</p>

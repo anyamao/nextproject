@@ -31,11 +31,11 @@ class ShopItemOut(BaseModel):
 
     id: int
     name: str
-    image: str  # "pink_bow.png"
+    image: str
     price: int
     description: str | None = None
-    is_owned: bool = False  # 🔥 Купил ли текущий юзер?
-    is_equipped: bool = False  # 🔥 Экипировано ли сейчас?
+    is_owned: bool = False
+    is_equipped: bool = False
 
 
 class UserOut(BaseModel):
@@ -63,7 +63,7 @@ class TokenReward(BaseModel):
     """Начисление токенов"""
 
     amount: int = Field(..., ge=1, le=1000)
-    reason: str = Field(..., max_length=200)  # Например: "first_course_enrolled"
+    reason: str = Field(..., max_length=200)
 
 
 class UserUpdate(BaseModel):
@@ -84,9 +84,6 @@ class EgeSubjectCreate(BaseModel):
     image: str | None = None
 
 
-# backend/schemas.py
-
-
 class EgeSubjectOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -98,7 +95,6 @@ class EgeSubjectOut(BaseModel):
     created_at: datetime
     completion_percent: float | None = None
     is_enrolled: bool | None = None
-    # 🔥 Новые поля:
     certificate_available: bool = False
     duration_minutes: int | None = None
     enrolled_count: int | None = None
@@ -122,7 +118,7 @@ class CourseUnitOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
-    unit_number: int  # 1
+    unit_number: int
     description: str | None = None
     lesson_count: int = 0
 
@@ -141,10 +137,7 @@ class EgeLessonOut(BaseModel):
     unit: CourseUnitOut | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
-    is_locked: bool = False  # 🔥 Добавили поле с дефолтом
-
-
-# backend/schemas.py
+    is_locked: bool = False
 
 
 class ReviewOut(BaseModel):
@@ -162,8 +155,8 @@ class ReviewOut(BaseModel):
     # 🔥 Реакции:
     likes: int = 0
     dislikes: int = 0
-    equipped_item: dict | None = None  # 🔥 Добавь это
-    user_reaction: str | None = None  # "like" | "dislike" | None
+    equipped_item: dict | None = None
+    user_reaction: str | None = None
 
 
 class TeacherOut(BaseModel):
@@ -181,8 +174,8 @@ class ReviewStatsOut(BaseModel):
     """Статистика отзывов"""
 
     model_config = ConfigDict(from_attributes=True)
-    reviews: list[ReviewOut]  # 🔥 Добавь это поле!
-    stats: dict  # { average_rating, total_reviews, user_review }
+    reviews: list[ReviewOut]
+    stats: dict
 
 
 class ReviewCreate(BaseModel):
@@ -211,21 +204,16 @@ class PromoCourseOut(BaseModel):
     enrolled_count: int = 0
     rating: float | None = None
     is_favorite: bool = False
-    about: str | None = None  # 🔥 Новое поле
+    about: str | None = None
     is_enrolled: bool = False
-    teachers: list[TeacherOut] = []  # 🔥 Список учителей
+    teachers: list[TeacherOut] = []
     total_units: int | None = None
     completed_units: int | None = None
 
 
-# backend/schemas.py
-
-
 class CourseReviewCreate(BaseModel):
     rating: int = Field(..., ge=1, le=5)
-    comment: str = Field(
-        ..., min_length=50, max_length=2000
-    )  # 🔥 Минимум 50 символов (не слов, но можно увеличить)
+    comment: str = Field(..., min_length=50, max_length=2000)
 
 
 class CourseReviewOut(BaseModel):
@@ -241,7 +229,7 @@ class CourseReviewOut(BaseModel):
 
 class CourseReviewsResponse(BaseModel):
     reviews: list[CourseReviewOut]
-    stats: dict  # { average_rating, total_reviews, user_review }
+    stats: dict
 
 
 class EgeLessonList(BaseModel):
@@ -291,10 +279,7 @@ class TestSubmissionResult(BaseModel):
     total_questions: int
     correct_count: int
 
-    reward_granted: bool = False  # 🔥 Добавь это поле
-
-
-# backend/schemas.py
+    reward_granted: bool = False
 
 
 class TestSubmission(BaseModel):
@@ -310,7 +295,7 @@ class TestResultOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     score: int
     passed: bool
-    reward_granted: bool = False  # 🔥 Добавь это поле!
+    reward_granted: bool = False
     completed_at: datetime
 
 
@@ -388,7 +373,7 @@ class PublicProfileOut(BaseModel):
     last_name: str | None = None
     status: str | None = None
     about_me: str | None = None
-    created_at: str | None = None  # 🔥 Добавляем дату регистрации
+    created_at: str | None = None
     token_balance: int = 0
     completed_courses: list[dict] = []
 
@@ -470,12 +455,7 @@ class FlashcardOut(BaseModel):
     back: str
     hint: str | None = None
     example: str | None = None
-    user_progress: dict | None = (
-        None  # { next_review, interval_days, ease_factor, repetitions }
-    )
-
-
-# backend/schemas.py
+    user_progress: dict | None = None
 
 
 class FavoriteCourseItem(BaseModel):
@@ -499,14 +479,14 @@ class FlashcardDeckOut(BaseModel):
     lesson_id: int
     card_count: int = 0
     cards: list[FlashcardOut] = []
-    due_count: int = 0  # Сколько карточек нужно повторить сегодня
-    new_count: int = 0  # Сколько новых карточек
-    mastered_count: int = 0  # Сколько выучено
+    due_count: int = 0
+    new_count: int = 0
+    mastered_count: int = 0
 
 
 class FlashcardAnswer(BaseModel):
     card_id: int
-    rating: str  # "again" | "hard" | "good" | "easy" (как в Anki)
+    rating: str
 
 
 __all__ = [

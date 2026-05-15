@@ -165,7 +165,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# backend/main.py — после импортов, перед эндпоинтами
 
 
 async def try_grant_reward(
@@ -179,7 +178,6 @@ async def try_grant_reward(
     Выдаёт награду, если ещё не получена.
     Возвращает True если выдана, False если уже была.
     """
-    # 1️⃣ Проверяем, не получал ли уже
     check = await db.execute(
         select(UserAchievement).where(
             UserAchievement.user_id == user_id,
@@ -190,7 +188,6 @@ async def try_grant_reward(
     if check.scalar_one_or_none():
         return False
 
-    # 2️⃣ Создаём запись
     db.add(
         UserAchievement(
             user_id=user_id,
@@ -199,12 +196,10 @@ async def try_grant_reward(
         )
     )
 
-    # 3️⃣ Начисляем токены
     user = await db.get(User, user_id)
     if user:
         user.token_balance += amount
 
-    # 4️⃣ Сохраняем
     await db.commit()
     return True
 
@@ -226,8 +221,6 @@ async def check_progress_milestones(
     return rewards
 
 
-# backend/main.py
-
 from pydantic import BaseModel, Field
 
 
@@ -243,9 +236,6 @@ async def reward_balance(
     db: AsyncSession = Depends(get_db),
 ):
     """Начислить токены пользователю (для фронтенд-триггеров)"""
-
-    # 🔥 Здесь можно добавить дополнительную валидацию, если нужно
-    # Например, проверять reason, чтобы нельзя было накрутить
 
     current_user.token_balance += request.amount
     await db.commit()
@@ -284,10 +274,6 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     )
 
 
-# backend/main.py
-# backend/main.py
-
-
 @app.get("/profile/test-stats")
 async def get_test_stats(
     current_user: User = Depends(get_current_user),
@@ -303,25 +289,12 @@ async def get_test_stats(
     return {"tests_passed_75": count.scalar() or 0}
 
 
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-# backend/main.py
-
-# backend/main.py
-
-
 class LeaderboardUser(BaseModel):
     user_id: int
     username: str
     avatar_url: str | None
     score: int
-    equipped_item: dict | None = None  # ← 🔥 Новое поле
+    equipped_item: dict | None = None
 
 
 class MyRankInfo(BaseModel):
@@ -341,22 +314,10 @@ class LeaderboardResponse(BaseModel):
     top_tests: list[LeaderboardUser]
 
 
-# backend/main.py
-
-
-# backend/main.py — обновляем эндпоинт
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
 @app.get("/leaderboard", response_model=LeaderboardResponse)
 async def get_leaderboard(
     limit: int = 10,
-    search: str | None = None,  # 🔥 Новый параметр поиска
+    search: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Топ пользователей по достижениям + поиск + экипировка"""
@@ -371,14 +332,11 @@ async def get_leaderboard(
         ShopItem,
     )
 
-    # 🔹 Вспомогательная функция: получить экипировку пользователя
     async def get_user_equipped_item(user_id: int):
-        # 🔥 Сначала получаем ID экипированного предмета из модели User
         user = await db.get(User, user_id)
         if not user or not user.equipped_item_id:
             return None
 
-        # 🔥 Затем загружаем сам предмет
         item = await db.get(ShopItem, user.equipped_item_id)
         if not item:
             return None
@@ -391,7 +349,6 @@ async def get_leaderboard(
             "description": item.description,
         }
 
-    # 🔹 Вспомогательная функция: подсчёт завершённых курсов
     async def count_completed_courses(user_id: int) -> int:
         enrollments = await db.execute(
             select(UserCourseEnrollment.course_id).where(
@@ -439,7 +396,6 @@ async def get_leaderboard(
 
         return completed
 
-    # 🔹 Базовый запрос пользователей (с опциональным поиском)
     query = select(User.id, User.username, User.avatar_url)
     if search and search.strip():
         query = query.where(User.username.ilike(f"%{search.strip()}%"))
@@ -447,7 +403,6 @@ async def get_leaderboard(
     all_users = await db.execute(query)
     users_list = all_users.all()
 
-    # 🔹 1. Топ по завершённым курсам
     course_scores = {}
     for user_id, username, avatar_url in users_list:
         count = await count_completed_courses(user_id)
@@ -458,7 +413,7 @@ async def get_leaderboard(
                 "username": username,
                 "avatar_url": avatar_url,
                 "score": count,
-                "equipped_item": equipped_item,  # 🔥 Добавляем экипировку
+                "equipped_item": equipped_item,
             }
 
     sorted_courses = sorted(
@@ -471,12 +426,11 @@ async def get_leaderboard(
             username=data["username"],
             avatar_url=data["avatar_url"],
             score=data["score"],
-            equipped_item=data["equipped_item"],  # 🔥 Передаём в модель
+            equipped_item=data["equipped_item"],
         )
         for uid, data in sorted_courses
     ]
 
-    # 🔹 2. Топ по купленным предметам (с экипировкой)
     items_query_text = """
         SELECT 
             u.id as user_id,
@@ -508,11 +462,10 @@ async def get_leaderboard(
                 username=row.username,
                 avatar_url=row.avatar_url,
                 score=row.items_purchased,
-                equipped_item=equipped_item,  # 🔥 Добавляем экипировку
+                equipped_item=equipped_item,
             )
         )
 
-    # 🔹 3. Топ по пройденным тестам (с экипировкой)
     tests_query_text = """
         SELECT 
             u.id as user_id,
@@ -544,11 +497,10 @@ async def get_leaderboard(
                 username=row.username,
                 avatar_url=row.avatar_url,
                 score=row.tests_passed,
-                equipped_item=equipped_item,  # 🔥 Добавляем экипировку
+                equipped_item=equipped_item,
             )
         )
 
-    # 🔥 Возвращаем БЕЗ my_rank (убрали)
     return LeaderboardResponse(
         top_courses=top_courses,
         top_items=top_items,
@@ -565,7 +517,6 @@ async def get_public_achievements(
 
     from models import EgeSubject, CourseUnit, EgeLesson, TestResult, UserInventory
 
-    # 🔹 1. Тесты, пройденные на 75%+
     tests_75 = await db.execute(
         select(func.count(func.distinct(TestResult.test_id))).where(
             TestResult.user_id == user_id,
@@ -574,7 +525,6 @@ async def get_public_achievements(
     )
     tests_passed_75 = tests_75.scalar() or 0
 
-    # 🔹 2. Курсы, завершённые на 75%+ (через уроки)
     enrollments = await db.execute(
         select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == user_id)
     )
@@ -586,7 +536,6 @@ async def get_public_achievements(
         if not subject:
             continue
 
-        # Юниты предмета
         units = await db.execute(
             select(CourseUnit.id).where(CourseUnit.subject_id == subject.id)
         )
@@ -594,7 +543,6 @@ async def get_public_achievements(
         if not unit_ids:
             continue
 
-        # Уроки юнитов
         lessons = await db.execute(
             select(EgeLesson.id).where(EgeLesson.unit_id.in_(unit_ids))
         )
@@ -602,7 +550,6 @@ async def get_public_achievements(
         if not lesson_ids:
             continue
 
-        # Пройденные тесты в этих уроках
         completed = await db.execute(
             select(func.count(func.distinct(TestResult.test_id))).where(
                 TestResult.user_id == user_id,
@@ -620,13 +567,11 @@ async def get_public_achievements(
         if total > 0 and (completed_count / total) >= 0.75:
             courses_completed_75 += 1
 
-    # 🔹 3. Купленные товары (публично — можно показывать количество)
     purchased = await db.execute(
         select(func.count()).where(UserInventory.user_id == user_id)
     )
     items_purchased = purchased.scalar() or 0
 
-    # 🔹 4. Кастомный аватар (публично)
     user = await db.get(User, user_id)
     has_custom_avatar = bool(
         user and user.avatar_url and user.avatar_url != "default_cat.jpg"
@@ -649,7 +594,6 @@ async def get_user_achievements(
 
     from models import EgeSubject, CourseUnit, EgeLesson, TestResult, UserInventory
 
-    # 🔹 1. Тесты, пройденные на 75%+
     tests_75 = await db.execute(
         select(func.count(func.distinct(TestResult.test_id))).where(
             TestResult.user_id == current_user.id,
@@ -658,7 +602,6 @@ async def get_user_achievements(
     )
     tests_passed_75 = tests_75.scalar() or 0
 
-    # 🔹 2. Курсы (предметы), завершённые на 75%+
     enrollments = await db.execute(
         select(UserCourseEnrollment).where(
             UserCourseEnrollment.user_id == current_user.id
@@ -672,7 +615,6 @@ async def get_user_achievements(
         if not subject:
             continue
 
-        # Юниты предмета
         units = await db.execute(
             select(CourseUnit.id).where(CourseUnit.subject_id == subject.id)
         )
@@ -680,7 +622,6 @@ async def get_user_achievements(
         if not unit_ids:
             continue
 
-        # Уроки юнитов
         lessons = await db.execute(
             select(EgeLesson.id).where(EgeLesson.unit_id.in_(unit_ids))
         )
@@ -688,7 +629,6 @@ async def get_user_achievements(
         if not lesson_ids:
             continue
 
-        # Пройденные тесты
         completed = await db.execute(
             select(func.count(func.distinct(TestResult.test_id))).where(
                 TestResult.user_id == current_user.id,
@@ -706,18 +646,15 @@ async def get_user_achievements(
         if total > 0 and (completed_count / total) >= 0.75:
             courses_completed_75 += 1
 
-    # 🔹 3. Купленные товары (просто счёт)
     purchased = await db.execute(
         select(func.count()).where(UserInventory.user_id == current_user.id)
     )
     items_purchased = purchased.scalar() or 0
 
-    # 🔹 4. Кастомный аватар
     has_custom_avatar = bool(
         current_user.avatar_url and current_user.avatar_url != "default_cat.jpg"
     )
 
-    # 🔥 Возвращаем простые числа
     return {
         "tests_passed_75": tests_passed_75,
         "courses_completed_75": courses_completed_75,
@@ -760,12 +697,6 @@ async def read_me(current_user: User = Depends(get_current_user)):
     )
 
 
-# backend/main.py
-
-
-# backend/main.py — в get_my_profile
-
-
 @app.get("/profile", response_model=UserOut)
 async def get_my_profile(
     current_user: User = Depends(get_current_user),
@@ -773,13 +704,8 @@ async def get_my_profile(
 ):
     """Получить данные текущего пользователя"""
 
-    # 🔥 Предзагружаем экипированную вещь, чтобы избежать ленивой загрузки
     if current_user.equipped_item_id:
         await db.refresh(current_user, attribute_names=["equipped_item"])
-
-    print(
-        f"🔍 [DEBUG] get_my_profile: user_id={current_user.id}, equipped_item_id={current_user.equipped_item_id}"
-    )
 
     equipped_item = None
     if current_user.equipped_item_id and current_user.equipped_item:
@@ -802,16 +728,10 @@ async def get_my_profile(
         token_balance=current_user.token_balance,
         about_me=current_user.about_me,
         created_at=current_user.created_at,
-        equipped_item=equipped_item,  # 🔥 Возвращаем вещь
+        equipped_item=equipped_item,
     )
 
 
-# backend/main.py
-
-# backend/main.py — добавь после импортов
-
-
-# 🔹 Получить список товаров
 @app.get("/shop/items", response_model=list[ShopItemOut])
 async def get_shop_items(
     current_user: User | None = Depends(get_current_user_optional),
@@ -822,10 +742,8 @@ async def get_shop_items(
     items = await db.execute(select(ShopItem).where(ShopItem.is_active == True))
     shop_items = items.scalars().all()
 
-    # Если пользователь авторизован — добавляем флаги owned/equipped
     items_out = []
     if current_user:
-        # Загружаем инвентарь и экипированное
         inventory = await db.execute(
             select(UserInventory.item_id).where(
                 UserInventory.user_id == current_user.id
@@ -848,7 +766,6 @@ async def get_shop_items(
                 }
             )
     else:
-        # Для неавторизованных — без флагов
         for item in shop_items:
             items_out.append(
                 {
@@ -865,7 +782,6 @@ async def get_shop_items(
     return items_out
 
 
-# 🔹 Купить товар
 @app.post("/shop/items/{item_id}/buy")
 async def buy_shop_item(
     item_id: int,
@@ -874,12 +790,10 @@ async def buy_shop_item(
 ):
     """Купить товар за токены"""
 
-    # Находим товар
     item = await db.get(ShopItem, item_id)
     if not item or not item.is_active:
         raise HTTPException(404, "Item not found")
 
-    # Проверяем, не купил ли уже
     existing = await db.execute(
         select(UserInventory).where(
             UserInventory.user_id == current_user.id,
@@ -889,14 +803,12 @@ async def buy_shop_item(
     if existing.scalar_one_or_none():
         raise HTTPException(400, "You already own this item")
 
-    # Проверяем баланс
     if current_user.token_balance < item.price:
         raise HTTPException(
             400,
             f"Not enough tokens. Need {item.price}, have {current_user.token_balance}",
         )
 
-    # Списываем токены и добавляем в инвентарь
     current_user.token_balance -= item.price
     db.add(UserInventory(user_id=current_user.id, item_id=item_id))
     await db.commit()
@@ -908,7 +820,6 @@ async def buy_shop_item(
     }
 
 
-# 🔹 Экипировать/снять вещь
 @app.post("/shop/items/{item_id}/equip")
 async def equip_shop_item(
     item_id: int,
@@ -917,13 +828,11 @@ async def equip_shop_item(
 ):
     """Экипировать купленную вещь (или снять, если item_id=0)"""
 
-    # item_id=0 означает "снять всё"
     if item_id == 0:
         current_user.equipped_item_id = None
         await db.commit()
         return {"message": "Item unequipped", "equipped_item_id": None}
 
-    # Проверяем, что вещь куплена
     owned = await db.execute(
         select(UserInventory).where(
             UserInventory.user_id == current_user.id,
@@ -933,7 +842,6 @@ async def equip_shop_item(
     if not owned.scalar_one_or_none():
         raise HTTPException(403, "You don't own this item")
 
-    # Экипируем
     current_user.equipped_item_id = item_id
     await db.commit()
 
@@ -951,7 +859,6 @@ async def get_my_courses(
 ):
     """Получить курсы пользователя: записанные + избранные (не записанные)"""
 
-    # 🔥 1. Загружаем IDs записанных курсов
     enrolled_ids_result = await db.execute(
         select(UserCourseEnrollment.course_id).where(
             UserCourseEnrollment.user_id == current_user.id
@@ -959,7 +866,6 @@ async def get_my_courses(
     )
     enrolled_ids = {row[0] for row in enrolled_ids_result.all()}
 
-    # 🔥 2. Загружаем IDs избранных курсов
     favorite_ids_result = await db.execute(
         select(UserFavoriteCourse.course_id).where(
             UserFavoriteCourse.user_id == current_user.id
@@ -967,37 +873,30 @@ async def get_my_courses(
     )
     favorite_ids = {row[0] for row in favorite_ids_result.all()}
 
-    # 🔥 3. Объединяем: записанные ИЛИ избранные
     course_ids = enrolled_ids | favorite_ids
 
     if not course_ids:
         return []
 
-    # 🔥 4. Загружаем данные курсов
     subjects_result = await db.execute(
         select(EgeSubject).where(EgeSubject.id.in_(course_ids))
     )
     subjects = subjects_result.scalars().all()
 
-    # 🔥 5. Поиск по названию (после загрузки)
     if search:
         subjects = [s for s in subjects if search.lower() in s.title.lower()]
 
-    # 🔥 6. Собираем ответ для каждого курса
     courses_out = []
     for s in subjects:
-        # Флаги
         is_enrolled = s.id in enrolled_ids
         is_favorite = s.id in favorite_ids
 
-        # Прогресс (только если записан)
         completion_percent = 0.0
         if is_enrolled:
             completion_percent = await get_course_completion_percent(
                 current_user.id, s.id, db
             )
 
-        # Юниты
         units_count = await db.execute(
             select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == s.id)
         )
@@ -1028,7 +927,6 @@ async def get_my_courses(
                 if completed_lessons.scalar() == len(lesson_ids):
                     completed_units += 1
 
-        # Учителя
         teachers_result = await db.execute(
             select(Teacher)
             .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
@@ -1053,8 +951,8 @@ async def get_my_courses(
                 "certificate_available": s.certificate_available or False,
                 "enrolled_count": 0,
                 "rating": None,
-                "is_favorite": is_favorite,  # 🔥 Сердечко
-                "is_enrolled": is_enrolled,  # 🔥 Записан или нет
+                "is_favorite": is_favorite,
+                "is_enrolled": is_enrolled,
                 "completion_percent": round(completion_percent, 1),
                 "total_units": total_units,
                 "completed_units": completed_units,
@@ -1062,7 +960,6 @@ async def get_my_courses(
             }
         )
 
-    # 🔥 Сортировка: сначала записанные, потом избранные
     courses_out.sort(key=lambda c: (not c["is_enrolled"], c["title"].lower()))
 
     return courses_out
@@ -1079,7 +976,6 @@ async def get_course_meta(
     if not course:
         raise HTTPException(404, "Course not found")
 
-    # 🔥 Считаем реальное количество юнитов
     units_count = await db.execute(
         select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == course.id)
     )
@@ -1106,7 +1002,7 @@ async def get_course_meta(
         "slug": course.slug,
         "is_enrolled": is_enrolled,
         "completion_percent": round(completion_percent, 1),
-        "total_units": total_units,  # 🔥 Новое поле
+        "total_units": total_units,
     }
 
 
@@ -1172,7 +1068,6 @@ async def update_profile_settings(
     )
 
 
-# backend/main.py — ДОБАВЬ ЭТИ ЭНДПОИНТЫ
 @app.delete("/courses/{slug}/unenroll")
 async def unenroll_from_course(
     slug: str,
@@ -1185,8 +1080,6 @@ async def unenroll_from_course(
     course = course.scalar_one_or_none()
     if not course:
         raise HTTPException(404, "Course not found")
-    # В начале unenroll_from_course:
-    print(f"🔴 [UNENROLL] Called for user {current_user.id}, slug={slug}")
     enrollment = await db.execute(
         select(UserCourseEnrollment).where(
             UserCourseEnrollment.user_id == current_user.id,
@@ -1204,7 +1097,6 @@ async def unenroll_from_course(
     return {"message": "Successfully unenrolled"}
 
 
-# 🔹 Получить список избранного
 @app.get("/courses/favorites", response_model=list[FavoriteCourseItem])
 async def get_user_favorites(
     current_user: User = Depends(get_current_user),
@@ -1236,7 +1128,6 @@ async def get_user_favorites(
     ]
 
 
-# 🔹 Добавить в избранное
 @app.post("/courses/{course_id}/favorite")
 async def add_to_favorites(
     course_id: int,
@@ -1261,7 +1152,6 @@ async def add_to_favorites(
     return {"message": "Added to favorites"}
 
 
-# 🔹 Убрать из избранного
 @app.delete("/courses/{course_id}/favorite")
 async def remove_from_favorites(
     course_id: int,
@@ -1283,10 +1173,6 @@ async def remove_from_favorites(
     return {"message": "Removed from favorites"}
 
 
-# backend/main.py
-# backend/main.py — в начало файла, после импортов
-
-
 async def get_course_completion_percent(
     user_id: int,
     course_id: int,
@@ -1297,15 +1183,12 @@ async def get_course_completion_percent(
     - Если есть юниты: (пройдено юнитов / всего юнитов) * 100
     - Если нет юнитов: (пройдено уроков / всего уроков) * 100
     """
-    # Считаем всего юнитов в курсе
     total_units = await db.execute(
         select(func.count(CourseUnit.id)).where(CourseUnit.subject_id == course_id)
     )
     total_units = total_units.scalar() or 0
 
     if total_units > 0:
-        # 🔹 Есть юниты: считаем пройденные юниты
-        # Юнит считается пройденным, если ВСЕ уроки в нём завершены
         units = await db.execute(
             select(CourseUnit.id).where(CourseUnit.subject_id == course_id)
         )
@@ -1313,16 +1196,14 @@ async def get_course_completion_percent(
 
         completed_units = 0
         for uid in unit_ids:
-            # Считаем уроки в юните
             lessons_in_unit = await db.execute(
                 select(func.count(EgeLesson.id)).where(EgeLesson.unit_id == uid)
             )
             total_lessons = lessons_in_unit.scalar() or 0
 
             if total_lessons == 0:
-                continue  # Пустой юнит не считаем
+                continue
 
-            # Считаем завершённые уроки в юните
             completed = await db.execute(
                 select(func.count(UserCompletedLesson.id)).where(
                     UserCompletedLesson.user_id == user_id,
@@ -1333,14 +1214,12 @@ async def get_course_completion_percent(
             )
             completed_count = completed.scalar() or 0
 
-            # Юнит пройден, если все уроки завершены
             if completed_count >= total_lessons:
                 completed_units += 1
 
         return (completed_units / total_units) * 100
 
     else:
-        # 🔹 Нет юнитов: считаем по урокам напрямую
         total_lessons = await db.execute(
             select(func.count(EgeLesson.id)).where(EgeLesson.subject_id == course_id)
         )
@@ -1370,13 +1249,11 @@ async def get_course_promo(
 ):
     """Возвращает полную информацию о курсе для промо-страницы"""
 
-    # 1. Находим курс по slug
     course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     course = course.scalar_one_or_none()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    # 2. Считаем количество записанных студентов
     enrolled_count = await db.execute(
         select(func.count(UserCourseEnrollment.user_id)).where(
             UserCourseEnrollment.course_id == course.id
@@ -1384,14 +1261,12 @@ async def get_course_promo(
     )
     enrolled_count = enrolled_count.scalar() or 0
 
-    # 3. Считаем средний рейтинг
     avg_rating = await db.execute(
         select(func.avg(CourseReview.rating)).where(CourseReview.course_id == course.id)
     )
     rating = avg_rating.scalar()
     rating = round(rating, 1) if rating else None
 
-    # 4. Проверяем, в избранном ли курс (если пользователь авторизован)
     is_favorite = False
     if current_user:
         fav = await db.execute(
@@ -1402,7 +1277,6 @@ async def get_course_promo(
         )
         is_favorite = fav.scalar_one_or_none() is not None
 
-    # 🔥 5. Загружаем преподавателей ВСЕГДА (не внутри if current_user!)
     teachers_result = await db.execute(
         select(Teacher)
         .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
@@ -1420,9 +1294,8 @@ async def get_course_promo(
         for t in teachers
     ]
 
-    # 6. Проверяем, записан ли пользователь на курс
     is_enrolled = False
-    completion_percent = None  # 🔥 По умолчанию None для неавторизованных
+    completion_percent = None
     if current_user:
         enrollment = await db.execute(
             select(UserCourseEnrollment).where(
@@ -1437,7 +1310,6 @@ async def get_course_promo(
                 current_user.id, course.id, db
             )
 
-    # 7. Возвращаем данные
     return PromoCourseOut(
         id=course.id,
         title=course.title,
@@ -1448,7 +1320,7 @@ async def get_course_promo(
         duration_minutes=course.duration_minutes,
         certificate_available=course.certificate_available or False,
         enrolled_count=enrolled_count,
-        about=course.about,  # 🔥 Это всегда возвращается!
+        about=course.about,
         rating=rating,
         is_favorite=is_favorite,
         teachers=teachers_out,
@@ -1467,19 +1339,6 @@ async def get_teachers(db: AsyncSession = Depends(get_db)):
     ]
 
 
-# backend/main.py — в create_course_review
-
-
-# backend/main.py
-
-# ============================================================================
-# 🔥 ОТЗЫВЫ: ПОЛНЫЙ НАБОР ЭНДПОИНТОВ
-# ============================================================================
-
-
-# backend/main.py
-
-
 @app.get("/courses/{course_id}/reviews")
 async def get_course_reviews(
     course_id: int,
@@ -1488,13 +1347,12 @@ async def get_course_reviews(
 ):
     """Получить отзывы курса с реакциями и экипировкой авторов"""
 
-    # 🔥 Загружаем отзывы с предзагрузкой equipped_item
     reviews_result = await db.execute(
         select(
             CourseReview,
             User.username,
             User.avatar_url,
-            User.equipped_item_id,  # 🔥 Добавляем для проверки
+            User.equipped_item_id,
             func.count(case((ReviewReaction.reaction_type == "like", 1))).label(
                 "likes"
             ),
@@ -1507,7 +1365,6 @@ async def get_course_reviews(
         .where(CourseReview.course_id == course_id)
         .group_by(CourseReview.id, User.id)
         .order_by(CourseReview.created_at.desc())
-        # 🔥 Предзагружаем equipped_item, чтобы избежать ленивой загрузки:
         .options(selectinload(CourseReview.user).selectinload(User.equipped_item))
     )
 
@@ -1515,7 +1372,6 @@ async def get_course_reviews(
     for row in reviews_result.all():
         review, username, avatar, equipped_item_id, likes, dislikes = row
 
-        # 🔥 Формируем equipped_item для ответа
         equipped_item = None
         if (
             equipped_item_id
@@ -1531,7 +1387,6 @@ async def get_course_reviews(
                 "description": review.user.equipped_item.description,
             }
 
-        # Реакция текущего пользователя
         user_reaction = None
         if current_user:
             ur = await db.execute(
@@ -1555,12 +1410,10 @@ async def get_course_reviews(
                 "likes": likes,
                 "dislikes": dislikes,
                 "user_reaction": user_reaction,
-                # 🔥 Добавляем экипировку:
                 "equipped_item": equipped_item,
             }
         )
 
-    # Статистика
     avg = await db.execute(
         select(func.avg(CourseReview.rating)).where(CourseReview.course_id == course_id)
     )
@@ -1568,7 +1421,6 @@ async def get_course_reviews(
         select(func.count(CourseReview.id)).where(CourseReview.course_id == course_id)
     )
 
-    # Отзыв текущего пользователя
     user_review = None
     if current_user:
         ur = await db.execute(
@@ -1598,7 +1450,6 @@ async def get_course_reviews(
                 )
             )
 
-            # 🔥 Экипировка для своего отзыва
             my_equipped_item = None
             if current_user.equipped_item_id and current_user.equipped_item:
                 my_equipped_item = {
@@ -1621,7 +1472,7 @@ async def get_course_reviews(
                 "likes": likes or 0,
                 "dislikes": dislikes or 0,
                 "user_reaction": user_reaction.scalar_one_or_none(),
-                "equipped_item": my_equipped_item,  # 🔥 Добавляем
+                "equipped_item": my_equipped_item,
             }
 
     return {
@@ -1647,7 +1498,6 @@ async def create_course_review(
     if not course:
         raise HTTPException(404, "Course not found")
 
-    # 🔥 Проверка: записан ли пользователь
     enrollment = await db.execute(
         select(UserCourseEnrollment).where(
             UserCourseEnrollment.user_id == current_user.id,
@@ -1657,7 +1507,6 @@ async def create_course_review(
     if not enrollment.scalar_one_or_none():
         raise HTTPException(403, "You must be enrolled in the course to leave a review")
 
-    # 🔥 Проверка прогресса ≥75%
     completion = await get_course_completion_percent(current_user.id, course_id, db)
     if completion < 75:
         raise HTTPException(
@@ -1665,7 +1514,6 @@ async def create_course_review(
             f"Complete at least 75% of the course to leave a review. Your progress: {completion:.1f}%",
         )
 
-    # Проверка: уже есть отзыв
     existing = await db.execute(
         select(CourseReview).where(
             CourseReview.user_id == current_user.id,
@@ -1675,7 +1523,6 @@ async def create_course_review(
     if existing.scalar_one_or_none():
         raise HTTPException(400, "You already reviewed this course")
 
-    # Создаём отзыв
     new_review = CourseReview(
         user_id=current_user.id,
         course_id=course_id,
@@ -1688,7 +1535,7 @@ async def create_course_review(
     await try_grant_reward(
         current_user.id,
         "review_written",
-        course_id,  # контекст: конкретный курс
+        course_id,
         50,
         db,
     )
@@ -1708,12 +1555,6 @@ async def create_course_review(
     )
 
 
-# backend/main.py
-
-
-# backend/main.py
-
-
 @app.get(
     "/profile/public/{user_id}",
 )
@@ -1724,13 +1565,10 @@ async def get_public_profile(
 ):
     """Получить публичный профиль пользователя"""
 
-    # Находим пользователя
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(404, "User not found")
 
-    # 🔥 Находим пройденные курсы (≥90% completion)
-    # Получаем все курсы, на которые записан пользователь
     enrolled_courses = await db.execute(
         select(
             EgeSubject.id,
@@ -1752,7 +1590,6 @@ async def get_public_profile(
 
     completed_courses = []
     for row in enrolled_courses.all():
-        # Считаем всего уроков в курсе
         total_lessons = await db.execute(
             select(func.count(EgeLesson.id)).where(EgeLesson.subject_id == row.id)
         )
@@ -1781,11 +1618,6 @@ async def get_public_profile(
                 "price": equipped.price,
                 "description": equipped.description,
             }
-    # 🔥 ОТЛАДКА: смотрим, что реально возвращается
-    print(f"🔍 [DEBUG] Returning profile for user {user_id}:")
-    print(f"   status={user.status!r}")
-    print(f"   about_me={user.about_me!r}")
-    print(f"   created_at={user.created_at.isoformat() if user.created_at else None!r}")
 
     return {
         "id": user.id,
@@ -1794,11 +1626,9 @@ async def get_public_profile(
         "first_name": user.first_name,
         "last_name": user.last_name,
         "equipped_item": equipped_item,
-        "status": user.status,  # 🔥 Прямо из модели
-        "about_me": user.about_me,  # 🔥 Прямо из модели
-        "created_at": user.created_at.isoformat()
-        if user.created_at
-        else None,  # 🔥 ISO-строка
+        "status": user.status,
+        "about_me": user.about_me,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
         "token_balance": user.token_balance,
         "completed_courses": completed_courses,
     }
@@ -1817,7 +1647,6 @@ async def update_review(
     if not review:
         raise HTTPException(404, "Review not found")
 
-    # 🔥 Только автор может редактировать
     if review.user_id != current_user.id:
         raise HTTPException(403, "You can only edit your own review")
 
@@ -1857,7 +1686,6 @@ async def delete_review(
     if not review:
         raise HTTPException(404, "Review not found")
 
-    # 🔥 Только автор может удалить
     if review.user_id != current_user.id:
         raise HTTPException(403, "You can only delete your own review")
 
@@ -1880,7 +1708,6 @@ async def react_to_review(
     if not review:
         raise HTTPException(404, "Review not found")
 
-    # Проверка: уже есть реакция
     existing = await db.execute(
         select(ReviewReaction).where(
             ReviewReaction.user_id == current_user.id,
@@ -1889,7 +1716,6 @@ async def react_to_review(
     )
 
     if existing.scalar_one_or_none():
-        # Обновляем реакцию
         await db.execute(
             update(ReviewReaction)
             .where(
@@ -1899,7 +1725,6 @@ async def react_to_review(
             .values(reaction_type=reaction)
         )
     else:
-        # Создаём новую
         db.add(
             ReviewReaction(
                 user_id=current_user.id, review_id=review_id, reaction_type=reaction
@@ -1908,7 +1733,6 @@ async def react_to_review(
 
     await db.commit()
 
-    # Возвращаем обновлённые счётчики
     counts = await db.execute(
         select(
             func.count(case((ReviewReaction.reaction_type == "like", 1))),
@@ -1942,7 +1766,6 @@ async def remove_reaction(
     await db.delete(item)
     await db.commit()
 
-    # Возвращаем обновлённые счётчики
     counts = await db.execute(
         select(
             func.count(case((ReviewReaction.reaction_type == "like", 1))),
@@ -1957,7 +1780,7 @@ async def remove_reaction(
 @app.post("/flashcards/{card_id}/answer", response_model=dict)
 async def answer_flashcard(
     card_id: int,
-    answer: FlashcardAnswer,  # { rating: "again" | "hard" | "good" | "easy" }
+    answer: FlashcardAnswer,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -2060,23 +1883,17 @@ async def answer_flashcard(
     }
 
 
-# backend/main.py
-
-
-# 🔹 Записаться на курс (по slug, а не по id!)
 @app.post("/courses/{slug}/enroll")
 async def enroll_in_course(
-    slug: str,  # ← Принимаем slug!
+    slug: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Находим курс по slug
     course = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     course = course.scalar_one_or_none()
     if not course:
         raise HTTPException(404, "Course not found")
 
-    # Проверка: не записан ли уже
     existing = await db.execute(
         select(UserCourseEnrollment).where(
             UserCourseEnrollment.user_id == current_user.id,
@@ -2091,17 +1908,14 @@ async def enroll_in_course(
     rewarded = await try_grant_reward(
         current_user.id,
         "first_enrollment",
-        None,  # глобальная награда
+        None,
         20,
         db,
     )
     return {
         "message": "Enrolled successfully",
-        "reward_granted": rewarded,  # 🔥 Флаг для фронтенда
+        "reward_granted": rewarded,
     }
-
-
-# backend/main.py
 
 
 @app.get("/lessons/{lesson_id}/flashcards", response_model=FlashcardDeckOut)
@@ -2596,7 +2410,7 @@ async def delete_language_comment(
 @app.post("/languages/comments/{comment_id}/reaction")
 async def react_to_language_comment(
     comment_id: int,
-    reaction_data: dict,  # {"reaction_type": "like" | "dislike" | "none"}
+    reaction_data: dict,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -2706,14 +2520,6 @@ async def get_lesson_views(
     return {"view_count": count or 0}
 
 
-# backend/main.py
-# backend/main.py
-
-# ============================================================================
-# 🔥 ТОКЕНЫ: ЭНДПОИНТЫ
-# ============================================================================
-
-
 @app.get("/profile/balance", response_model=dict)
 async def get_balance(
     current_user: User = Depends(get_current_user),
@@ -2730,9 +2536,6 @@ async def add_token_reward(
 ):
     """Начислить токены пользователю (внутренний эндпоинт)"""
 
-    # 🔥 Защита: только сервер может начислять токены
-    # (в реальном проекте добавь проверку API-ключа или роли)
-
     current_user.token_balance += reward.amount
     await db.commit()
 
@@ -2743,7 +2546,6 @@ async def add_token_reward(
     }
 
 
-# 🔹 Хелпер для начисления токенов
 async def reward_user(
     user_id: int,
     amount: int,
@@ -2759,9 +2561,6 @@ async def reward_user(
     return None
 
 
-# backend/main.py
-
-
 @app.get("/courses/subjects", response_model=list[EgeSubjectOut])
 async def get_course_subjects(
     category: str | None = None,
@@ -2769,7 +2568,6 @@ async def get_course_subjects(
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    # 1. Базовый запрос
     query = select(EgeSubject)
     if category:
         query = query.where(EgeSubject.category == category)
@@ -2780,7 +2578,6 @@ async def get_course_subjects(
     result = await db.execute(query)
     subjects = result.scalars().all()
 
-    # 2. 🔥 Собери счётчики записей
     enrolled_counts = await db.execute(
         select(
             UserCourseEnrollment.course_id,
@@ -2789,7 +2586,6 @@ async def get_course_subjects(
     )
     enrolled_dict = {row.course_id: row.count for row in enrolled_counts.all()}
 
-    # 3. 🔥 Собери средние рейтинги
     avg_ratings = await db.execute(
         select(
             CourseReview.course_id, func.avg(CourseReview.rating).label("avg_rating")
@@ -2797,7 +2593,6 @@ async def get_course_subjects(
     )
     ratings_dict = {row.course_id: row.avg_rating for row in avg_ratings.all()}
 
-    # 4. 🔥 Если пользователь авторизован — загрузи избранное
     fav_ids = set()
     if current_user:
         favs = await db.execute(
@@ -2817,7 +2612,6 @@ async def get_course_subjects(
     completion_dict: dict[int, float] = {}
 
     if current_user:
-        # Получаем все завершённые уроки пользователя
         completed_lessons_result = await db.execute(
             select(
                 EgeLesson.subject_id,
@@ -2827,31 +2621,26 @@ async def get_course_subjects(
             .where(UserCompletedLesson.user_id == current_user.id)
             .group_by(EgeLesson.subject_id)
         )
-        completed_lessons = completed_lessons_result.all()  # 🔥 Сохраняем результат
+        completed_lessons = completed_lessons_result.all()
 
-        # Считаем всего уроков по каждому курсу
         total_lessons_result = await db.execute(
             select(
                 EgeLesson.subject_id, func.count(EgeLesson.id).label("total_count")
             ).group_by(EgeLesson.subject_id)
         )
-        total_lessons = total_lessons_result.all()  # 🔥 Сохраняем результат
+        total_lessons = total_lessons_result.all()
 
-        # Создаём словари
         completed_dict_temp = {
             row.subject_id: row.completed_count for row in completed_lessons
         }
         total_dict = {row.subject_id: row.total_count for row in total_lessons}
 
-        # Вычисляем проценты
         for course_id, total in total_dict.items():
             completed = completed_dict_temp.get(course_id, 0)
             completion_dict[course_id] = (
                 round((completed / total) * 100, 1) if total > 0 else 0.0
             )
 
-    # 5. 🔥 Верни курсы с новыми полями
-    # 5. 🔥 Верни курсы с новыми полями
     return [
         EgeSubjectOut(
             id=s.id,
@@ -2875,19 +2664,17 @@ async def get_course_subjects(
     ]
 
 
-@app.get("/courses/{slug}")  # ← УБЕРИ response_model=..., если есть
+@app.get("/courses/{slug}")
 async def get_course_lessons(
     slug: str,
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    # 1. Ищем курс
     subject_result = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject_result.scalar_one_or_none()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    # 2. Проверяем запись
     is_enrolled = False
     if current_user:
         enrollment = await db.execute(
@@ -2898,7 +2685,6 @@ async def get_course_lessons(
         )
         is_enrolled = enrollment.scalar_one_or_none() is not None
 
-    # 3. Загружаем юниты
     units_result = await db.execute(
         select(CourseUnit, func.count(EgeLesson.id).label("lesson_count"))
         .outerjoin(EgeLesson, EgeLesson.unit_id == CourseUnit.id)
@@ -2917,7 +2703,6 @@ async def get_course_lessons(
         for u, c in units_result.all()
     ]
 
-    # 4. Загружаем уроки
     lessons_result = await db.execute(
         select(EgeLesson)
         .outerjoin(CourseUnit, EgeLesson.unit_id == CourseUnit.id)
@@ -2939,10 +2724,8 @@ async def get_course_lessons(
             current_user.id, subject.id, db
         )
 
-    # 5. 🔥 ВРУЧНУЮ ДОБАВЛЯЕМ is_locked 🔥
     lessons_out = []
     for i, lesson in enumerate(all_lessons):
-        # 🔥 Сериализуем unit вручную
         unit_data = None
         if lesson.unit:
             unit_data = {
@@ -2951,7 +2734,7 @@ async def get_course_lessons(
                 "unit_number": lesson.unit.unit_number,
                 "description": lesson.unit.description,
             }
-        has_flashcards = lesson.flashcard_deck is not None  # или используй свою логику
+        has_flashcards = lesson.flashcard_deck is not None
 
         lessons_out.append(
             {
@@ -2964,16 +2747,13 @@ async def get_course_lessons(
                 "time_minutes": lesson.time_minutes,
                 "is_completed": False,
                 "test_id": lesson.test_id,
-                "unit": unit_data,  # 🔥 Теперь это dict, а не модель!
+                "unit": unit_data,
                 "created_at": lesson.created_at,
                 "updated_at": lesson.updated_at,
                 "is_locked": not is_enrolled and i > 0,
                 "has_flashcards": getattr(lesson, "flashcard_deck", None) is not None,
             }
         )
-    print(
-        f"🟢 [DEBUG] Returning {len(lessons_out)} lessons, {len(units_with_counts)} units"
-    )
 
     milestone_rewards = []
     if current_user:
@@ -2996,29 +2776,18 @@ async def get_course_lessons(
     }
 
 
-# backend/main.py
-
-
-# backend/main.py
-
-
-# backend/main.py
-
-
-@app.get("/courses/{slug}/{lesson_slug}")  # ← БЕЗ response_model!
+@app.get("/courses/{slug}/{lesson_slug}")
 async def get_course_lesson_detail(
     slug: str,
     lesson_slug: str,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    # 1. Находим курс
     subject = await db.execute(select(EgeSubject).where(EgeSubject.slug == slug))
     subject = subject.scalar_one_or_none()
     if not subject:
         raise HTTPException(404, "Course not found")
 
-    # 2. Находим урок
     lesson = await db.execute(
         select(EgeLesson).where(
             EgeLesson.subject_id == subject.id, EgeLesson.slug == lesson_slug
@@ -3028,7 +2797,6 @@ async def get_course_lesson_detail(
     if not lesson:
         raise HTTPException(404, "Lesson not found")
 
-    # 3. Проверяем запись
     is_enrolled = False
     if current_user:
         check = await db.execute(
@@ -3039,7 +2807,6 @@ async def get_course_lesson_detail(
         )
         is_enrolled = check.scalar_one_or_none() is not None
 
-    # 4. Индекс урока для блокировки
     all_ids = await db.execute(
         select(EgeLesson.id)
         .where(EgeLesson.subject_id == subject.id)
@@ -3049,7 +2816,6 @@ async def get_course_lesson_detail(
     idx = ids.index(lesson.id) if lesson.id in ids else 0
     is_locked = not is_enrolled and idx > 0
 
-    # 5. 🔥 ВОЗВРАЩАЕМ ТОЛЬКО ПРИМИТИВЫ — БЕЗ unit, БЕЗ моделей!
     return {
         "id": lesson.id,
         "title": lesson.title,
@@ -3058,9 +2824,8 @@ async def get_course_lesson_detail(
         "content": lesson.content,
         "time_minutes": lesson.time_minutes,
         "test_id": lesson.test_id,
-        # "unit": ...,  # ← УБРАЛИ! Не возвращаем nested-объекты
         "created_at": lesson.created_at.isoformat() if lesson.created_at else None,
-        "is_locked": is_locked,  # 🔥 Главное поле для блокировки
+        "is_locked": is_locked,
     }
 
 
@@ -3072,19 +2837,15 @@ ARTICLE_TOPICS_LIST = [
 ]
 
 
-# backend/main.py
-
-
 @app.get("/articles", response_model=list[ArticleOut])
 async def get_articles(
     topic: str | None = None,
     search: str | None = None,
-    with_stats: bool = False,  # 🔥 Новый параметр
+    with_stats: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
     """Получить список статей с опциональной статистикой"""
 
-    # 🔹 Базовый запрос
     query = select(Article)
 
     if topic and topic != "Все":
@@ -3093,18 +2854,15 @@ async def get_articles(
     if search:
         query = query.where(Article.title.ilike(f"%{search}%"))
 
-    # Сортировка по умолчанию: новые сверху
     query = query.order_by(Article.created_at.desc())
 
     result = await db.execute(query)
     articles = result.scalars().all()
 
-    # 🔥 Если запрошена статистика — считаем для каждой статьи
     if with_stats:
         articles_with_stats = []
 
         for article in articles:
-            # 👁 Просмотры: уникальные юзеры в день
             views = await db.execute(
                 select(func.count(func.distinct(ArticleView.user_id))).where(
                     ArticleView.article_id == article.id
@@ -3112,7 +2870,6 @@ async def get_articles(
             )
             view_count = views.scalar() or 0
 
-            # 👍 Лайки
             likes = await db.execute(
                 select(func.count()).where(
                     ArticleReaction.article_id == article.id,
@@ -3120,7 +2877,6 @@ async def get_articles(
                 )
             )
 
-            # 👎 Дизлайки
             dislikes = await db.execute(
                 select(func.count()).where(
                     ArticleReaction.article_id == article.id,
@@ -3128,7 +2884,6 @@ async def get_articles(
                 )
             )
 
-            # 🔥 Создаём объект с доп. полями
             article_data = {
                 "id": article.id,
                 "title": article.title,
@@ -3138,7 +2893,6 @@ async def get_articles(
                 "time_minutes": article.time_minutes,
                 "image": article.image,
                 "created_at": article.created_at,
-                # 🔥 Статистика:
                 "view_count": view_count,
                 "likes": likes.scalar() or 0,
                 "dislikes": dislikes.scalar() or 0,
@@ -3147,15 +2901,9 @@ async def get_articles(
 
         return articles_with_stats
 
-    # 🔹 Без статистики — возвращаем как есть
     return articles
 
 
-# backend/main.py
-
-
-# backend/main.py
-# 🔹 Переключить избранное
 @app.post("/articles/{article_id}/favorite")
 async def toggle_article_favorite(
     article_id: int,
@@ -3180,7 +2928,6 @@ async def toggle_article_favorite(
         return {"is_favorite": True, "message": "Added to favorites"}
 
 
-# 🔹 Получить список ID избранных статей
 @app.get("/articles/favorites")
 async def get_user_article_favorites(
     current_user: User = Depends(get_current_user),
@@ -3202,12 +2949,10 @@ async def mark_lesson_complete(
 ):
     """Отметить урок как завершённый (вызывается при прохождении теста или просмотре)"""
 
-    # Проверка: существует ли урок
     lesson = await db.get(EgeLesson, lesson_id)
     if not lesson:
         raise HTTPException(404, "Lesson not found")
 
-    # Проверка: не отмечен ли уже
     existing = await db.execute(
         select(UserCompletedLesson).where(
             UserCompletedLesson.user_id == current_user.id,
@@ -3217,14 +2962,13 @@ async def mark_lesson_complete(
     if existing.scalar_one_or_none():
         return {"message": "Already completed", "completed": True}
 
-    # Создаём запись
     db.add(UserCompletedLesson(user_id=current_user.id, lesson_id=lesson_id))
     await db.commit()
 
     return {"message": "Lesson marked as completed", "completed": True}
 
 
-@app.get("/lessons/{lesson_id}")  # ← Убрали response_model!
+@app.get("/lessons/{lesson_id}")
 async def get_lesson_by_id(
     lesson_id: int,
     db: AsyncSession = Depends(get_db),
@@ -3233,7 +2977,6 @@ async def get_lesson_by_id(
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # 🔥 Вручную собираем ответ — только примитивы, БЕЗ unit!
     return {
         "id": lesson.id,
         "title": lesson.title,
@@ -3242,7 +2985,6 @@ async def get_lesson_by_id(
         "content": lesson.content,
         "time_minutes": lesson.time_minutes,
         "test_id": lesson.test_id,
-        # "unit": ...,  # ← НЕ возвращаем nested-объекты!
         "created_at": lesson.created_at.isoformat() if lesson.created_at else None,
     }
 
@@ -3453,16 +3195,12 @@ async def submit_test(
     )
     db.add(test_result)
     await db.commit()
-    print(
-        f"🔍 [DEBUG] Test {test_id}: score={score}, passed={passed}, passing_score={test.passing_score}"
-    )
-
     reward_granted = False
     if passed:
         reward_granted = await try_grant_reward(
             current_user.id,
             "test_passed",
-            test_id,  # контекст: конкретный тест
+            test_id,
             30,
             db,
         )
@@ -3507,25 +3245,21 @@ async def complete_test(
     await db.execute(stmt)
     await db.commit()
 
-    # 🔥 ДОБАВЬ ЭТО: Награда за прохождение теста (первый раз для этого теста)
     reward_granted = False
-    if result_.passed:  # только если тест пройден
+    if result_.passed:
         reward_granted = await try_grant_reward(
             current_user.id,
             "test_passed",
-            test_id,  # контекст: конкретный тест
-            30,  # сумма
+            test_id,
+            30,
             db,
-        )
-        print(
-            f"🎁 [DEBUG] Test {test_id} reward: granted={reward_granted}, user={current_user.id}"
         )
 
     return TestResultOut(
         score=result_.score,
         passed=result_.passed,
         completed_at=datetime.now(timezone.utc),
-        reward_granted=reward_granted,  # 🔥 Новый флаг для фронтенда
+        reward_granted=reward_granted,
     )
 
 
@@ -3764,9 +3498,7 @@ async def get_lesson_comments(
         select(Comment)
         .where(Comment.lesson_id == lesson_id, Comment.parent_id.is_(None))
         .options(
-            # 🔥 Предзагружаем user И его equipped_item:
             selectinload(Comment.user).selectinload(User.equipped_item),
-            # 🔥 То же самое для ответов:
             selectinload(Comment.replies)
             .selectinload(Comment.user)
             .selectinload(User.equipped_item),
@@ -3795,20 +3527,14 @@ async def get_article_comments(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    # backend/main.py — в get_article_comments
-
     result = await db.execute(
         select(Comment)
         .where(Comment.article_id == article_id, Comment.parent_id.is_(None))
         .options(
-            # 🔥 КЛЮЧЕВОЕ: цепочка предзагрузки equipped_item
-            selectinload(Comment.user).selectinload(
-                User.equipped_item
-            ),  # ← Добавь это!
-            # 🔥 То же самое для ответов:
+            selectinload(Comment.user).selectinload(User.equipped_item),
             selectinload(Comment.replies)
             .selectinload(Comment.user)
-            .selectinload(User.equipped_item),  # ← И это!
+            .selectinload(User.equipped_item),
         )
         .order_by(Comment.created_at.asc())
     )
@@ -3824,7 +3550,6 @@ async def get_article_comments(
     return formatted
 
 
-# backend/main.py
 @app.get("/articles/{slug}", response_model=ArticleOut)
 async def get_article_by_slug(
     slug: str,
@@ -3833,20 +3558,16 @@ async def get_article_by_slug(
 ):
     """Получить статью по слагам"""
 
-    # 🔍 Ищем статью
     article = await db.execute(select(Article).where(Article.slug == slug))
     article = article.scalar_one_or_none()
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    # В @app.get("/articles/{slug}") замени try/except на:
-
     if current_user:
         try:
-            today = datetime.now().date()  # 🔥 naive date, совместимо с БД
+            today = datetime.now().date()
 
-            # Проверяем, не записывали ли уже сегодня
             existing = await db.execute(
                 select(ArticleView).where(
                     ArticleView.article_id == article.id,
@@ -3864,14 +3585,9 @@ async def get_article_by_slug(
                     )
                 )
                 await db.commit()
-                print(
-                    f"✅ View recorded for user {current_user.id}, article {article.id}"
-                )
         except Exception as e:
-            print(f"⚠️ View record failed: {e}")
-            await db.rollback()  # 🔥 Обязательно откатываем при ошибке!
+            await db.rollback()
 
-    # 🔥 Возвращаем статью
     return ArticleOut(
         id=article.id,
         title=article.title,
@@ -3884,14 +3600,10 @@ async def get_article_by_slug(
     )
 
 
-# backend/main.py
-
-
-# 🔹 1. Лайк/дизлайк статьи
 @app.post("/articles/{slug}/reaction")
 async def react_to_article(
     slug: str,
-    reaction_data: dict,  # {"reaction_type": "like" | "dislike" | null}
+    reaction_data: dict,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -3904,7 +3616,6 @@ async def react_to_article(
 
     reaction_type = reaction_data.get("reaction_type")
 
-    # Ищем существующую реакцию
     existing = await db.execute(
         select(ArticleReaction).where(
             ArticleReaction.user_id == current_user.id,
@@ -3913,27 +3624,22 @@ async def react_to_article(
     )
     existing_reaction = existing.scalar_one_or_none()
 
-    # Если reaction_type = null → удаляем реакцию
     if not reaction_type:
         if existing_reaction:
             await db.delete(existing_reaction)
             await db.commit()
         return {"message": "Reaction removed"}
 
-    # Если реакция уже есть
     if existing_reaction:
         if existing_reaction.reaction_type == reaction_type:
-            # Тот же тип → убираем (toggle)
             await db.delete(existing_reaction)
             await db.commit()
             return {"message": "Reaction removed"}
         else:
-            # Другой тип → меняем
             existing_reaction.reaction_type = reaction_type
             await db.commit()
             return {"message": f"Reaction changed to {reaction_type}"}
     else:
-        # Новая реакция
         db.add(
             ArticleReaction(
                 user_id=current_user.id,
@@ -3943,9 +3649,6 @@ async def react_to_article(
         )
         await db.commit()
         return {"message": f"Reaction set to {reaction_type}"}
-
-
-# backend/main.py
 
 
 @app.get("/articles/{slug}/stats")
@@ -3962,7 +3665,6 @@ async def get_article_stats(
     if not article:
         raise HTTPException(404, "Article not found")
 
-    # 🔥 Считаем просмотры (уникальные юзеры в день)
     view_count = (
         await db.execute(
             select(func.count(func.distinct(ArticleView.user_id))).where(
@@ -3971,7 +3673,6 @@ async def get_article_stats(
         )
     ).scalar() or 0
 
-    # 🔥 Считаем лайки/дизлайки
     likes = (
         await db.execute(
             select(func.count()).where(
@@ -3990,7 +3691,6 @@ async def get_article_stats(
         )
     ).scalar() or 0
 
-    # 🔥 Реакция текущего пользователя
     user_reaction = None
     if current_user:
         ur = await db.execute(
@@ -4000,10 +3700,6 @@ async def get_article_stats(
             )
         )
         user_reaction = ur.scalar_one_or_none()
-
-    print(
-        f"🔍 [DEBUG] Stats for article {article.id}: views={view_count}, likes={likes}, dislikes={dislikes}, user_reaction={user_reaction}"
-    )
 
     return {
         "view_count": view_count,
@@ -4027,7 +3723,6 @@ async def record_article_view(
     if not article:
         raise HTTPException(404, "Article not found")
 
-    # Если пользователь авторизован — записываем персональный просмотр
     if current_user:
         today = datetime.now(timezone.utc).date()
         existing = await db.execute(
@@ -4046,19 +3741,11 @@ async def record_article_view(
                 )
             )
     else:
-        # Для анонимов — просто увеличиваем счётчик
         article.view_count = (article.view_count or 0) + 1
 
     await db.commit()
 
     return {"message": "View recorded"}
-
-
-# backend/main.py
-# backend/main.py — в @app.get("/articles/{slug}/views")
-
-
-# backend/main.py
 
 
 @app.get("/articles/{slug}/views")
@@ -4074,7 +3761,6 @@ async def get_article_views(
     if not article:
         raise HTTPException(404, "Article not found")
 
-    # 🔥 Вычисляем счётчик ОДИН РАЗ и сохраняем в переменную
     unique_views_count = (
         await db.execute(
             select(func.count(func.distinct(ArticleView.user_id))).where(
@@ -4083,13 +3769,9 @@ async def get_article_views(
         )
     ).scalar() or 0
 
-    print(
-        f"🔍 [DEBUG] Article {article.id} views: {unique_views_count}"
-    )  # ← Для отладки
-
     return {
-        "view_count": unique_views_count,  # ← Используем переменную
-        "unique_views": unique_views_count,  # ← И здесь ту же переменную
+        "view_count": unique_views_count,
+        "unique_views": unique_views_count,
     }
 
 

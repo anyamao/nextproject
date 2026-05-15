@@ -1,4 +1,3 @@
-// frontend/components/AchievementCard.tsx
 "use client";
 
 import { Check, Lock } from "lucide-react";
@@ -9,11 +8,10 @@ type AchievementCardProps = {
   description: string;
   color: string;
 
-  // 🔥 Новые пропсы для уровней:
-  currentLevelTitle: string; // "Умный кот 1lv"
-  nextLevelTitle: string | null; // "Умный кот 2lv" или null
-  progress: number; // 0-100%
-  nextMessage: string; // "Пройдите ещё 1 курс на 75%"
+  currentLevelTitle: string;
+  nextLevelTitle: string | null;
+  progress: number;
+  nextMessage: string;
   isUnlocked: boolean;
 };
 
@@ -43,7 +41,6 @@ export default function AchievementCard({
 
           <p className="text-sm text-gray-600 mt-1">{description}</p>
 
-          {/* Прогресс до следующего уровня */}
           {nextLevelTitle && progress < 100 && (
             <div className="mt-3">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -60,7 +57,6 @@ export default function AchievementCard({
             </div>
           )}
 
-          {/* Если уровень максимален */}
           {!nextLevelTitle && (
             <p className="text-xs text-green-600 mt-2 font-medium">
               ✅ Максимальный уровень достигнут!

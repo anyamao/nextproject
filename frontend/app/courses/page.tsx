@@ -1,4 +1,3 @@
-// frontend/app/courses/page.tsx
 import { Suspense } from "react";
 import CoursesContent from "./CourseContent";
 

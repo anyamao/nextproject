@@ -1,4 +1,3 @@
-// frontend/app/shop/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -65,7 +64,6 @@ export default function ShopPage() {
         const itemsData = await apiFetch("/shop/items");
         setItems(itemsData);
       } catch (err) {
-        console.error("❌ Failed to load shop:", err);
       } finally {
         setLoading(false);
       }
@@ -101,13 +99,11 @@ export default function ShopPage() {
       price: item.price,
       onConfirm: async () => {
         try {
-          // 🔥 1. Покупка
           await apiFetch(`/shop/items/${item.id}/buy`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          // 🔥 2. Перезагружаем ВСЕ данные с ?t=timestamp чтобы обойти кэш
           const timestamp = Date.now();
 
           const [itemsData, balanceData, profileData] = await Promise.all([
@@ -297,7 +293,6 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* Секция 1: Текущая аватарка + купленные предметы */}
       <div className="w-full bg-white rounded-lg shadow-xs max-w-[1100px] p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           Ваша аватарка

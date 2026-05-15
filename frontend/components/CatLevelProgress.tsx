@@ -1,4 +1,3 @@
-// components/CatLevelProgress.tsx
 "use client";
 
 import { Trophy, PawPrint, Star, Sparkles, Target } from "lucide-react";
@@ -136,7 +135,6 @@ export default function CatLevelProgress({
   completedCoursesCount,
   hasAvatar,
 }: CatLevelProgressProps) {
-  // Определяем текущий уровень
   const getCurrentLevel = () => {
     if (!hasAvatar) return 0;
     for (let i = catLevels.length - 1; i >= 0; i--) {
@@ -150,7 +148,6 @@ export default function CatLevelProgress({
   const currentLevel = getCurrentLevel();
   const currentLevelData = catLevels[currentLevel];
 
-  // Следующий уровень
   const nextLevel = catLevels[currentLevel + 1];
   const progressToNext = nextLevel
     ? Math.min(
@@ -169,7 +166,6 @@ export default function CatLevelProgress({
         <h2 className="text-lg font-bold text-pink-900">Точки роста кота</h2>
       </div>
 
-      {/* Текущий уровень */}
       <div className="flex items-center justify-center w-full">
         <div className="text-center bg-yellow-400 w-[200px] rounded-lg mb-6">
           <div
@@ -186,7 +182,6 @@ export default function CatLevelProgress({
         </div>
       </div>
 
-      {/* Прогресс-бар к следующему уровню */}
       {nextLevel && (
         <div className="mb-6">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -209,7 +204,6 @@ export default function CatLevelProgress({
         </div>
       )}
 
-      {/* Все уровни */}
       <div>
         <p className="text-xs font-medium text-gray-500 mb-3">Все уровни:</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -269,7 +263,6 @@ export default function CatLevelProgress({
         </div>
       </div>
 
-      {/* Мотивационная фраза */}
       {nextLevel && (
         <div className="mt-4 pt-3 border-t border-purple-200 text-center">
           <p className="text-xs text-purple-600">

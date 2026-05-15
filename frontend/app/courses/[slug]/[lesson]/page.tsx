@@ -1,4 +1,3 @@
-// frontend/app/courses/[slug]/[lesson]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,7 +13,7 @@ type Lesson = {
   content: string | null;
   time_minutes: number | null;
   test_id: number | null;
-  is_locked?: boolean; // 🔥 Новое поле
+  is_locked?: boolean;
 };
 
 export default function CourseLessonPage() {
@@ -22,10 +21,6 @@ export default function CourseLessonPage() {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  // frontend/app/courses/[slug]/[lesson]/page.tsx
-
-  // frontend/app/courses/[slug]/[lesson]/page.tsx
 
   useEffect(() => {
     async function fetchLesson() {
@@ -39,32 +34,17 @@ export default function CourseLessonPage() {
           throw new Error("Lesson not found");
         }
 
-        // 🔥 ЛОГИ: смотри в консоль браузера
-        console.log("🔍 [page.tsx] foundLesson:", {
-          slug: foundLesson.slug,
-          is_locked: foundLesson.is_locked,
-          id: foundLesson.id,
-        });
-
         const locked = !!foundLesson.is_locked;
         setIsLocked(locked);
-        console.log("🔍 [page.tsx] isLocked set to:", locked);
 
-        // 🔥 Если заблокирован — НЕ загружаем детали урока
         if (locked) {
-          console.log(
-            "🔒 [page.tsx] Lesson is locked, skipping /lessons/{id} fetch",
-          );
           setLoading(false);
           return;
         }
 
-        // Загружаем детали только если не заблокирован
         const lessonData = await apiFetch(`/lessons/${foundLesson.id}`);
-        console.log("✅ [page.tsx] Lesson data loaded:", { id: lessonData.id });
         setLesson(lessonData);
       } catch (err) {
-        console.error("❌ Failed to load lesson:", err);
       } finally {
         setLoading(false);
       }
@@ -89,7 +69,7 @@ export default function CourseLessonPage() {
       subjectSlug={params.slug as string}
       lessonSlug={params.lesson as string}
       testId={lesson?.test_id ?? null}
-      isLocked={isLocked} // 🔥 Передаём флаг блокировки
+      isLocked={isLocked}
     />
   );
 }

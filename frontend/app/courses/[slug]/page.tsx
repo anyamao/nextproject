@@ -65,26 +65,6 @@ export default function CourseLessonsPage() {
     async function fetchData() {
       try {
         const data: CourseResponse = await apiFetch(`/courses/${slug}`);
-        console.log("🔍 [Frontend] Received course ", {
-          is_enrolled: data.is_enrolled,
-          lessonsCount: data.lessons.length,
-          lockedLessons: data.lessons.filter((l: any) => l.is_locked).length,
-        });
-
-        console.log("🟢 [CourseLessons] Raw response:", {
-          hasData: !!data,
-          lessonsCount: data?.lessons?.length,
-          unitsCount: data?.units?.length,
-          is_enrolled: data?.is_enrolled,
-          completion_percent: data?.completion_percent,
-        });
-        console.log(
-          "🔍 [Frontend] Lessons:",
-          data.lessons.map((l: any) => ({
-            title: l.title,
-            is_locked: l.is_locked,
-          })),
-        );
 
         if (!data || !data.lessons) {
           return;
@@ -109,7 +89,6 @@ export default function CourseLessonsPage() {
               if (result?.score !== undefined && result.score >= 75) {
                 isCompleted = true;
 
-                // 🔥 Если урок пройден, но ещё не отмечен на бэкенде — отмечаем
                 const token = localStorage.getItem("token");
                 if (token && lesson.id) {
                   apiFetch(`/lessons/${lesson.id}/complete`, {
@@ -185,13 +164,12 @@ export default function CourseLessonsPage() {
   useEffect(() => {
     if (completionPercent === null || loading || notifiedCompletion) return;
 
-    // 🔥 Если курс завершён на 75%+ — показываем тост
     if (completionPercent >= 75) {
       setToast({
         message: "🎓 Курс завершён! +300 XP",
         type: "success",
       });
-      setNotifiedCompletion(true); // 🔥 Чтобы не показать снова
+      setNotifiedCompletion(true);
     }
   }, [completionPercent, loading, notifiedCompletion]);
   const unitsWithProgress = units.map((unit) => {
@@ -319,7 +297,6 @@ export default function CourseLessonsPage() {
                   <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-4">
                     {unitLessons.map((lesson) =>
                       lesson.is_locked ? (
-                        // 🔒 Заблокированный урок
                         <div
                           key={lesson.id}
                           className="group flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 opacity-60 cursor-not-allowed"

@@ -1,4 +1,3 @@
-// frontend/app/articles/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -61,11 +60,9 @@ export default function ArticlesPage() {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
-  // 🔥 Состояние избранного
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Синхронизация поиска из URL
   useEffect(() => {
     const newSearchQuery = searchParams.get("search") || "";
     setSearchQuery(newSearchQuery);
@@ -75,7 +72,6 @@ export default function ArticlesPage() {
     const topicFromUrl = searchParams.get("topic") || "";
     setSelectedTopic(topicFromUrl);
   }, [searchParams]);
-  // 🔥 Загрузка избранного
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -90,7 +86,6 @@ export default function ArticlesPage() {
     }
   }, []);
 
-  // Загрузка статей + статистики
   useEffect(() => {
     async function fetchArticles() {
       setLoading(true);
@@ -109,7 +104,6 @@ export default function ArticlesPage() {
         setArticles(data);
         setFilteredArticles(data);
       } catch (err) {
-        console.error("Failed to fetch articles", err);
       } finally {
         setLoading(false);
       }
@@ -117,7 +111,6 @@ export default function ArticlesPage() {
     fetchArticles();
   }, [selectedTopic, searchQuery]);
 
-  // Фильтрация + сортировка на клиенте
   useEffect(() => {
     let result = [...articles];
 
@@ -130,14 +123,12 @@ export default function ArticlesPage() {
       );
     }
 
-    // 🔥 Фильтр "Избранное"
     if (selectedTopic === "Избранное") {
       result = result.filter((a) => favorites.has(a.id));
     } else if (selectedTopic) {
       result = result.filter((a) => a.topic === selectedTopic);
     }
 
-    // Сортировка
     result.sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
@@ -147,7 +138,6 @@ export default function ArticlesPage() {
     setFilteredArticles(result);
   }, [articles, searchQuery, selectedTopic, sortOrder, favorites]);
 
-  // 🔥 Переключение избранного
   const toggleFavorite = async (e: React.MouseEvent, articleId: number) => {
     e.preventDefault();
     e.stopPropagation(); // Чтобы не переходить по ссылке карточки
@@ -170,9 +160,7 @@ export default function ArticlesPage() {
         else next.add(articleId);
         return next;
       });
-    } catch (err) {
-      console.error("❌ Failed to toggle favorite:", err);
-    }
+    } catch (err) {}
   };
 
   const handleSearchChange = (value: string) => {
@@ -350,7 +338,6 @@ export default function ArticlesPage() {
                 </div>
               )}
 
-              {/* 🔥 Кнопка Избранное */}
               <button
                 onClick={(e) => toggleFavorite(e, article.id)}
                 className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${

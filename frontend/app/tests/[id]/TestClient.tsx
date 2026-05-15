@@ -147,10 +147,6 @@ export default function TestClient({
     );
   }, [test.id, subjectSlug, lessonSlug]);
 
-  // frontend/app/tests/[id]/TestClient.tsx — в handleNext:
-
-  // frontend/app/tests/[id]/TestClient.tsx
-
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -169,7 +165,6 @@ export default function TestClient({
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        // 🔥 ОДИН запрос к бэкенду:
         const result = await apiFetch(`/tests/${test.id}/complete`, {
           method: "POST",
           headers: {
@@ -179,14 +174,12 @@ export default function TestClient({
           body: JSON.stringify({ score, passed }),
         });
 
-        // 🔥 ПРОВЕРКА уровня (если тест пройден на 75%+)
         if (passed && score >= 75) {
           await checkLevelUp("test");
         }
         if (result.new_balance !== undefined) {
           useContactStore.getState().setTokenBalance(result.new_balance);
         } else {
-          // Если бэкенд не вернул new_balance — перечитаем отдельно
           const balanceData = await apiFetch("/profile/balance", {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -194,11 +187,8 @@ export default function TestClient({
             .getState()
             .setTokenBalance(balanceData.token_balance ?? 0);
         }
-        // 🔥 ПОКАЗЫВАЕМ ТОСТЫ ДО редиректа:
 
-        // 1. Тост за прохождение теста на 75%+
         if (passed && score >= 75) {
-          // 🔥 Ждём 1.5 секунды перед редиректом, чтобы тост успел показаться
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
 
@@ -210,12 +200,10 @@ export default function TestClient({
       }
     } catch (err) {
       console.error("❌ Failed to complete test:", err);
-      // 🔥 Показываем ошибку тоже
       setToast("❌ Ошибка при сохранении результата");
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
-    // 🔥 Сохраняем результат в sessionStorage
     sessionStorage.setItem(
       `test_${test.id}_result`,
       JSON.stringify({
@@ -226,7 +214,6 @@ export default function TestClient({
       }),
     );
 
-    // 🔥 Редирект ПОСЛЕ показа тоста
     window.location.href = `/tests/${test.id}/results?returnTo=${encodeURIComponent(returnTo)}`;
   };
 
@@ -236,7 +223,7 @@ export default function TestClient({
   };
 
   function SolutionBlock({ solution }: { solution: string }) {
-    const [isExpanded, setIsExpanded] = useState(true); // ✅ По умолчанию развёрнуто
+    const [isExpanded, setIsExpanded] = useState(true);
 
     return (
       <div className="mt-3 mx-[20px] my-[20px] ">

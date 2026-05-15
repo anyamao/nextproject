@@ -1,4 +1,3 @@
-// frontend/app/courses/my-courses/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -105,29 +104,17 @@ export default function MyCoursesPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Загрузка курсов
   useEffect(() => {
     async function fetchMyCourses() {
       if (!isAuthenticated) return;
 
-      console.log("🔵 [MyCourses] Fetching courses...");
       try {
         const data = await apiFetch(`/courses/my?include_wishlist=true`);
-        console.log("🟢 [MyCourses] Loaded:", data.length, "courses");
 
         if (data.length > 0) {
-          console.log("🔍 [MyCourses] First course:", {
-            id: data[0].id,
-            title: data[0].title,
-            is_enrolled: data[0].is_enrolled,
-            is_favorite: data[0].is_favorite,
-            total_units: data[0].total_units,
-            completed_units: data[0].completed_units,
-          });
         }
         setCourses(data);
       } catch (err) {
-        console.error("❌ [MyCourses] Failed to load:", err);
       } finally {
         setLoading(false);
       }
@@ -166,7 +153,6 @@ export default function MyCoursesPage() {
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("❤️ [Favorite] Toggle clicked:", { courseId, courseSlug });
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -179,83 +165,56 @@ export default function MyCoursesPage() {
       if (!course) return;
 
       const method = course.is_favorite ? "DELETE" : "POST";
-      console.log(
-        `❤️ [Favorite] Calling ${method} /courses/${courseId}/favorite`,
-      );
 
       await apiFetch(`/courses/${courseId}/favorite`, {
         method,
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("🟢 [Favorite] Success, updating local state");
       setCourses((prev) =>
         prev.map((c) =>
           c.id === courseId ? { ...c, is_favorite: !c.is_favorite } : c,
         ),
       );
-    } catch (err) {
-      console.error("❌ [Favorite] Failed:", err);
-    }
+    } catch (err) {}
   };
 
   const handleTogglePin = (e: React.MouseEvent, courseId: number) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("📌 [Pin] Toggle clicked:", courseId);
     togglePin(courseId);
   };
 
   const handleUnenroll = async (courseId: number, courseSlug: string) => {
-    console.log("🔴 [Unenroll] === BUTTON CLICKED ===", {
-      courseId,
-      courseSlug,
-    });
-
     if (!confirm("Вы уверены, что хотите отменить запись на этот курс?")) {
-      console.log("⚠️ [Unenroll] User cancelled");
       setOpenMenu(null);
       return;
     }
 
-    console.log("🔵 [Unenroll] User confirmed, starting request...");
     setUnenrolling(courseId);
 
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("❌ [Unenroll] No token found");
         return;
       }
 
       const url = `/courses/${courseSlug}/unenroll`;
-      console.log(`🔵 [Unenroll] Calling DELETE ${url}`);
 
       const response = await apiFetch(url, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("🟢 [Unenroll] Server response:", response);
-
       setCourses((prev) => {
         const filtered = prev.filter((c) => c.id !== courseId);
-        console.log(
-          `🟢 [Unenroll] State updated: ${prev.length} → ${filtered.length} courses`,
-        );
         return filtered;
       });
     } catch (err: any) {
-      console.error("❌ [Unenroll] Request failed:", {
-        message: err?.message,
-        status: err?.status,
-        data: err?.data,
-      });
       alert(
         `Не удалось отменить запись: ${err?.message || "Неизвестная ошибка"}`,
       );
     } finally {
-      console.log("🟡 [Unenroll] Cleanup: resetting states");
       setUnenrolling(null);
       setOpenMenu(null);
     }

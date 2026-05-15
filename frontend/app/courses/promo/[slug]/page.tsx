@@ -1,4 +1,3 @@
-// frontend/app/courses/promo/[slug]/page.tsx
 "use client";
 import AvatarWithOverlay from "@/components/AvatarWithOverlay";
 import Toast from "@/components/Toast"; // 🔥 Импорт с большой буквы
@@ -59,8 +58,6 @@ type Teacher = {
   about: string | null;
 };
 
-// 🔹 В типе Review добавь:
-
 type Review = {
   id: number;
   user_id: number;
@@ -74,7 +71,6 @@ type Review = {
   dislikes: number;
   user_reaction: "like" | "dislike" | null;
 
-  // 🔥 Добавь это поле:
   equipped_item?: {
     id: number;
     name: string;
@@ -159,9 +155,6 @@ export default function CoursePromoPage() {
   const [commentError, setCommentError] = useState<string | null>(null);
   const [reactingReviewId, setReactingReviewId] = useState<number | null>(null);
 
-  // 🔥 Убрали rewardTokens, если не используем на фронтенде
-  // const { rewardTokens } = useTokens();
-
   const [totalUnits, setTotalUnits] = useState(0);
   const [totalLessons, setTotalLessons] = useState(0);
   const [totalTests, setTotalTests] = useState(0);
@@ -172,7 +165,6 @@ export default function CoursePromoPage() {
     new Set(),
   );
 
-  // 🔹 Toast стейт с типом
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error" | "info";
@@ -190,7 +182,6 @@ export default function CoursePromoPage() {
     });
   };
 
-  // 🔹 Функция showToast с типом
   const showToast = (
     message: string,
     type: "success" | "error" | "info" = "success",
@@ -201,23 +192,17 @@ export default function CoursePromoPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("🔍 [Promo] Fetching data for slug:", slug);
-
         const courses = await apiFetch("/courses/subjects");
         const found = courses.find((c: any) => c.slug === slug);
 
         if (!found) {
-          console.error("❌ Course not found in /courses/subjects");
           setLoading(false);
           return;
         }
 
-        console.log("✅ Found course:", { id: found.id, title: found.title });
-
         try {
           const courseStructure = await apiFetch(`/courses/${slug}`);
 
-          // 🔥 Показываем тост за прогресс, если есть награды
           if (courseStructure.rewards_granted?.length > 0) {
             const total = courseStructure.rewards_granted.reduce(
               (sum: number, r: { amount: number }) => sum + r.amount,
@@ -225,11 +210,6 @@ export default function CoursePromoPage() {
             );
             showToast(`+${total} лапок за прогресс! 🎉`, "success");
           }
-
-          console.log("✅ Course structure:", {
-            units_count: courseStructure.units?.length || 0,
-            lessons_count: courseStructure.lessons?.length || 0,
-          });
 
           if (courseStructure.lessons) {
             setTotalLessons(courseStructure.lessons.length);
@@ -244,9 +224,7 @@ export default function CoursePromoPage() {
             setCourseUnits(courseStructure.units || []);
             setCourseLessons(courseStructure.lessons || []);
           }
-        } catch (err) {
-          console.warn("⚠️ Could not load course structure:", err);
-        }
+        } catch (err) {}
 
         const token = localStorage.getItem("token");
         let courseDetails: any = {};
@@ -254,16 +232,8 @@ export default function CoursePromoPage() {
 
         try {
           courseDetails = await apiFetch(`/courses/promo/${slug}`);
-          console.log("✅ Course details:", {
-            is_enrolled: courseDetails.is_enrolled,
-            completion_percent: courseDetails.completion_percent,
-            has_about: !!courseDetails.about,
-            teachers_count: courseDetails.teachers?.length || 0,
-          });
           isEnrolledValue = courseDetails.is_enrolled || false;
-        } catch (err) {
-          console.warn("⚠️ Could not load course details:", err);
-        }
+        } catch (err) {}
 
         const mergedCourse: PromoCourse = {
           ...found,
@@ -276,30 +246,12 @@ export default function CoursePromoPage() {
         setCourse(mergedCourse);
         setIsEnrolled(isEnrolledValue);
 
-        console.log("✅ Merged course:", {
-          id: mergedCourse.id,
-          has_about: !!mergedCourse.about,
-          teachers_count: mergedCourse.teachers?.length || 0,
-        });
-
         try {
-          console.log("🔍 [Reviews] Fetching:", `/courses/${found.id}/reviews`);
           const reviewsData = await apiFetch(`/courses/${found.id}/reviews`);
-          console.log("✅ [Reviews] Response:", {
-            status: 200,
-            reviews_count: reviewsData.reviews?.length,
-            stats: reviewsData.stats,
-          });
           setReviews(reviewsData.reviews || []);
           setReviewStats(reviewsData.stats || null);
           calculateRatingDistribution(reviewsData.reviews || []);
-        } catch (err: any) {
-          console.error("❌ [Reviews] Error:", {
-            status: err?.status,
-            message: err?.message,
-            data: err?.data,
-          });
-        }
+        } catch (err: any) {}
       } catch (err) {
         console.error("❌ [Promo] Fetch error:", err);
       } finally {
@@ -351,7 +303,6 @@ export default function CoursePromoPage() {
 
     setEnrolling(true);
     try {
-      // 🔥 Сохраняем ответ, чтобы проверить reward_granted
       const response = await apiFetch(`/courses/${course.slug}/enroll`, {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -359,7 +310,6 @@ export default function CoursePromoPage() {
 
       setIsEnrolled(true);
 
-      // 🔥 Показываем тост только если бэкенд выдал награду
       if (response.reward_granted) {
         showToast("+20 лапок за первую запись! 🎉", "success");
       }
@@ -428,8 +378,6 @@ export default function CoursePromoPage() {
       calculateRatingDistribution(data.reviews || []);
       setNewReview({ rating: 5, comment: "" });
       setIsEditing(false);
-
-      // 🔥 Показываем тост за успешный отзыв
     } catch (err: any) {
       alert(err.message || "Ошибка");
     } finally {
@@ -588,7 +536,6 @@ export default function CoursePromoPage() {
     </div>
   );
 
-  // 🔹 Загрузка похожих курсов (той же категории)
   useEffect(() => {
     async function fetchSimilarCourses() {
       if (!course?.category) return;
@@ -610,14 +557,7 @@ export default function CoursePromoPage() {
     fetchSimilarCourses();
   }, [course?.category, course?.id]);
 
-  useEffect(() => {
-    console.log(
-      "🔍 [Render] course:",
-      course ? { id: course.id, slug: course.slug } : null,
-    );
-    console.log("🔍 [Render] isEnrolled:", isEnrolled);
-    console.log("🔍 [Render] reviewStats:", reviewStats);
-  }, [course, isEnrolled, reviewStats]);
+  useEffect(() => {}, [course, isEnrolled, reviewStats]);
 
   if (loading) {
     return (
@@ -660,7 +600,6 @@ export default function CoursePromoPage() {
         </Link>
       </div>
 
-      {/* 🔹 Toast с типом */}
       {toast && (
         <Toast
           message={toast.message}
@@ -1124,7 +1063,6 @@ export default function CoursePromoPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <MessageSquare className="w-5 h-5" /> Отзывы (
           {reviewStats?.total_reviews || 0})
-          {/* 🔥 Средний рейтинг, если есть отзывы */}
           {reviewStats?.average_rating != null &&
             reviewStats.total_reviews > 0 && (
               <span className="flex items-center gap-1 text-sm text-gray-600 ml-2">

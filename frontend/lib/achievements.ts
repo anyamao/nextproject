@@ -1,26 +1,22 @@
-// frontend/lib/achievements.ts
-
 export type AchievementRule = {
   id: string;
   name: string;
   description: string;
-  icon: string; // emoji или название иконки
-  color: string; // Tailwind класс для цвета
+  icon: string;
+  color: string;
   levels: AchievementLevel[];
 
-  // 🔥 Добавь эти опциональные свойства для основного уровня:
-  courseCompletionThreshold?: number; // после скольких курсов переход в "Кот"
-  catLevels?: AchievementLevel[]; // уровни для режима "Кот"
+  courseCompletionThreshold?: number;
+  catLevels?: AchievementLevel[];
 };
 
 export type AchievementLevel = {
   level: number;
-  threshold: number; // сколько нужно для этого уровня
-  title: string; // например "Котенок 3lv"
+  threshold: number;
+  title: string;
   description: string;
 };
 
-// 🔹 Правила для основного уровня (Котенок → Кот)
 export const MAIN_LEVEL_RULE: AchievementRule = {
   id: "main_level",
   name: "Уровень кота",
@@ -58,7 +54,6 @@ export const MAIN_LEVEL_RULE: AchievementRule = {
       title: "Котенок 5lv",
       description: "Пройди 18 тестов на 75%",
     },
-    // Далее +9 тестов за уровень
     {
       level: 6,
       threshold: 36,
@@ -119,7 +114,6 @@ export const MAIN_LEVEL_RULE: AchievementRule = {
   ],
 };
 
-// 🔹 Уничтожитель тестов — каждый тест = уровень, начиная с 0:
 export const TEST_DESTROYER_RULE: AchievementRule = {
   id: "test_destroyer",
   name: "Уничтожитель тестов",
@@ -127,8 +121,8 @@ export const TEST_DESTROYER_RULE: AchievementRule = {
   icon: "🎯",
   color: "bg-emerald-500",
   levels: Array.from({ length: 20 }, (_, i) => ({
-    level: i, // ← Было: i + 1, стало: i (уровни 0, 1, 2...)
-    threshold: i, // ← Было: (i+1)*5 или i+1, стало: i (0 тестов = уровень 0)
+    level: i,
+    threshold: i,
     title: i === 0 ? "Уничтожитель тестов 0lv" : `Уничтожитель тестов ${i}lv`,
     description:
       i === 0
@@ -137,7 +131,6 @@ export const TEST_DESTROYER_RULE: AchievementRule = {
   })),
 };
 
-// 🔹 Умный кот — каждый курс = уровень, начиная с 0:
 export const SMART_CAT_RULE: AchievementRule = {
   id: "smart_cat",
   name: "Умный кот",
@@ -145,8 +138,8 @@ export const SMART_CAT_RULE: AchievementRule = {
   icon: "🧠",
   color: "bg-blue-500",
   levels: Array.from({ length: 10 }, (_, i) => ({
-    level: i, // ← Уровни 0, 1, 2...
-    threshold: i, // ← 0 курсов = уровень 0
+    level: i,
+    threshold: i,
     title: i === 0 ? "Умный кот 0lv" : `Умный кот ${i}lv`,
     description:
       i === 0
@@ -155,7 +148,6 @@ export const SMART_CAT_RULE: AchievementRule = {
   })),
 };
 
-// 🔹 Модный котик — каждая покупка = уровень, начиная с 0:
 export const FASHION_CAT_RULE: AchievementRule = {
   id: "fashion_cat",
   name: "Модный котик",
@@ -189,7 +181,6 @@ export const FASHION_CAT_RULE: AchievementRule = {
     })),
   ],
 };
-// 🔹 Все правила в одном месте
 export const ACHIEVEMENT_RULES: Record<string, AchievementRule> = {
   main_level: MAIN_LEVEL_RULE,
   test_destroyer: TEST_DESTROYER_RULE,
@@ -197,7 +188,6 @@ export const ACHIEVEMENT_RULES: Record<string, AchievementRule> = {
   fashion_cat: FASHION_CAT_RULE,
 };
 
-// 🔹 Утилита: рассчитать текущий уровень по правилу
 export function calculateLevel(
   rule: AchievementRule,
   currentValue: number,
@@ -207,10 +197,8 @@ export function calculateLevel(
   nextLevel: AchievementLevel | null;
   progress: number; // 0-100%
 } {
-  // 🔥 Выбираем правильную таблицу уровней
   const levels = isCatMode && rule.catLevels ? rule.catLevels : rule.levels;
 
-  // Находим текущий уровень (последний, где threshold <= currentValue)
   let current = levels[0];
   for (const level of levels) {
     if (currentValue >= level.threshold) {
@@ -220,12 +208,10 @@ export function calculateLevel(
     }
   }
 
-  // Находим следующий уровень
   const currentIndex = levels.findIndex((l) => l.level === current.level);
   const nextLevel =
     currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
 
-  // Рассчитываем прогресс
   let progress = 100;
   if (nextLevel) {
     const range = nextLevel.threshold - current.threshold;
@@ -242,7 +228,6 @@ export function calculateLevel(
   };
 }
 
-// 🔹 Утилита: проверить, достиг ли пользователь нового уровня
 export function checkNewAchievement(
   rule: AchievementRule,
   oldValue: number,

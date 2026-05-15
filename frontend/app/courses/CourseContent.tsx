@@ -58,9 +58,7 @@ export default function CoursesContent() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Оставь только этот, но без searchParams в зависимостях:
   useEffect(() => {
-    // Обновляем URL только если категория изменилась и это не первоначальный рендер
     if (selectedCategory !== categoryFromUrl) {
       const params = new URLSearchParams(searchParams.toString());
       if (selectedCategory) {
@@ -86,7 +84,6 @@ export default function CoursesContent() {
         setCourses(data);
         setFilteredCourses(data);
       } catch (err) {
-        console.error("Failed to fetch courses", err);
       } finally {
         setLoading(false);
       }
@@ -152,9 +149,7 @@ export default function CoursesContent() {
         else next.add(courseId);
         return next;
       });
-    } catch (err) {
-      console.error("❌ Failed to toggle favorite:", err);
-    }
+    } catch (err) {}
   };
 
   const formatDuration = (minutes: number | null) => {

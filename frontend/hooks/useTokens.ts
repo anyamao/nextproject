@@ -1,4 +1,3 @@
-// frontend/hooks/useTokens.ts
 import useContactStore from "@/store/states";
 import { useEffect } from "react";
 import { apiFetch } from "@/lib/api";
@@ -6,7 +5,6 @@ import { apiFetch } from "@/lib/api";
 export function useTokens() {
   const { tokenBalance, setTokenBalance } = useContactStore();
 
-  // 🔥 Авто-обновление при маунте + при фокусе окна
   useEffect(() => {
     const fetchBalance = async () => {
       const token = localStorage.getItem("token");
@@ -23,7 +21,6 @@ export function useTokens() {
 
     fetchBalance();
 
-    // 🔥 Обновлять при возврате на вкладку (если награда пришла в фоне)
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         fetchBalance();
@@ -39,7 +36,6 @@ export function useTokens() {
     balance: tokenBalance,
     loading: false,
     refresh: () => {
-      // 🔥 Ручное обновление по запросу
       const token = localStorage.getItem("token");
       if (token) {
         apiFetch("/profile/balance", {

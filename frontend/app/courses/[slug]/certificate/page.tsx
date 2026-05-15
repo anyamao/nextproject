@@ -1,4 +1,3 @@
-// frontend/app/courses/[slug]/certificate/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -10,6 +9,7 @@ import {
   Award,
   CheckCircle,
   Sparkles,
+  Star,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import html2canvas from "html2canvas";
@@ -80,65 +80,70 @@ export default function CertificatePage() {
     if (slug) fetchCertificate();
   }, [slug, router]);
 
-  // 🔹 Скачивание с максимальным качеством и совместимостью
   const handleDownload = async () => {
     if (!certificate || !certificateRef.current) return;
 
     setDownloading(true);
     try {
+      const originalConfetti = document.querySelectorAll(".confetti");
+      originalConfetti.forEach(
+        (el) => ((el as HTMLElement).style.display = "none"),
+      );
+
       const canvas = await html2canvas(certificateRef.current, {
-        scale: 4, // 🔥 Высокое разрешение для печати (300 DPI)
-        backgroundColor: "#fffbeb", // 🔥 Явный фон
+        scale: 4, // 🔥 4x = ~300 DPI для печати
+        backgroundColor: "#fffbeb",
         useCORS: true,
         allowTaint: true,
         logging: false,
-        foreignObjectRendering: true, // 🔥 Лучше рендерит сложные стили
+        foreignObjectRendering: true,
         removeContainer: true,
-        // 🔥 Игнорируем элементы которые могут сломать рендер
+
         ignoreElements: (element) => {
-          // Пропускаем анимированные элементы (конфетти, пульсация)
-          if (element.classList?.contains("confetti")) return true;
-          if (element.classList?.contains("animate-pulse")) return true;
-          if (element.classList?.contains("animate-bounce")) return true;
-          // Пропускаем элементы с backdrop-filter (не поддерживается)
-          if (element.style?.backdropFilter?.includes("blur")) return true;
+          // 🔥 Приводим Element → HTMLElement для доступа к style
+          const el = element as HTMLElement;
+
+          if (el.classList?.contains("confetti")) return true;
+          if (el.classList?.contains("animate-pulse")) return true;
+          if (el.classList?.contains("animate-bounce")) return true;
+          if (el.style?.backdropFilter?.includes("blur")) return true; // ✅ Теперь работает
           return false;
         },
       });
 
+      originalConfetti.forEach(
+        (el) => ((el as HTMLElement).style.display = ""),
+      );
+
       const link = document.createElement("a");
       link.download = `certificate-${certificate.certificate_id}.png`;
-      link.href = canvas.toDataURL("image/png", 1.0); // 🔥 Максимальное качество
+      link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
     } catch (err) {
-      console.error("❌ Failed to download:", err);
-      // 🔥 Фоллбэк — но теперь он тоже красивый!
-      await downloadCertificateBeautifulFallback();
+      console.error("❌ html2canvas failed, using fallback:", err);
+      await downloadCertificateFallback();
     } finally {
       setDownloading(false);
     }
   };
 
-  // 🔹 Красивый фоллбэк через Canvas API
-  const downloadCertificateBeautifulFallback = async () => {
+  const downloadCertificateFallback = async () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not get canvas context");
 
-    // 🔥 Высокое разрешение
     const width = 1600;
     const height = 1200;
     canvas.width = width;
     canvas.height = height;
 
-    // 🔥 Фон с радиальными градиентами (поддерживается в Canvas)
     const bgGradient = ctx.createRadialGradient(
       width / 2,
       height / 2,
       0,
       width / 2,
       height / 2,
-      width,
+      width * 0.8,
     );
     bgGradient.addColorStop(0, "#fffbeb");
     bgGradient.addColorStop(0.5, "#ffffff");
@@ -146,273 +151,358 @@ export default function CertificatePage() {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // 🔥 Декоративная рамка
-    ctx.strokeStyle = "#f59e0b";
-    ctx.lineWidth = 20;
-    ctx.strokeRect(20, 20, width - 40, height - 40);
-
-    // Внутренняя рамка
-    ctx.strokeStyle = "#fbbf24";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(50, 50, width - 100, height - 100);
-
-    // 🔥 Угловые орнаменты
+    ctx.save();
+    ctx.globalAlpha = 0.08;
     ctx.strokeStyle = "#d97706";
-    ctx.lineWidth = 8;
-    const ornamentSize = 100;
-    const corners = [
-      { x: 60, y: 60, rot: 0 },
-      { x: width - 60, y: 60, rot: 90 },
-      { x: 60, y: height - 60, rot: -90 },
-      { x: width - 60, y: height - 60, rot: 180 },
-    ];
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      const x = width / 2 + Math.cos(angle) * 300;
+      const y = height / 2 + Math.sin(angle) * 200;
+      ctx.beginPath();
+      ctx.arc(x, y, 40, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
 
-    corners.forEach(({ x, y, rot }) => {
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 25;
+    ctx.strokeRect(15, 15, width - 30, height - 30);
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(50, 50, width - 100, height - 100);
+    ctx.strokeStyle = "#fde68a";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(70, 70, width - 140, height - 140);
+
+    const drawCorner = (x: number, y: number, rot: number) => {
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate((rot * Math.PI) / 180);
+      ctx.rotate(rot);
+      ctx.strokeStyle = "#d97706";
+      ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(0, -ornamentSize / 2);
-      ctx.quadraticCurveTo(
-        ornamentSize / 2,
-        -ornamentSize / 4,
-        ornamentSize / 2,
-        0,
-      );
-      ctx.quadraticCurveTo(
-        ornamentSize / 2,
-        ornamentSize / 4,
-        0,
-        ornamentSize / 2,
-      );
+      ctx.moveTo(0, -60);
+      ctx.quadraticCurveTo(40, -30, 40, 0);
+      ctx.quadraticCurveTo(40, 30, 0, 60);
       ctx.stroke();
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, -40);
+      ctx.quadraticCurveTo(25, -20, 25, 0);
+      ctx.quadraticCurveTo(25, 20, 0, 40);
+      ctx.stroke();
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
-    });
+    };
 
-    // 🔥 Заголовок
-    ctx.fillStyle = "#92400e";
-    ctx.font = "bold 72px 'Georgia', 'Times New Roman', serif";
-    ctx.textAlign = "center";
-    ctx.fillText("СВИДЕТЕЛЬСТВО", width / 2, 180);
+    drawCorner(80, 80, 0);
+    drawCorner(width - 80, 80, Math.PI / 2);
+    drawCorner(80, height - 80, -Math.PI / 2);
+    drawCorner(width - 80, height - 80, Math.PI);
 
-    // Подзаголовок
-    ctx.fillStyle = "#6b7280";
-    ctx.font = "italic 32px 'Georgia', serif";
-    ctx.fillText("об успешном окончании курса", width / 2, 240);
-
-    // 🔥 Декоративная линия
-    ctx.strokeStyle = "#fbbf24";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(width / 2 - 200, 270);
-    ctx.lineTo(width / 2 - 50, 270);
-    ctx.moveTo(width / 2 + 50, 270);
-    ctx.lineTo(width / 2 + 200, 270);
-    ctx.stroke();
-
-    // Точки на линии
+    ctx.save();
+    ctx.shadowColor = "#fbbf24";
+    ctx.shadowBlur = 30;
     ctx.fillStyle = "#f59e0b";
     ctx.beginPath();
-    ctx.arc(width / 2, 270, 6, 0, Math.PI * 2);
+    ctx.arc(width / 2, 140, 55, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(width / 2, 140, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f59e0b";
+    ctx.font = "bold 40px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🏆", width / 2, 155);
+    ctx.restore();
 
-    // 🔥 Имя получателя
+    ctx.fillStyle = "#92400e";
+    ctx.font = "bold 68px 'Georgia', 'Times New Roman', serif";
+    ctx.textAlign = "center";
+    ctx.fillText("СВИДЕТЕЛЬСТВО", width / 2, 240);
+
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - 180, 270);
+    ctx.lineTo(width / 2 - 40, 270);
+    ctx.moveTo(width / 2 + 40, 270);
+    ctx.lineTo(width / 2 + 180, 270);
+    ctx.stroke();
+    ctx.fillStyle = "#f59e0b";
+    ctx.font = "20px Arial";
+    ctx.fillText("✦", width / 2, 278);
+
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "italic 28px 'Georgia', serif";
+    ctx.fillText("об успешном окончании курса", width / 2, 320);
+
     ctx.fillStyle = "#9ca3af";
-    ctx.font = "20px 'Arial', sans-serif";
-    ctx.fillText("Настоящим удостоверяется, что", width / 2, 340);
+    ctx.font = "18px 'Arial', sans-serif";
+    ctx.fillText("Настоящим удостоверяется, что", width / 2, 380);
 
     ctx.fillStyle = "#1f2937";
-    ctx.font = "bold 64px 'Georgia', serif";
-    ctx.fillText(certificate.user_full_name, width / 2, 430);
+    ctx.font = "bold 56px 'Georgia', serif";
+    if (!certificate) return;
+    ctx.fillText(certificate.user_full_name, width / 2, 460);
 
-    // Подчёркивание имени
-    ctx.strokeStyle = "#fbbf24";
-    ctx.lineWidth = 4;
+    const underlineGradient = ctx.createLinearGradient(
+      width / 2 - 280,
+      480,
+      width / 2 + 280,
+      480,
+    );
+    underlineGradient.addColorStop(0, "transparent");
+    underlineGradient.addColorStop(0.5, "#fbbf24");
+    underlineGradient.addColorStop(1, "transparent");
+    ctx.strokeStyle = underlineGradient;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(width / 2 - 300, 450);
-    ctx.lineTo(width / 2 + 300, 450);
+    ctx.moveTo(width / 2 - 280, 480);
+    ctx.lineTo(width / 2 + 280, 480);
     ctx.stroke();
 
-    // 🔥 Название курса
     ctx.fillStyle = "#9ca3af";
-    ctx.font = "20px 'Arial', sans-serif";
+    ctx.font = "18px 'Arial', sans-serif";
     ctx.fillText(
       "успешно завершил(а) образовательную программу",
       width / 2,
-      520,
+      550,
     );
 
-    // Фон для названия курса
     ctx.fillStyle = "#f3e8ff";
-    ctx.roundRect(width / 2 - 400, 540, 800, 100, 20);
+    ctx.strokeStyle = "#e9d5ff";
+    ctx.lineWidth = 2;
+    if (ctx.roundRect) {
+      ctx.roundRect(width / 2 - 420, 570, 840, 90, 20);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(width / 2 - 400, 570);
+      ctx.lineTo(width / 2 + 400, 570);
+      ctx.quadraticCurveTo(width / 2 + 420, 570, width / 2 + 420, 590);
+      ctx.lineTo(width / 2 + 420, 640);
+      ctx.quadraticCurveTo(width / 2 + 420, 660, width / 2 + 400, 660);
+      ctx.lineTo(width / 2 - 400, 660);
+      ctx.quadraticCurveTo(width / 2 - 420, 660, width / 2 - 420, 640);
+      ctx.lineTo(width / 2 - 420, 590);
+      ctx.quadraticCurveTo(width / 2 - 420, 570, width / 2 - 400, 570);
+      ctx.closePath();
+    }
     ctx.fill();
+    ctx.stroke();
 
     ctx.fillStyle = "#7c3aed";
-    ctx.font = "bold 40px 'Georgia', serif";
-    ctx.fillText(`"${certificate.course_title}"`, width / 2, 610);
+    ctx.font = "bold 36px 'Georgia', serif";
+    ctx.fillText(`"${certificate.course_title}"`, width / 2, 630);
 
-    // 🔥 Прогресс с круговой диаграммой
     const centerX = width / 2;
-    const centerY = 780;
-    const radius = 80;
+    const centerY = 820;
+    const radius = 75;
     const progress = certificate.completion_percent / 100;
 
-    // Фон круга
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.fillStyle = "#fef3c7";
     ctx.fill();
     ctx.strokeStyle = "#fcd34d";
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 8;
     ctx.stroke();
 
-    // Прогресс (дуга)
     ctx.beginPath();
     ctx.arc(
       centerX,
       centerY,
-      radius - 5,
+      radius - 4,
       -Math.PI / 2,
       -Math.PI / 2 + 2 * Math.PI * progress,
     );
     ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 10;
     ctx.lineCap = "round";
     ctx.stroke();
 
-    // Процент в центре
     ctx.fillStyle = "#059669";
-    ctx.font = "bold 48px 'Arial', sans-serif";
+    ctx.font = "bold 42px 'Arial', sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`${certificate.completion_percent}%`, centerX, centerY + 16);
+    ctx.fillText(`${certificate.completion_percent}%`, centerX, centerY + 14);
 
-    // Подпись
     ctx.fillStyle = "#6b7280";
-    ctx.font = "18px 'Arial', sans-serif";
-    ctx.fillText("прогресс прохождения · отлично!", centerX, centerY + 70);
+    ctx.font = "16px 'Arial', sans-serif";
+    ctx.fillStyle = "#10b981";
+    ctx.font = "bold 16px 'Arial', sans-serif";
 
-    // 🔥 Нижняя часть: дата и номер
     ctx.textAlign = "left";
     ctx.fillStyle = "#6b7280";
-    ctx.font = "18px 'Arial', sans-serif";
+    ctx.font = "16px 'Arial', sans-serif";
     ctx.fillText(
       `Дата выдачи: ${certificate.completion_date}`,
       100,
-      height - 140,
+      height - 150,
     );
 
     ctx.textAlign = "right";
     ctx.fillStyle = "#1f2937";
-    ctx.font = "bold 16px 'Courier New', monospace";
-    ctx.fillText(certificate.certificate_id, width - 100, height - 140);
-
+    ctx.font = "bold 14px 'Courier New', monospace";
+    ctx.fillText(certificate.certificate_id, width - 100, height - 150);
     ctx.fillStyle = "#f59e0b";
-    ctx.font = "16px 'Arial', sans-serif";
-    ctx.fillText("MaoSchool.ru", width - 100, height - 115);
+    ctx.font = "14px 'Arial', sans-serif";
+    ctx.fillText("MaoSchool.ru", width - 100, height - 125);
 
-    // 🔥 Печать/штамп
+    ctx.textAlign = "center";
+    ctx.strokeStyle = "#9ca3af";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(300, height - 220);
+    ctx.lineTo(500, height - 220);
+    ctx.stroke();
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "14px 'Arial', sans-serif";
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "12px 'Arial', sans-serif";
+    ctx.fillText("MaoSchool.ru", 400, height - 180);
+
+    ctx.beginPath();
+    ctx.moveTo(width - 500, height - 220);
+    ctx.lineTo(width - 300, height - 220);
+    ctx.stroke();
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "14px 'Arial', sans-serif";
+    ctx.fillStyle = "#9ca3af";
+
     ctx.save();
-    ctx.translate(width - 180, height - 200);
-    ctx.rotate((-15 * Math.PI) / 180);
+    ctx.translate(width - 200, height - 240);
+    ctx.rotate((-12 * Math.PI) / 180);
     ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(0, 0, 50, 0, Math.PI * 2);
+    ctx.arc(0, 0, 55, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 45, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fillStyle = "#92400e";
-    ctx.font = "bold 14px 'Arial', sans-serif";
+    ctx.font = "bold 13px 'Arial', sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("ОРИГИНАЛ", 0, -5);
+    ctx.fillText("ОРИГИНАЛ", 0, -8);
     ctx.font = "10px 'Arial', sans-serif";
-    ctx.fillText("MaoSchool", 0, 15);
+    ctx.fillText("MaoSchool", 0, 8);
+    ctx.fillText("✓ Проверено", 0, 22);
     ctx.restore();
 
-    // 🔥 QR-заглушка
     ctx.fillStyle = "#ffffff";
     ctx.strokeStyle = "#fbbf24";
     ctx.lineWidth = 3;
-    ctx.roundRect(80, height - 240, 100, 100, 10);
+    if (ctx.roundRect) {
+      ctx.roundRect(80, height - 280, 110, 110, 12);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(92, height - 280);
+      ctx.lineTo(178, height - 280);
+      ctx.lineTo(190, height - 268);
+      ctx.lineTo(190, height - 182);
+      ctx.lineTo(178, height - 170);
+      ctx.lineTo(92, height - 170);
+      ctx.lineTo(80, height - 182);
+      ctx.lineTo(80, height - 268);
+      ctx.closePath();
+    }
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#6b7280";
-    ctx.font = "bold 12px 'Arial', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("QR", 130, height - 195);
-    ctx.font = "9px 'Arial', sans-serif";
-    ctx.fillText("Проверка", 130, height - 175);
-
-    // 🔥 Водяной знак
     ctx.save();
-    ctx.globalAlpha = 0.03;
+    ctx.globalAlpha = 0.04;
     ctx.fillStyle = "#92400e";
-    ctx.font = "bold 200px 'Georgia', serif";
+    ctx.font = "bold 180px 'Georgia', serif";
     ctx.textAlign = "center";
-    ctx.fillText("★", width / 2, height / 2);
+    ctx.fillText("★", width / 2, height / 2 + 20);
     ctx.restore();
 
-    // 🔥 Скачивание
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("✦", 30, 40);
+    ctx.textAlign = "right";
+    ctx.fillText("✦", width - 30, 40);
+    ctx.textAlign = "left";
+    ctx.fillText("✦", 30, height - 30);
+    ctx.textAlign = "right";
+    ctx.fillText("✦", width - 30, height - 30);
+
     const link = document.createElement("a");
     link.download = `certificate-${certificate.certificate_id}.png`;
     link.href = canvas.toDataURL("image/png", 1.0);
     link.click();
   };
 
-  // 🔹 Polyfill для roundRect если не поддерживается
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function (
-      x: number,
-      y: number,
-      w: number,
-      h: number,
-      r: number,
-    ) {
-      if (w < 2 * r) r = w / 2;
-      if (h < 2 * r) r = h / 2;
-      this.beginPath();
-      this.moveTo(x + r, y);
-      this.arcTo(x + w, y, x + w, y + h, r);
-      this.arcTo(x + w, y + h, x, y + h, r);
-      this.arcTo(x, y + h, x, y, r);
-      this.arcTo(x, y, x + w, y, r);
-      this.closePath();
-      return this;
-    };
-  }
-  // 🔹 Конфетти-анимация при загрузке
   useEffect(() => {
-    if (certificate) {
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        r: number,
+      ) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (certificate && typeof window !== "undefined") {
       const colors = ["#fbbf24", "#f59e0b", "#fcd34d", "#fde68a", "#a78bfa"];
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 40; i++) {
         const confetti = document.createElement("div");
         confetti.className = "confetti";
         confetti.style.cssText = `
           position: fixed;
-          width: 10px;
-          height: 10px;
+          width: 8px;
+          height: 8px;
           background: ${colors[Math.floor(Math.random() * colors.length)]};
           left: ${Math.random() * 100}%;
           top: -10px;
-          border-radius: ${Math.random() > 0.5 ? "50%" : "0"};
-          animation: fall ${2 + Math.random() * 3}s linear forwards;
-          z-index: 100;
+          border-radius: ${Math.random() > 0.5 ? "50%" : "2px"};
+          animation: fall ${3 + Math.random() * 2}s linear forwards;
+          z-index: 50;
           pointer-events: none;
+          opacity: 0.8;
         `;
         document.body.appendChild(confetti);
-        setTimeout(() => confetti.remove(), 5000);
+        setTimeout(() => confetti.remove(), 6000);
       }
 
-      // 🔹 Добавляем CSS-анимацию динамически
       const style = document.createElement("style");
       style.textContent = `
         @keyframes fall {
           to {
-            transform: translateY(100vh) rotate(720deg);
+            transform: translateY(100vh) rotate(720deg) scale(0);
             opacity: 0;
           }
         }
       `;
       document.head.appendChild(style);
+      return () => {
+        document.head.removeChild(style);
+      };
     }
   }, [certificate]);
 
@@ -441,9 +531,8 @@ export default function CertificatePage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center py-8 px-4 bg-gradient-to-br from-amber-50 via-white to-yellow-50 min-h-screen">
-      {/* 🔹 Кнопка "Назад" */}
-      <div className="w-full max-w-4xl mb-6">
+    <main className="flex-1 flex flex-col items-center py-8 px-4  min-h-screen">
+      <div className="w-full max-w-5xl mb-6">
         <Link
           href={`/courses/promo/${slug}`}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-amber-600 transition"
@@ -452,122 +541,189 @@ export default function CertificatePage() {
         </Link>
       </div>
 
-      {/* 🔹 Сам сертификат */}
       <div
         ref={certificateRef}
-        className="relative w-full max-w-4xl bg-gradient-to-br from-amber-50 via-white to-yellow-50 rounded-3xl shadow-2xl border-4 border-amber-400 overflow-hidden"
+        data-certificate
+        className="relative w-full max-w-4xl bg-[#fffbeb] rounded-3xl shadow-2xl overflow-hidden"
         style={{
           fontFamily: "'Georgia', 'Times New Roman', serif",
+          border: "4px solid #f59e0b",
         }}
       >
-        {/* 🔹 Фоновый паттерн */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <svg className="w-full h-full" viewBox="0 0 400 400">
-            <defs>
-              <pattern
-                id="laurel"
-                x="0"
-                y="0"
-                width="100"
-                height="100"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M50 10 Q70 30 50 50 Q30 70 50 90"
-                  stroke="#d97706"
-                  strokeWidth="1"
-                  fill="none"
-                />
-                <path
-                  d="M50 10 Q30 30 50 50 Q70 70 50 90"
-                  stroke="#d97706"
-                  strokeWidth="1"
-                  fill="none"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#laurel)" />
-          </svg>
-        </div>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 30%, rgba(251, 191, 36, 0.08) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.08) 0%, transparent 40%)`,
+          }}
+        />
 
-        {/* 🔹 Декоративная рамка */}
-        <div className="absolute inset-6 border-2 border-amber-300/60 rounded-2xl pointer-events-none" />
-        <div className="absolute inset-8 border border-amber-200/40 rounded-xl pointer-events-none" />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            border: "25px solid #f59e0b",
+            borderRadius: "24px",
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            border: "4px solid #fbbf24",
+            borderRadius: "20px",
+            margin: "35px",
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            border: "2px solid #fde68a",
+            borderRadius: "16px",
+            margin: "55px",
+          }}
+        />
 
-        {/* 🔹 Угловые орнаменты */}
         {[
-          "top-8 left-8 rotate-0",
-          "top-8 right-8 rotate-90",
-          "bottom-8 left-8 -rotate-90",
-          "bottom-8 right-8 rotate-180",
+          { top: "20px", left: "20px", rot: "rotate(0deg)" },
+          { top: "20px", right: "20px", rot: "rotate(90deg)" },
+          { bottom: "20px", left: "20px", rot: "rotate(-90deg)" },
+          { bottom: "20px", right: "20px", rot: "rotate(180deg)" },
         ].map((pos, i) => (
-          <div key={i} className={`absolute ${pos} w-20 h-20`}>
-            <svg viewBox="0 0 80 80" className="w-full h-full text-amber-500">
+          <div
+            key={i}
+            className="absolute w-24 h-24 pointer-events-none"
+            style={{ ...pos }}
+          >
+            <svg viewBox="0 0 100 100" className="w-full h-full">
               <path
-                d="M10 40 Q20 20 40 10 Q60 20 70 40 Q60 60 40 70 Q20 60 10 40"
-                stroke="currentColor"
-                strokeWidth="2"
+                d="M50 10 Q75 30 75 50 Q75 70 50 90 Q25 70 25 50 Q25 30 50 10"
+                stroke="#d97706"
+                strokeWidth="5"
                 fill="none"
               />
-              <circle cx="40" cy="40" r="8" fill="currentColor" opacity="0.3" />
+              <path
+                d="M50 25 Q65 38 65 50 Q65 62 50 75 Q35 62 35 50 Q35 38 50 25"
+                stroke="#fbbf24"
+                strokeWidth="3"
+                fill="none"
+              />
+              <circle cx="50" cy="50" r="8" fill="#f59e0b" />
             </svg>
           </div>
         ))}
 
-        {/* 🔹 Контент сертификата */}
-        <div className="relative z-10 p-12 sm:p-16 text-center">
-          {/* 🔹 Логотип/медаль */}
-          <div className="flex justify-center mb-8">
+        <div className="relative z-10 px-12 sm:px-16 pt-12 pb-16 text-center">
+          <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-full blur-xl opacity-40 animate-pulse" />
-              <div className="relative w-28 h-28 bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white">
-                <Award className="w-14 h-14 text-white drop-shadow-lg" />
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(251,191,36,0.4) 0%, transparent 70%)",
+                  filter: "blur(20px)",
+                }}
+              />
+              <div
+                className="relative w-24 h-24 rounded-full flex items-center justify-center shadow-xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)",
+                  border: "4px solid #ffffff",
+                }}
+              >
+                <div
+                  className="w-20 h-20 rounded-full bg-white flex items-center justify-center"
+                  style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.1)" }}
+                >
+                  <Award className="w-12 h-12 text-amber-500" />
+                </div>
               </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-lg shadow-lg animate-bounce">
-                ✨
+              <div
+                className="absolute -top-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow-lg"
+                style={{ background: "#fbbf24" }}
+              >
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
             </div>
           </div>
 
           <h1
-            className="text-amber-700 font-bold"
-            style={{ textShadow: "0 2px 4px rgba(217, 119, 6, 0.2)" }}
+            className="text-5xl sm:text-6xl font-bold mb-3"
+            style={{
+              color: "#92400e",
+              textShadow: "0 2px 4px rgba(217, 119, 6, 0.2)",
+            }}
           >
             СВИДЕТЕЛЬСТВО
           </h1>
-          {/* 🔹 Декоративная линия */}
-          <div className="flex justify-center items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-400 to-amber-300" />
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-amber-400 to-amber-300" />
+
+          <div className="flex justify-center items-center gap-3 mb-5">
+            <div
+              className="flex-1 h-px"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent, #fbbf24, #fde68a, #fbbf24, transparent)",
+              }}
+            />
+            <Star className="w-5 h-5 text-amber-500" />
+            <div
+              className="flex-1 h-px"
+              style={{
+                background:
+                  "linear-gradient(to left, transparent, #fbbf24, #fde68a, #fbbf24, transparent)",
+              }}
+            />
           </div>
 
-          <p className="text-xl text-gray-600 mb-10 italic font-serif">
+          <p
+            className="text-xl mb-10 italic"
+            style={{ color: "#6b7280", fontFamily: "'Georgia', serif" }}
+          >
             об успешном окончании курса
           </p>
 
-          {/* 🔹 Имя получателя */}
-          <p className="text-sm text-gray-500 mb-3 uppercase tracking-widest font-medium">
+          <p
+            className="text-sm mb-3 uppercase tracking-widest font-medium"
+            style={{ color: "#9ca3af" }}
+          >
             Настоящим удостоверяется, что
           </p>
           <div className="relative inline-block mb-8">
-            <p className="text-4xl sm:text-5xl font-bold text-gray-800 px-6 py-2">
+            <p
+              className="text-4xl sm:text-5xl font-bold px-6 py-2"
+              style={{ color: "#1f2937" }}
+            >
               {certificate.user_full_name}
             </p>
-            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+            <div
+              className="absolute -bottom-1 left-0 right-0 h-0.5"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent, #fbbf24, transparent)",
+              }}
+            />
           </div>
 
-          {/* 🔹 Название курса */}
-          <p className="text-sm text-gray-500 mb-3 uppercase tracking-widest font-medium">
+          <p
+            className="text-sm mb-3 uppercase tracking-widest font-medium"
+            style={{ color: "#9ca3af" }}
+          >
             успешно завершил(а) образовательную программу
           </p>
-          <div className="inline-block bg-gradient-to-r from-purple-50 via-amber-50 to-purple-50 rounded-2xl px-10 py-5 mb-10 shadow-inner border border-amber-200/50">
-            <p className="text-2xl sm:text-3xl font-semibold text-purple-800 leading-relaxed">
+          <div
+            className="inline-block rounded-2xl px-10 py-5 mb-10"
+            style={{
+              background: "linear-gradient(135deg, #f3e8ff 0%, #fef3c7 100%)",
+              border: "2px solid #e9d5ff",
+              boxShadow: "inset 0 2px 8px rgba(0,0,0,0.05)",
+            }}
+          >
+            <p
+              className="text-2xl sm:text-3xl font-semibold leading-relaxed"
+              style={{ color: "#7c3aed" }}
+            >
               «{certificate.course_title}»
             </p>
           </div>
 
-          {/* 🔹 Прогресс с круговой диаграммой */}
           <div className="flex justify-center items-center gap-6 mb-12">
             <div className="relative">
               <svg className="w-24 h-24 transform -rotate-90">
@@ -583,120 +739,142 @@ export default function CertificatePage() {
                   cx="48"
                   cy="48"
                   r="40"
-                  stroke="url(#progressGradient)"
+                  stroke="#10b981"
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 40}`}
                   strokeDashoffset={`${2 * Math.PI * 40 * (1 - certificate.completion_percent / 100)}`}
                   strokeLinecap="round"
                 />
-                <defs>
-                  <linearGradient
-                    id="progressGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="0%"
-                  >
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold text-green-700">
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: "#059669" }}
+                >
                   {certificate.completion_percent}%
                 </span>
               </div>
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-gray-700 mb-1">
-                прогресс прохождения
-              </p>
-              <div className="flex items-center gap-1 text-green-600">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">отлично!</span>
-              </div>
+              <p
+                className="text-sm font-semibold mb-1"
+                style={{ color: "#374151" }}
+              ></p>
             </div>
           </div>
 
-          {/* 🔹 Нижняя часть: дата, номер, подписи */}
-          <div className="grid grid-cols-2 gap-8 pt-8 border-t-2 border-amber-200">
-            {/* Дата */}
+          <div
+            className="grid grid-cols-2 gap-8 pt-8"
+            style={{ borderTop: "2px solid #fde68a" }}
+          >
             <div className="text-left">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+              <p
+                className="text-xs mb-2 uppercase tracking-wide"
+                style={{ color: "#9ca3af" }}
+              >
                 Дата выдачи
               </p>
-              <p className="font-semibold text-gray-800 text-lg">
+              <p className="font-semibold text-lg" style={{ color: "#1f2937" }}>
                 {certificate.completion_date}
               </p>
             </div>
 
-            {/* Номер сертификата */}
             <div className="text-right">
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+              <p
+                className="text-xs mb-2 uppercase tracking-wide"
+                style={{ color: "#9ca3af" }}
+              >
                 Номер сертификата
               </p>
-              <p className="font-mono text-sm font-medium text-gray-800 bg-amber-100/50 px-3 py-1 rounded inline-block">
+              <span
+                className="font-mono text-sm font-medium inline-block px-3 py-1 rounded"
+                style={{
+                  color: "#1f2937",
+                  background: "rgba(251, 191, 36, 0.15)",
+                }}
+              >
                 {certificate.certificate_id}
-              </p>
+              </span>
             </div>
           </div>
 
-          {/* 🔹 Подписи (декоративные) */}
           <div className="grid grid-cols-2 gap-12 mt-12 pt-8">
             <div className="text-center">
-              <div className="h-16 border-b border-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium" style={{ color: "#374151" }}>
                 Руководитель платформы
               </p>
-              <p className="text-xs text-gray-500">MaoSchool.ru</p>
-            </div>
-            <div className="text-center">
-              <div className="h-16 border-b border-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700">
-                Преподаватель курса
+              <p className="text-xs" style={{ color: "#9ca3af" }}>
+                MaoSchool.ru
               </p>
-              <p className="text-xs text-gray-500">Сертифицированный эксперт</p>
             </div>
           </div>
 
-          {/* 🔹 Печать/штамп */}
-          <div className="absolute bottom-16 right-16 w-24 h-24 border-4 border-amber-500/60 rounded-full flex items-center justify-center transform rotate-12 opacity-80">
+          <div
+            className="absolute bottom-20 right-20 w-28 h-28 rounded-full flex items-center justify-center opacity-85"
+            style={{
+              border: "4px solid #f59e0b",
+              transform: "rotate(-12deg)",
+            }}
+          >
             <div className="text-center">
-              <p className="text-xs font-bold text-amber-700 leading-tight">
+              <p
+                className="text-xs font-bold leading-tight"
+                style={{ color: "#92400e" }}
+              >
                 ОРИГИНАЛ
               </p>
-              <p className="text-[10px] text-amber-600 mt-1">MaoSchool</p>
+              <p className="text-[10px] mt-1" style={{ color: "#b45309" }}>
+                MaoSchool
+              </p>
+              <p
+                className="text-[9px] mt-1 font-medium"
+                style={{ color: "#10b981" }}
+              >
+                ✓ Проверено
+              </p>
             </div>
           </div>
 
-          {/* 🔹 QR-код (заглушка) */}
-          <div className="absolute bottom-16 left-16 w-20 h-20 bg-white border-2 border-amber-300 rounded-lg flex items-center justify-center shadow-sm">
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-1 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-500">QR</span>
-              </div>
-              <p className="text-[9px] text-gray-400">Проверка</p>
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Star
+              className="w-80 h-80"
+              style={{ color: "#92400e", opacity: "0.04" }}
+            />
           </div>
 
-          {/* 🔹 Водяной знак */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
-            <Award className="w-96 h-96 text-amber-800" />
-          </div>
+          <Star
+            className="absolute top-5 left-5 w-6 h-6"
+            style={{ color: "#fbbf24" }}
+          />
+          <Star
+            className="absolute top-5 right-5 w-6 h-6"
+            style={{ color: "#fbbf24" }}
+          />
+          <Star
+            className="absolute bottom-5 left-5 w-6 h-6"
+            style={{ color: "#fbbf24" }}
+          />
+          <Star
+            className="absolute bottom-5 right-5 w-6 h-6"
+            style={{ color: "#fbbf24" }}
+          />
         </div>
 
-        {/* 🔹 Нижняя декоративная полоса */}
-        <div className="absolute bottom-0 left-0 w-full h-3 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500" />
+        <div
+          className="absolute bottom-0 left-0 w-full h-3"
+          style={{
+            background:
+              "linear-gradient(to right, #f59e0b, #fbbf24, #fde68a, #fbbf24, #f59e0b)",
+          }}
+        />
       </div>
-
-      {/* 🔹 Кнопки действий */}
       <div className="mt-10 flex flex-wrap justify-center gap-4">
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-yellow-600 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed
+      bg-yellow-500 text-white hover:bg-yellow-600 hover:shadow-xl active:scale-[0.98]"
         >
           {downloading ? (
             <>
@@ -710,18 +888,16 @@ export default function CertificatePage() {
             </>
           )}
         </button>
+
         <Link
           href={`/courses/promo/${slug}`}
-          className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition shadow-sm"
+          className="px-8 py-4 rounded-xl font-semibold transition-all duration-200 shadow-sm
+      bg-white text-gray-700 border-2 border-gray-200
+      hover:bg-gray-50 hover:border-gray-300 hover:shadow-md active:scale-[0.98]"
         >
           Назад к курсу
         </Link>
       </div>
-
-      {/* 🔹 Подсказка */}
-      <p className="text-center text-sm text-gray-500 mt-6 max-w-md">
-        💡 Совет: распечатайте сертификат или добавьте в портфолио!
-      </p>
     </main>
   );
 }

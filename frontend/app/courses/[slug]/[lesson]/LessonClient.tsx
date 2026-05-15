@@ -1,4 +1,3 @@
-// frontend/app/courses/[slug]/[lesson]/LessonClient.tsx
 "use client";
 
 import useContactStore from "@/store/states";
@@ -40,7 +39,7 @@ type TestResult = {
   score: number;
   passed: boolean;
   completed_at: string;
-  reward_granted?: boolean; // 🔥 Новый флаг от бэкенда
+  reward_granted?: boolean;
 };
 
 interface LessonClientProps {
@@ -63,7 +62,6 @@ export default function LessonClient({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
 
-  // 🔹 Toast стейт с типом
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error" | "info";
@@ -88,7 +86,6 @@ export default function LessonClient({
   const [flashcardStats, setFlashcardStats] = useState<any>(null);
   const { openLogin } = useContactStore();
 
-  // 🔹 Функция showToast с типом
   const showToast = (
     message: string,
     type: "success" | "error" | "info" = "success",
@@ -130,9 +127,7 @@ export default function LessonClient({
       try {
         const parsed = JSON.parse(saved);
         setUnitLessons(parsed);
-      } catch (e) {
-        console.error("❌ Failed to parse saved unit lessons:", e);
-      }
+      } catch (e) {}
     }
   }, [subjectSlug]);
   useEffect(() => {
@@ -176,9 +171,7 @@ export default function LessonClient({
                     isCompleted = true;
                   }
                 }
-              } catch (e) {
-                console.warn(`⚠️ Could not fetch test result for ${l.test_id}`);
-              }
+              } catch (e) {}
             }
             return {
               ...l,
@@ -189,9 +182,7 @@ export default function LessonClient({
         );
 
         setUnitLessons(lessonsWithStatus);
-      } catch (err) {
-        console.error("❌ [UnitLessons] Failed:", err);
-      }
+      } catch (err) {}
     }
 
     loadUnitLessons();
@@ -232,7 +223,6 @@ export default function LessonClient({
     fetchViews();
   }, [lesson?.id]);
 
-  // 🔹 Загрузка результата теста
   useEffect(() => {
     if (!testId) return;
 
@@ -253,8 +243,6 @@ export default function LessonClient({
         );
         if (result) {
           setTestResult(result);
-          // 🔥 Награды за тест теперь выдаются на бэкенде при завершении
-          // Здесь только показываем результат
         }
       } catch (err) {
       } finally {
@@ -360,12 +348,9 @@ export default function LessonClient({
     });
   };
 
-  useEffect(() => {
-    console.log("🔍 [LessonClient] Props:", { isLocked, lessonId: lesson?.id });
-  }, [isLocked, lesson?.id]);
+  useEffect(() => {}, [isLocked, lesson?.id]);
 
   if (isLocked) {
-    console.log("🔒 [LessonClient] Rendering LOCKED overlay");
     return (
       <>
         <div className="fixed inset-0 z-50 bg-gray-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6">
@@ -408,7 +393,6 @@ export default function LessonClient({
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-[1200px] mx-auto gap-6">
-      {/* 🔹 Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -417,7 +401,6 @@ export default function LessonClient({
         />
       )}
 
-      {/* 🔹 Confirm Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
@@ -432,7 +415,6 @@ export default function LessonClient({
       <div className="flex-1 w-full items-center justify-center">
         <div className="w-full flex flex-col md:flex-row items-center justify-between">
           <div className="flex flex-row">
-            {/* 🔹 Динамические квадраты уроков юнита */}
             {unitLessons.length > 0 && (
               <div className="flex flex-row items-center">
                 <div className="flex flex-row">

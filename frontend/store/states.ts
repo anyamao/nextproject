@@ -153,7 +153,6 @@ const useContactStore = create<ContactState>()(
                 : userData.avatar_url,
             status: userData.status,
             created_at: userData.created_at,
-            // 🔥 ДОБАВЬ ЭТО:
             equipped_item: userData.equipped_item || null,
           };
 
@@ -205,7 +204,7 @@ const useContactStore = create<ContactState>()(
         }),
     }),
     {
-      name: "maoschool-storage", // ключ в localStorage
+      name: "maoschool-storage",
       partialize: (state) => ({
         tokenBalance: state.tokenBalance,
         user: state.user,

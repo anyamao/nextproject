@@ -39,7 +39,6 @@ export default async function TestPage({
       }
     }
 
-    // Если не удалось извлечь из returnTo, используем данные из API
     if (
       (!lessonSlug || !subjectSlug) &&
       test.lesson_slug &&

@@ -1,4 +1,3 @@
-// frontend/components/LevelUpNotification.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -50,14 +49,12 @@ export default function LevelUpNotification({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      {/* Затемнение фона */}
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ${
           animationStage >= 1 ? "opacity-100" : "opacity-0"
         }`}
       />
 
-      {/* Модальное окно */}
       <div
         className={`relative bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all duration-500 pointer-events-auto ${
           animationStage >= 2
@@ -65,7 +62,6 @@ export default function LevelUpNotification({
             : "scale-90 opacity-0 translate-y-10"
         }`}
       >
-        {/* Кнопка закрытия */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition"
@@ -73,7 +69,6 @@ export default function LevelUpNotification({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Иконки */}
         <div className="flex justify-center mb-6">
           <div className="relative">
             <div className="absolute inset-0 bg-yellow-400 rounded-full blur-xl opacity-50 animate-pulse" />
@@ -85,7 +80,6 @@ export default function LevelUpNotification({
           </div>
         </div>
 
-        {/* Текст */}
         <div className="text-center text-white">
           <p className="text-lg font-medium mb-2 opacity-90">
             {messages[achievementType]}
@@ -101,7 +95,6 @@ export default function LevelUpNotification({
             <Sparkles className="w-5 h-5 text-yellow-300" />
           </div>
 
-          {/* Прогресс-бар */}
           <div className="mt-6 bg-white/20 rounded-full h-2 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full transition-all duration-1000"
@@ -110,7 +103,6 @@ export default function LevelUpNotification({
           </div>
         </div>
 
-        {/* Конфетти (упрощённое) */}
         <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <div

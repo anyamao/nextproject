@@ -11,8 +11,6 @@ export default function ArticleStats({ slug }: { slug: string }) {
   const [myReaction, setMyReaction] = useState<"like" | "dislike" | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Замени useEffect на этот:
-
   useEffect(() => {
     if (!slug) return;
 
@@ -20,17 +18,13 @@ export default function ArticleStats({ slug }: { slug: string }) {
       try {
         setLoading(true);
 
-        // 🔥 Запрашиваем ПОЛНУЮ статистику (просмотры + лайки + реакция)
         const data = await apiFetch(`/articles/${slug}/stats`);
-
-        console.log("🔍 [ArticleStats] Received:", data);
 
         setViews(data.view_count ?? 0);
         setLikes(data.likes ?? 0); // ← Добавь это
         setDislikes(data.dislikes ?? 0); // ← И это
         setMyReaction(data.user_reaction); // ← И это
       } catch (err) {
-        console.error("❌ Failed to load stats:", err);
       } finally {
         setLoading(false);
       }
@@ -58,16 +52,12 @@ export default function ArticleStats({ slug }: { slug: string }) {
         body: JSON.stringify({ reaction_type: newReaction }),
       });
 
-      // 🔥 Запрашиваем обновлённую статистику
       const data = await apiFetch(`/articles/${slug}/stats`);
-
-      console.log("🔍 [ArticleStats] After reaction:", data); // ← Для отладки
 
       setLikes(data.likes ?? 0);
       setDislikes(data.dislikes ?? 0);
       setMyReaction(data.user_reaction);
     } catch (err) {
-      console.error("❌ Failed to update reaction:", err);
     } finally {
       setLoading(false);
     }

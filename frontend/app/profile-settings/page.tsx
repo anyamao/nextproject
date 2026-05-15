@@ -1,4 +1,3 @@
-// frontend/app/profile-settings/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -82,29 +81,7 @@ export default function ProfileSettingsPage() {
         const data = await apiFetch("/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log("🔍 [ProfileSettings] Raw profile data:", {
-          about_me: data.about_me,
-          about_me_type: typeof data.about_me,
-          about_me_is_null: data.about_me === null,
-          about_me_is_undefined: data.about_me === undefined,
-          status: data.status,
-        });
-
-        setProfile(data);
-        setUsername(data.username);
-        setFirstName(data.first_name ?? "");
-        setLastName(data.last_name ?? "");
-        setStatus(data.status ?? "");
-        setAboutMe(data.about_me ?? "");
-        setSelectedAvatar(data.avatar_url ?? "default_cat.jpg");
-
-        console.log("🔍 [ProfileSettings] After setState:", {
-          aboutMe_after: data.about_me ?? "",
-          status_after: data.status ?? "",
-        });
       } catch (err: any) {
-        console.error("❌ Failed to load profile:", err);
         setError("Не удалось загрузить профиль");
         showToast("Не удалось загрузить профиль", "error");
         if (err?.status === 401) {
@@ -120,10 +97,7 @@ export default function ProfileSettingsPage() {
     fetchProfile();
   }, [router]);
 
-  useEffect(() => {
-    console.log("🔍 [Render] aboutMe state:", aboutMe);
-    console.log("🔍 [Render] status state:", status);
-  }, [aboutMe, status]);
+  useEffect(() => {}, [aboutMe, status]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,8 +113,6 @@ export default function ProfileSettingsPage() {
 
     try {
       const token = localStorage.getItem("token");
-
-      console.log("🔵 [ProfileSettings] Sending avatar:", selectedAvatar);
 
       const updated = await apiFetch("/profile/settings", {
         method: "PATCH",
@@ -158,12 +130,6 @@ export default function ProfileSettingsPage() {
         }),
       });
 
-      console.log("🟢 [ProfileSettings] Response from server:", updated);
-      console.log(
-        "🟢 [ProfileSettings] updated.avatar_url:",
-        updated.avatar_url,
-      );
-
       setProfile(updated);
 
       const newUser = {
@@ -177,14 +143,12 @@ export default function ProfileSettingsPage() {
         about_me: updated.about_me ?? aboutMe,
       };
 
-      console.log("🟢 [ProfileSettings] Saving to localStorage:", newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       setUser(newUser);
       setSuccess(true);
       showToast("Профиль успешно обновлён!", "success");
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      console.error("❌ [ProfileSettings] Error:", err);
       setError(err.message || "Ошибка при сохранении");
       showToast(err.message || "Ошибка при сохранении", "error");
     } finally {
@@ -242,7 +206,6 @@ export default function ProfileSettingsPage() {
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 w-full max-w-2xl mx-auto">
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -251,7 +214,6 @@ export default function ProfileSettingsPage() {
         />
       )}
 
-      {/* Confirm Dialog для удаления аккаунта */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
@@ -347,7 +309,6 @@ export default function ProfileSettingsPage() {
                 <p className="text-xs text-gray-500 mt-1">До 200 символов</p>
               </div>
 
-              {/* О себе */}
               <div>
                 <label className="block text-sm font-medium text-purple-700 mb-2">
                   О себе
@@ -368,7 +329,6 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
         </div>
-        {/* ✅ Карточка: ФИО для сертификата */}
         <div className="bg-white p-6 rounded-lg shadow-xs">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Данные для сертификата

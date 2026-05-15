@@ -1,4 +1,3 @@
-// frontend/app/articles/[slug]/ArticleClient.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -35,7 +34,6 @@ export default function ArticleClient({ article }: { article: Article }) {
   const [nextArticleSlug, setNextArticleSlug] = useState<string | null>(null);
   const [articlesLoaded, setArticlesLoaded] = useState(false);
 
-  // 🔥 Стейт для похожих статей
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(true);
 
@@ -112,18 +110,15 @@ export default function ArticleClient({ article }: { article: Article }) {
     }
   }, [article?.id, article?.slug, article.topic]);
 
-  // 🔥 Загрузка похожих статей (последние 4 в той же теме)
   useEffect(() => {
     async function fetchRelatedArticles() {
       if (!article.topic) return;
       setLoadingRelated(true);
       try {
-        // Загружаем статьи темы
         const allInTopic = await apiFetch(
           `/articles?topic=${encodeURIComponent(article.topic)}`,
         );
 
-        // Фильтруем текущую, сортируем по дате (новые сверху), берём 4
         const related = allInTopic
           .filter((a: Article) => a.slug !== article.slug)
           .sort(
@@ -135,7 +130,6 @@ export default function ArticleClient({ article }: { article: Article }) {
 
         setRelatedArticles(related);
       } catch (err) {
-        console.error("❌ Failed to load related articles:", err);
       } finally {
         setLoadingRelated(false);
       }
@@ -144,7 +138,6 @@ export default function ArticleClient({ article }: { article: Article }) {
     fetchRelatedArticles();
   }, [article.topic, article.slug]);
 
-  // 🔥 Форматирование даты
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ru-RU", {
       day: "numeric",
@@ -213,7 +206,6 @@ export default function ArticleClient({ article }: { article: Article }) {
             </span>
           </div>
         </div>
-        {/* 🔥 Изображение текущей статьи */}
         {article.image && (
           <div className="w-full mb-6 rounded-lg overflow-hidden bg-gray-100 h-[300px] sm:h-[350px] md:h-[400px]">
             <img

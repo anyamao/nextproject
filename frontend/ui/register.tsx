@@ -1,4 +1,3 @@
-// frontend/components/Contactform.tsx
 "use client";
 
 import Link from "next/link";
@@ -24,21 +23,9 @@ function Contactform() {
   const avatarUrl = user?.avatar_url || "default_cat.jpg";
   const userId = user?.id;
 
-  // 🔹 Отладка: смотрим, что в user
-  useEffect(() => {
-    console.log("🔍 [Contactform] User in store:", {
-      id: user?.id,
-      username: user?.username,
-      avatar_url: user?.avatar_url,
-      equipped_item: user?.equipped_item,
-    });
-  }, [user]);
-
-  // 🔹 Загрузка пользователя + фоновое обновление с сервера
   useEffect(() => {
     setMounted(true);
 
-    // 1️⃣ Сначала загружаем из localStorage (быстро)
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -52,25 +39,19 @@ function Contactform() {
       }
     }
 
-    // 2️⃣ Затем фоновое обновление с сервера (актуальные данные)
     const token = localStorage.getItem("token");
     if (token) {
       apiFetch("/profile", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((data) => {
-          // 🔥 Обновляем стейт и localStorage актуальными данными
           setUser(data);
           localStorage.setItem("user", JSON.stringify(data));
-          console.log("🟢 [Contactform] Profile refreshed from server");
         })
-        .catch((err) => {
-          console.error("❌ Failed to refresh profile:", err);
-        });
+        .catch((err) => {});
     }
   }, [setUser]);
 
-  // 🔹 Анимация выпадающего меню
   useEffect(() => {
     if (profilenavigationState) {
       setShouldRender(true);
@@ -89,7 +70,6 @@ function Contactform() {
     }
   }, [profilenavigationState, shouldRender]);
 
-  // 🔹 Пока не смонтирован — показываем скелетон
   if (!mounted) {
     return (
       <div className="w-[35px] h-[35px] rounded-full bg-gray-200 animate-pulse" />
@@ -109,7 +89,7 @@ function Contactform() {
         >
           <AvatarWithOverlay
             baseAvatar={user?.avatar_url || "default_cat.jpg"}
-            overlayImage={user?.equipped_item?.image} // 🔥 Теперь будет работать!
+            overlayImage={user?.equipped_item?.image}
             alt={user?.username}
             size="md"
           />

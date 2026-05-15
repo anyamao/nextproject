@@ -14,7 +14,6 @@ import useContactStore from "@/store/states";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Toast from "@/components/Toast";
 import AvatarWithOverlay from "@/components/AvatarWithOverlay";
-// 🔹 В начале файла, в типе Comment:
 
 type Comment = {
   id: number;
@@ -30,7 +29,6 @@ type Comment = {
   user_reaction: "like" | "dislike" | null;
   replies: Comment[];
 
-  // 🔥 Добавь это поле (опционально, для совместимости):
   equipped_item?: {
     id: number;
     name: string;
@@ -223,7 +221,6 @@ export default function CommentsSection({
 
   return (
     <div className="mt-12 pt-8 border-t w-full border-gray-200">
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -232,7 +229,6 @@ export default function CommentsSection({
         />
       )}
 
-      {/* Confirm Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}

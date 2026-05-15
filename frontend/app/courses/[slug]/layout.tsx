@@ -1,4 +1,3 @@
-// courses/[slug]/layout.tsx
 "use client";
 
 import { ArrowLeft, TableOfContents } from "lucide-react";
@@ -32,11 +31,9 @@ export default function RootLayout({
   useEffect(() => {
     async function fetchMeta() {
       try {
-        // 🔥 Запрашиваем только лёгкие метаданные
         const data = await apiFetch(`/courses/${slug}/meta`);
         setMeta(data);
       } catch (err) {
-        console.error("❌ Failed to load course meta:", err);
       } finally {
         setLoading(false);
       }
@@ -45,7 +42,6 @@ export default function RootLayout({
     if (slug) fetchMeta();
   }, [slug]);
   const handleEnroll = async () => {
-    // Проверяем аутентификацию
     if (!isAuthenticated) {
       openLogin();
       return;
@@ -59,11 +55,9 @@ export default function RootLayout({
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      // Обновляем метаданные после записи
       const updatedMeta = await apiFetch(`/courses/${slug}/meta`);
       setMeta(updatedMeta);
     } catch (err: any) {
-      console.error("❌ Failed to enroll:", err);
       alert(err.message || "Ошибка при записи");
     } finally {
       setEnrolling(false);
@@ -72,7 +66,7 @@ export default function RootLayout({
   const pathParts = pathname.split("/").filter(Boolean);
   const currentLessonSlug =
     pathParts.length > 2 ? pathParts[pathParts.length - 1] : null;
-  const isLessonPage = pathParts.length == 2; // например: /courses/slug/lesson-slug
+  const isLessonPage = pathParts.length == 2;
   if (loading || !meta) {
     return (
       <div className="flex flex-col w-full h-full max-w-[1100px]">
@@ -80,15 +74,13 @@ export default function RootLayout({
       </div>
     );
   }
-  const totalUnits = meta?.total_units || 1; // Защита от деления на 0
+  const totalUnits = meta?.total_units || 1;
   const completedUnits = Math.floor(
     (meta.completion_percent / 100) * totalUnits,
   );
-  // Приблизительный прогресс в юнитах (можно заменить на точный подсчёт, если нужно)
 
   return (
     <div className="flex flex-col w-full h-full max-w-[1200px]">
-      {/* 🔹 Верхняя панель */}
       <div
         className={` flex-row items-center mt-[30px] justify-between ${isCertificatePage ? "hidden" : "flex"} `}
       >
@@ -100,7 +92,6 @@ export default function RootLayout({
           <p className="ml-[5px]">О курсе</p>
         </div>
 
-        {/* 🔹 Хлебные крошки */}
         <div className="flex flex-row items-center text-gray-500 font-semibold text-xs">
           <span
             className="hover:text-purple-600 cursor-pointer transition"
@@ -139,7 +130,6 @@ export default function RootLayout({
         </div>
       )}
 
-      {/* 🔹 Карточка курса с прогрессом */}
       <div
         className={`bg-white rounded-lg w-full justify-between shadow-xs h-[70px] my-[20px] p-[10px]  px-[20px]   ${isCertificatePage ? "hidden" : "flex"}    flex-row`}
       >
@@ -184,7 +174,6 @@ export default function RootLayout({
         )}
       </div>
 
-      {/* 🔹 Основной контент */}
       <div className="flex flex-row flex-1 relative w-full h-full">
         <CourseSidePanel />
         {children}

@@ -1,4 +1,3 @@
-// frontend/components/LogoutButton.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -18,7 +17,6 @@ export default function LogoutButton() {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
-      // 🔥 Сбрасываем баланс токенов в сторе
       useContactStore.getState().setTokenBalance(0); // ← Добавь это!
 
       window.location.reload();

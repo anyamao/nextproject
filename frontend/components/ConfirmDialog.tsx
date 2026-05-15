@@ -1,4 +1,3 @@
-// components/ConfirmDialog.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -60,15 +59,12 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Dialog */}
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 fade-in duration-200">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <AlertTriangle className={`w-5 h-5 ${typeColors[type].icon}`} />
@@ -82,12 +78,10 @@ export default function ConfirmDialog({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6">
           <p className="text-gray-600 text-sm leading-relaxed">{message}</p>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-100">
           <button
             onClick={onClose}

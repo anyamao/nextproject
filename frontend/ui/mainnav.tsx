@@ -17,11 +17,9 @@ function Mainnav() {
   const [searchQuery, setSearchQuery] = useState("");
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      // Перенаправляем на страницу курсов с поисковым запросом
       router.push(`/courses?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); // Опционально: очистить поле после поиска
+      setSearchQuery("");
     } else {
-      // Если запрос пустой, просто переходим на страницу курсов
       router.push("/courses");
     }
   };
@@ -90,8 +88,6 @@ function Mainnav() {
                   {balance}
                 </span>
               </div>
-
-              {/* 🔹 Подсказка при наведении - показываем СНИЗУ */}
             </div>
 
             <Register />

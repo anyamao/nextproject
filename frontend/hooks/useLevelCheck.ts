@@ -1,11 +1,10 @@
-// frontend/hooks/useLevelCheck.ts
 "use client";
 
 import { useCallback } from "react";
 import { getAchievements, type UserStats } from "@/hooks/useAchievements";
 
 type UseLevelCheckProps = {
-  currentStats: UserStats; // ← Было: UserAchievementStats
+  currentStats: UserStats;
   onLevelUp: (
     oldLevel: string,
     newLevel: string,
@@ -15,7 +14,6 @@ type UseLevelCheckProps = {
 export function useLevelCheck({ currentStats, onLevelUp }: UseLevelCheckProps) {
   const checkLevelUp = useCallback(
     async (achievementType: "test" | "course") => {
-      // Загружаем актуальные данные с сервера
       try {
         const response = await fetch("/api/profile/achievements", {
           headers: {
@@ -34,14 +32,12 @@ export function useLevelCheck({ currentStats, onLevelUp }: UseLevelCheckProps) {
           hasCustomAvatar: backendData.has_custom_avatar ?? false,
         };
 
-        // Рассчитываем старый и новый уровень
         const oldAchievements = getAchievements(currentStats);
         const newAchievements = getAchievements(newStats);
 
         const oldLevel = oldAchievements.main.currentLevel.title;
         const newLevel = newAchievements.main.currentLevel.title;
 
-        // Если уровень изменился — показываем уведомление
         if (oldLevel !== newLevel) {
           onLevelUp(oldLevel, newLevel, achievementType);
         }

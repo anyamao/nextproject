@@ -1,4 +1,3 @@
-// frontend/hooks/useAuthListener.ts
 "use client";
 
 import { useEffect, useState } from "react";

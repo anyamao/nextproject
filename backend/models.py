@@ -19,9 +19,6 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import DeclarativeBase, relationship, backref
 
 
-# backend/models.py — в классе User
-
-
 class User(Base):
     __tablename__ = "users"
 
@@ -35,7 +32,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     first_name = Column(String(100), nullable=True)
-    about_me = Column(Text, nullable=True)  # Подробное "о себе"
+    about_me = Column(Text, nullable=True)
     last_name = Column(String(100), nullable=True)
     equipped_item_id = Column(
         Integer,
@@ -48,67 +45,54 @@ class User(Base):
     )
 
     equipped_item = relationship("ShopItem", foreign_keys=[equipped_item_id])
-    # 🔥 ДОБАВЛЯЕМ все отношения с cascade:
     inventory = relationship(
         "UserInventory", back_populates="user", cascade="all, delete-orphan"
     )
     token_balance = Column(Integer, default=0, nullable=False)
-    # FlashcardProgress (уже есть, проверяем back_populates)
     flashcard_progress = relationship(
         "FlashcardProgress", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 TestResult
     test_results = relationship(
         "TestResult", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 LessonView
     lesson_views = relationship(
         "LessonView", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 LessonReaction
     lesson_reactions = relationship(
         "LessonReaction", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 Comment
     comments = relationship(
         "Comment", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 CommentReaction
     comment_reactions = relationship(
         "CommentReaction", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 ArticleView
     article_views = relationship(
         "ArticleView", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 ArticleReaction
     article_reactions = relationship(
         "ArticleReaction", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 UserCompletedLesson
     completed_lessons = relationship(
         "UserCompletedLesson", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 LanguageComment
     language_comments = relationship(
         "LanguageComment", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 LanguageCommentReaction
     language_comment_reactions = relationship(
         "LanguageCommentReaction", back_populates="user", cascade="all, delete-orphan"
     )
 
-    # 🔥 LanguageLessonView
     language_lesson_views = relationship(
         "LanguageLessonView", back_populates="user", cascade="all, delete-orphan"
     )
@@ -118,9 +102,6 @@ class User(Base):
     favorite_courses = relationship(
         "UserFavoriteCourse", back_populates="user", cascade="all, delete-orphan"
     )
-
-
-# backend/models.py
 
 
 class UserCourseEnrollment(Base):
@@ -203,9 +184,6 @@ class CourseReview(Base):
     )
 
 
-# backend/models.py
-
-
 class PublicProfileOut(BaseModel):
     """Публичный профиль пользователя"""
 
@@ -216,7 +194,7 @@ class PublicProfileOut(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     token_balance: int = 0
-    completed_courses: list[dict] = []  # Список пройденных курсов
+    completed_courses: list[dict] = []
 
 
 class EgeSubject(Base):
@@ -229,21 +207,18 @@ class EgeSubject(Base):
     image = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     category = Column(String(50), nullable=True)
-    about = Column(Text, nullable=True)  # 🔥 Добавь это!
-    # 🔥 ДОБАВЬ ЭТИ ПОЛЯ:
-    cover_image = Column(String(500), nullable=True)  # Обложка курса
-    duration_minutes = Column(Integer, nullable=True)  # Время прохождения в минутах
-    certificate_available = Column(Boolean, default=False, nullable=False)  # Сертификат
+    about = Column(Text, nullable=True)
+    cover_image = Column(String(500), nullable=True)
+    duration_minutes = Column(Integer, nullable=True)
+    certificate_available = Column(Boolean, default=False, nullable=False)
     teachers = relationship(
         "Teacher", secondary="course_teachers", back_populates="courses"
     )
-    # Отношения
     units = relationship(
         "CourseUnit", back_populates="subject", cascade="all, delete-orphan"
     )
     lessons = relationship("EgeLesson", cascade="all, delete-orphan")
 
-    # 🔥 НОВЫЕ отношения (для избранного, записей, отзывов):
     enrollments = relationship(
         "UserCourseEnrollment", back_populates="course", cascade="all, delete-orphan"
     )
@@ -266,7 +241,6 @@ class Teacher(Base):
     about = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Связь с курсами
     courses = relationship(
         "EgeSubject", secondary="course_teachers", back_populates="teachers"
     )
@@ -300,23 +274,18 @@ class CourseTeacher(Base):
     teacher = relationship("Teacher")
 
 
-# backend/models.py
-# backend/models.py
-
-
 class ShopItem(Base):
     __tablename__ = "shop_items"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
-    image = Column(String(255), nullable=False)  # "pink_bow.png"
+    image = Column(String(255), nullable=False)
     price = Column(Integer, nullable=False)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    # Связи
     inventory = relationship("UserInventory", back_populates="item")
 
 
@@ -347,15 +316,10 @@ class UserAchievement(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    reward_type = Column(
-        String(50), nullable=False
-    )  # Например: "test_passed", "enroll_first", "progress_75"
-    context_id = Column(
-        Integer, nullable=True
-    )  # ID теста, курса и т.д. (None для глобальных наград)
+    reward_type = Column(String(50), nullable=False)
+    context_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    # 🔥 Уникальное ограничение: один юзер + тип + контекст = только одна запись
     __table_args__ = (
         UniqueConstraint(
             "user_id", "reward_type", "context_id", name="uq_user_achievement"
@@ -381,7 +345,7 @@ class EgeLesson(Base):
     unit = relationship("CourseUnit", back_populates="lessons")
 
     time_minutes = Column(Integer, nullable=True)
-    test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)  # Просто FK
+    test_id = Column(Integer, ForeignKey("ege_tests.id"), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     flashcard_deck = relationship(
@@ -476,8 +440,8 @@ class CourseUnit(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     subject_id = Column(Integer, ForeignKey("ege_subjects.id"), nullable=False)
-    title = Column(String(100), nullable=False)  # "My Friends and Me"
-    unit_number = Column(Integer, nullable=False)  # 1, 2, 3...
+    title = Column(String(100), nullable=False)
+    unit_number = Column(Integer, nullable=False)
     description = Column(Text)
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now())
@@ -620,7 +584,6 @@ class EgeTest(Base):
     passing_score = Column(Integer, default=75)
     created_at = Column(DateTime, server_default=func.now())
 
-    # ✅ Эта связь нужна: тест → вопросы
     questions = relationship(
         "EgeTestQuestion", back_populates="test", cascade="all, delete-orphan"
     )
@@ -748,9 +711,6 @@ class ArticleView(Base):
     )
 
 
-# backend/models.py
-
-
 class ArticleReaction(Base):
     __tablename__ = "article_reactions"
 
@@ -761,7 +721,7 @@ class ArticleReaction(Base):
     article_id = Column(
         Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False
     )
-    reaction_type = Column(String(10), nullable=False)  # "like" или "dislike"
+    reaction_type = Column(String(10), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     __table_args__ = (
@@ -794,7 +754,7 @@ class TestResult(Base):
 
     user = relationship("User", back_populates="test_results")
     test = relationship("EgeTest")
-    lesson = relationship("EgeLesson", back_populates="test_results")  # опционально
+    lesson = relationship("EgeLesson", back_populates="test_results")
     __table_args__ = ()
 
 
@@ -810,7 +770,7 @@ class ReviewReaction(Base):
     review_id = Column(
         Integer, ForeignKey("course_reviews.id", ondelete="CASCADE"), nullable=False
     )
-    reaction_type = Column(String(10), nullable=False)  # "like" или "dislike"
+    reaction_type = Column(String(10), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     __table_args__ = (

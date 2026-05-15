@@ -1,9 +1,8 @@
-// frontend/components/AvatarWithOverlay.tsx
 "use client";
 
 type AvatarWithOverlayProps = {
-  baseAvatar: string; // "light_gray_cat.jpg"
-  overlayImage?: string | null; // "pink_bow.png" или null
+  baseAvatar: string;
+  overlayImage?: string | null;
   alt?: string;
   size?: "sm" | "md" | "lg" | "xxxl";
   className?: string;
@@ -25,7 +24,6 @@ export default function AvatarWithOverlay({
 
   return (
     <div className={`relative inline-block ${sizeClasses[size]} ${className}`}>
-      {/* Базовая аватарка */}
       <img
         src={`/avatars/${baseAvatar}`}
         alt={alt}
@@ -35,7 +33,6 @@ export default function AvatarWithOverlay({
         }}
       />
 
-      {/* Наложение (если есть) */}
       {overlayImage && (
         <img
           src={`/shop-items/${overlayImage}`}
@@ -43,7 +40,6 @@ export default function AvatarWithOverlay({
           className="absolute inset-0 w-full h-full rounded-full object-cover pointer-events-none"
           style={{ mixBlendMode: "normal" }}
           onError={(e) => {
-            // Если наложение не загрузилось — просто скрываем
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />

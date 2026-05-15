@@ -1,6 +1,3 @@
-// frontend/hooks/useAchievements.ts
-// 🔥 Убираем "use client" и useMemo, если они были. Это теперь просто функция.
-
 import { ACHIEVEMENT_RULES, calculateLevel } from "@/lib/achievements";
 
 export type UserStats = {
@@ -10,9 +7,7 @@ export type UserStats = {
   hasCustomAvatar: boolean;
 };
 
-// 🔥 Переименовываем в getAchievements (обычная функция)
 export function getAchievements(stats: UserStats) {
-  // 🔹 Основной уровень
   const isCatMode = stats.coursesCompleted75 >= 1;
   const mainValue = isCatMode ? stats.coursesCompleted75 : stats.testsPassed75;
 
@@ -22,7 +17,6 @@ export function getAchievements(stats: UserStats) {
     isCatMode,
   );
 
-  // 🔹 Остальные достижения
   const testResult = calculateLevel(
     ACHIEVEMENT_RULES.test_destroyer,
     stats.testsPassed75,

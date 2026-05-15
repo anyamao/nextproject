@@ -19,7 +19,6 @@ type LeaderboardUser = {
   avatar_url: string | null;
   score: number;
   equipped_item?: {
-    // ← 🔥 Новое поле
     id: number;
     name: string;
     image: string;
@@ -28,7 +27,7 @@ type LeaderboardUser = {
   } | null;
 };
 type MyRankInfo = {
-  rank: number | null; // null если не в рейтинге или не авторизован
+  rank: number | null;
   score: number;
 };
 
@@ -52,7 +51,6 @@ export default function LeaderboardPage() {
         const result = await apiFetch("/leaderboard?limit=10");
         setData(result);
       } catch (err) {
-        console.error("❌ Failed to load leaderboard:", err);
       } finally {
         setLoading(false);
       }
@@ -136,7 +134,6 @@ export default function LeaderboardPage() {
         const result = await apiFetch(`/leaderboard?${params.toString()}`);
         setData(result);
       } catch (err) {
-        console.error("❌ Failed to load leaderboard:", err);
       } finally {
         setLoading(false);
       }
@@ -242,7 +239,6 @@ export default function LeaderboardPage() {
               href={`/profile/${user.user_id}`}
               className="flex items-center gap-4 bg-white p-4 rounded-lg transition group"
             >
-              {/* 🔹 Ранг */}
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-2xl font-bold">
                 {getRankIcon(index)}
               </div>
@@ -250,19 +246,17 @@ export default function LeaderboardPage() {
               <div className="flex-shrink-0">
                 <AvatarWithOverlay
                   baseAvatar={user.avatar_url || "default_cat.jpg"}
-                  overlayImage={user.equipped_item?.image || null} // 🔥 Показываем экипировку!
+                  overlayImage={user.equipped_item?.image || null}
                   alt={user.username}
                   size="sm"
                 />
               </div>
-              {/* 🔹 Имя */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 group-hover:text-purple-600 truncate">
                   {user.username}
                 </p>
               </div>
 
-              {/* 🔹 Счёт */}
               <div
                 className={`flex-shrink-0 px-4 py-2 ${tabConfig.color} text-sm text-white rounded-lg font-bold shadow-none`}
               >
