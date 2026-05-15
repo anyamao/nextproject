@@ -311,6 +311,334 @@ async def get_test_stats(
 
 # backend/main.py
 
+# backend/main.py
+
+# backend/main.py
+
+
+class LeaderboardUser(BaseModel):
+    user_id: int
+    username: str
+    avatar_url: str | None
+    score: int
+    equipped_item: dict | None = None  # ← 🔥 Новое поле
+
+
+class MyRankInfo(BaseModel):
+    rank: int | None
+    score: int
+
+
+class MyRanks(BaseModel):
+    courses: MyRankInfo | None
+    items: MyRankInfo | None
+    tests: MyRankInfo | None
+
+
+class LeaderboardResponse(BaseModel):
+    top_courses: list[LeaderboardUser]
+    top_items: list[LeaderboardUser]
+    top_tests: list[LeaderboardUser]
+
+
+# backend/main.py
+
+
+# backend/main.py — обновляем эндпоинт
+
+
+# backend/main.py
+
+
+# backend/main.py
+
+
+@app.get("/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard(
+    limit: int = 10,
+    search: str | None = None,  # 🔥 Новый параметр поиска
+    db: AsyncSession = Depends(get_db),
+):
+    """Топ пользователей по достижениям + поиск + экипировка"""
+
+    from models import (
+        EgeSubject,
+        CourseUnit,
+        EgeLesson,
+        TestResult,
+        UserInventory,
+        UserCourseEnrollment,
+        ShopItem,
+    )
+
+    # 🔹 Вспомогательная функция: получить экипировку пользователя
+    async def get_user_equipped_item(user_id: int):
+        # 🔥 Сначала получаем ID экипированного предмета из модели User
+        user = await db.get(User, user_id)
+        if not user or not user.equipped_item_id:
+            return None
+
+        # 🔥 Затем загружаем сам предмет
+        item = await db.get(ShopItem, user.equipped_item_id)
+        if not item:
+            return None
+
+        return {
+            "id": item.id,
+            "name": item.name,
+            "image": item.image,
+            "price": item.price,
+            "description": item.description,
+        }
+
+    # 🔹 Вспомогательная функция: подсчёт завершённых курсов
+    async def count_completed_courses(user_id: int) -> int:
+        enrollments = await db.execute(
+            select(UserCourseEnrollment.course_id).where(
+                UserCourseEnrollment.user_id == user_id
+            )
+        )
+        course_ids = [row[0] for row in enrollments.all()]
+
+        completed = 0
+        for course_id in course_ids:
+            subject = await db.get(EgeSubject, course_id)
+            if not subject:
+                continue
+
+            units = await db.execute(
+                select(CourseUnit.id).where(CourseUnit.subject_id == subject.id)
+            )
+            unit_ids = [row[0] for row in units.all()]
+            if not unit_ids:
+                continue
+
+            lessons = await db.execute(
+                select(EgeLesson.id).where(EgeLesson.unit_id.in_(unit_ids))
+            )
+            lesson_ids = [row[0] for row in lessons.all()]
+            if not lesson_ids:
+                continue
+
+            passed = await db.execute(
+                select(func.count(func.distinct(TestResult.test_id))).where(
+                    TestResult.user_id == user_id,
+                    TestResult.test_id.in_(
+                        select(EgeLesson.test_id).where(
+                            EgeLesson.id.in_(lesson_ids), EgeLesson.test_id.isnot(None)
+                        )
+                    ),
+                    TestResult.score >= 75,
+                )
+            )
+            passed_count = passed.scalar() or 0
+            total = len(lesson_ids)
+
+            if total > 0 and (passed_count / total) >= 0.75:
+                completed += 1
+
+        return completed
+
+    # 🔹 Базовый запрос пользователей (с опциональным поиском)
+    query = select(User.id, User.username, User.avatar_url)
+    if search and search.strip():
+        query = query.where(User.username.ilike(f"%{search.strip()}%"))
+
+    all_users = await db.execute(query)
+    users_list = all_users.all()
+
+    # 🔹 1. Топ по завершённым курсам
+    course_scores = {}
+    for user_id, username, avatar_url in users_list:
+        count = await count_completed_courses(user_id)
+        equipped_item = await get_user_equipped_item(user_id)
+
+        if count > 0:
+            course_scores[user_id] = {
+                "username": username,
+                "avatar_url": avatar_url,
+                "score": count,
+                "equipped_item": equipped_item,  # 🔥 Добавляем экипировку
+            }
+
+    sorted_courses = sorted(
+        course_scores.items(), key=lambda x: x[1]["score"], reverse=True
+    )[:limit]
+
+    top_courses = [
+        LeaderboardUser(
+            user_id=uid,
+            username=data["username"],
+            avatar_url=data["avatar_url"],
+            score=data["score"],
+            equipped_item=data["equipped_item"],  # 🔥 Передаём в модель
+        )
+        for uid, data in sorted_courses
+    ]
+
+    # 🔹 2. Топ по купленным предметам (с экипировкой)
+    items_query_text = """
+        SELECT 
+            u.id as user_id,
+            u.username,
+            u.avatar_url,
+            COUNT(ui.id) as items_purchased
+        FROM users u
+        LEFT JOIN user_inventory ui ON u.id = ui.user_id
+        GROUP BY u.id, u.username, u.avatar_url
+        HAVING COUNT(ui.id) > 0
+    """
+    if search and search.strip():
+        items_query_text += " AND u.username ILIKE :search"
+
+    items_query_text += " ORDER BY items_purchased DESC LIMIT :limit"
+
+    items_params = {"limit": limit}
+    if search and search.strip():
+        items_params["search"] = f"%{search.strip()}%"
+
+    items_result = await db.execute(text(items_query_text), items_params)
+
+    top_items = []
+    for row in items_result.all():
+        equipped_item = await get_user_equipped_item(row.user_id)
+        top_items.append(
+            LeaderboardUser(
+                user_id=row.user_id,
+                username=row.username,
+                avatar_url=row.avatar_url,
+                score=row.items_purchased,
+                equipped_item=equipped_item,  # 🔥 Добавляем экипировку
+            )
+        )
+
+    # 🔹 3. Топ по пройденным тестам (с экипировкой)
+    tests_query_text = """
+        SELECT 
+            u.id as user_id,
+            u.username,
+            u.avatar_url,
+            COUNT(DISTINCT tr.test_id) as tests_passed
+        FROM users u
+        LEFT JOIN test_results tr ON u.id = tr.user_id AND tr.score >= 75
+        GROUP BY u.id, u.username, u.avatar_url
+        HAVING COUNT(DISTINCT tr.test_id) > 0
+    """
+    if search and search.strip():
+        tests_query_text += " AND u.username ILIKE :search"
+
+    tests_query_text += " ORDER BY tests_passed DESC LIMIT :limit"
+
+    tests_params = {"limit": limit}
+    if search and search.strip():
+        tests_params["search"] = f"%{search.strip()}%"
+
+    tests_result = await db.execute(text(tests_query_text), tests_params)
+
+    top_tests = []
+    for row in tests_result.all():
+        equipped_item = await get_user_equipped_item(row.user_id)
+        top_tests.append(
+            LeaderboardUser(
+                user_id=row.user_id,
+                username=row.username,
+                avatar_url=row.avatar_url,
+                score=row.tests_passed,
+                equipped_item=equipped_item,  # 🔥 Добавляем экипировку
+            )
+        )
+
+    # 🔥 Возвращаем БЕЗ my_rank (убрали)
+    return LeaderboardResponse(
+        top_courses=top_courses,
+        top_items=top_items,
+        top_tests=top_tests,
+    )
+
+
+@app.get("/profile/public/{user_id}/achievements")
+async def get_public_achievements(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Публичная статистика достижений для любого пользователя"""
+
+    from models import EgeSubject, CourseUnit, EgeLesson, TestResult, UserInventory
+
+    # 🔹 1. Тесты, пройденные на 75%+
+    tests_75 = await db.execute(
+        select(func.count(func.distinct(TestResult.test_id))).where(
+            TestResult.user_id == user_id,
+            TestResult.score >= 75,
+        )
+    )
+    tests_passed_75 = tests_75.scalar() or 0
+
+    # 🔹 2. Курсы, завершённые на 75%+ (через уроки)
+    enrollments = await db.execute(
+        select(UserCourseEnrollment).where(UserCourseEnrollment.user_id == user_id)
+    )
+    user_enrollments = enrollments.scalars().all()
+
+    courses_completed_75 = 0
+    for enrollment in user_enrollments:
+        subject = await db.get(EgeSubject, enrollment.course_id)
+        if not subject:
+            continue
+
+        # Юниты предмета
+        units = await db.execute(
+            select(CourseUnit.id).where(CourseUnit.subject_id == subject.id)
+        )
+        unit_ids = [row[0] for row in units.all()]
+        if not unit_ids:
+            continue
+
+        # Уроки юнитов
+        lessons = await db.execute(
+            select(EgeLesson.id).where(EgeLesson.unit_id.in_(unit_ids))
+        )
+        lesson_ids = [row[0] for row in lessons.all()]
+        if not lesson_ids:
+            continue
+
+        # Пройденные тесты в этих уроках
+        completed = await db.execute(
+            select(func.count(func.distinct(TestResult.test_id))).where(
+                TestResult.user_id == user_id,
+                TestResult.test_id.in_(
+                    select(EgeLesson.test_id).where(
+                        EgeLesson.id.in_(lesson_ids), EgeLesson.test_id.isnot(None)
+                    )
+                ),
+                TestResult.score >= 75,
+            )
+        )
+        completed_count = completed.scalar() or 0
+        total = len(lesson_ids)
+
+        if total > 0 and (completed_count / total) >= 0.75:
+            courses_completed_75 += 1
+
+    # 🔹 3. Купленные товары (публично — можно показывать количество)
+    purchased = await db.execute(
+        select(func.count()).where(UserInventory.user_id == user_id)
+    )
+    items_purchased = purchased.scalar() or 0
+
+    # 🔹 4. Кастомный аватар (публично)
+    user = await db.get(User, user_id)
+    has_custom_avatar = bool(
+        user and user.avatar_url and user.avatar_url != "default_cat.jpg"
+    )
+
+    return {
+        "tests_passed_75": tests_passed_75,
+        "courses_completed_75": courses_completed_75,
+        "items_purchased": items_purchased,
+        "has_custom_avatar": has_custom_avatar,
+    }
+
 
 @app.get("/profile/achievements")
 async def get_user_achievements(
@@ -1073,11 +1401,13 @@ async def get_course_promo(
             )
         )
         is_favorite = fav.scalar_one_or_none() is not None
-        teachers_result = await db.execute(
-            select(Teacher)
-            .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
-            .where(CourseTeacher.course_id == course.id)
-        )
+
+    # 🔥 5. Загружаем преподавателей ВСЕГДА (не внутри if current_user!)
+    teachers_result = await db.execute(
+        select(Teacher)
+        .join(CourseTeacher, CourseTeacher.teacher_id == Teacher.id)
+        .where(CourseTeacher.course_id == course.id)
+    )
     teachers = teachers_result.scalars().all()
 
     teachers_out = [
@@ -1090,8 +1420,9 @@ async def get_course_promo(
         for t in teachers
     ]
 
-    # 5. Проверяем, записан ли пользователь на курс
+    # 6. Проверяем, записан ли пользователь на курс
     is_enrolled = False
+    completion_percent = None  # 🔥 По умолчанию None для неавторизованных
     if current_user:
         enrollment = await db.execute(
             select(UserCourseEnrollment).where(
@@ -1100,13 +1431,13 @@ async def get_course_promo(
             )
         )
         is_enrolled = enrollment.scalar_one_or_none() is not None
-    completion_percent = 0.0
-    if current_user:
-        completion_percent = await get_course_completion_percent(
-            current_user.id, course.id, db
-        )
 
-    # 6. Возвращаем данные
+        if is_enrolled:
+            completion_percent = await get_course_completion_percent(
+                current_user.id, course.id, db
+            )
+
+    # 7. Возвращаем данные
     return PromoCourseOut(
         id=course.id,
         title=course.title,
@@ -1117,11 +1448,11 @@ async def get_course_promo(
         duration_minutes=course.duration_minutes,
         certificate_available=course.certificate_available or False,
         enrolled_count=enrolled_count,
-        about=course.about,
+        about=course.about,  # 🔥 Это всегда возвращается!
         rating=rating,
         is_favorite=is_favorite,
         teachers=teachers_out,
-        completion_percent=round(completion_percent, 1),
+        completion_percent=round(completion_percent, 1) if completion_percent else None,
         is_enrolled=is_enrolled,
     )
 

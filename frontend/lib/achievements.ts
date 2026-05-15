@@ -32,7 +32,7 @@ export const MAIN_LEVEL_RULE: AchievementRule = {
       level: 1,
       threshold: 0,
       title: "Котенок 1lv",
-      description: "Зарегистрируйся и установи аватарку",
+      description: "Зарегистрируйся. Теперь ты котик!",
     },
     {
       level: 2,
@@ -119,22 +119,25 @@ export const MAIN_LEVEL_RULE: AchievementRule = {
   ],
 };
 
+// 🔹 Уничтожитель тестов — каждый тест = уровень, начиная с 0:
 export const TEST_DESTROYER_RULE: AchievementRule = {
   id: "test_destroyer",
   name: "Уничтожитель тестов",
   description: "Проходи тесты на 75% и выше!",
   icon: "🎯",
   color: "bg-emerald-500",
-
-  // 🔥 ИЗМЕНЕНО: каждый тест = новый уровень
   levels: Array.from({ length: 20 }, (_, i) => ({
-    level: i + 1,
-    threshold: i, // 0, 1, 2, 3... (каждый тест = уровень)
-    title: `Уничтожитель тестов ${i + 1}lv`,
-    description: `Пройди ${i + 1} тест${i === 0 ? "" : i < 4 ? "а" : "ов"} на 75%`,
+    level: i, // ← Было: i + 1, стало: i (уровни 0, 1, 2...)
+    threshold: i, // ← Было: (i+1)*5 или i+1, стало: i (0 тестов = уровень 0)
+    title: i === 0 ? "Уничтожитель тестов 0lv" : `Уничтожитель тестов ${i}lv`,
+    description:
+      i === 0
+        ? "Пройди первый тест на 75%"
+        : `Пройди ${i} тест${i === 1 ? "" : i < 5 ? "а" : "ов"} на 75%`,
   })),
 };
-// 🔹 Достижение "Умный кот" (за курсы)
+
+// 🔹 Умный кот — каждый курс = уровень, начиная с 0:
 export const SMART_CAT_RULE: AchievementRule = {
   id: "smart_cat",
   name: "Умный кот",
@@ -142,14 +145,17 @@ export const SMART_CAT_RULE: AchievementRule = {
   icon: "🧠",
   color: "bg-blue-500",
   levels: Array.from({ length: 10 }, (_, i) => ({
-    level: i + 1,
-    threshold: i + 1, // 1, 2, 3...
-    title: `Умный кот ${i + 1}lv`,
-    description: `Пройди ${i + 1} курс${i === 0 ? "" : i < 4 ? "а" : "ов"} на 75%`,
+    level: i, // ← Уровни 0, 1, 2...
+    threshold: i, // ← 0 курсов = уровень 0
+    title: i === 0 ? "Умный кот 0lv" : `Умный кот ${i}lv`,
+    description:
+      i === 0
+        ? "Заверши первый курс на 75%"
+        : `Заверши ${i} курс${i === 1 ? "" : i < 5 ? "а" : "ов"} на 75%`,
   })),
 };
 
-// 🔹 Достижение "Модный котик" (за покупки)
+// 🔹 Модный котик — каждая покупка = уровень, начиная с 0:
 export const FASHION_CAT_RULE: AchievementRule = {
   id: "fashion_cat",
   name: "Модный котик",
@@ -158,6 +164,12 @@ export const FASHION_CAT_RULE: AchievementRule = {
   color: "bg-pink-500",
   levels: [
     {
+      level: 0,
+      threshold: 0,
+      title: "Модный котик 0lv",
+      description: "Сделай первую покупку",
+    },
+    {
       level: 1,
       threshold: 1,
       title: "Модный котик 1lv",
@@ -165,26 +177,18 @@ export const FASHION_CAT_RULE: AchievementRule = {
     },
     {
       level: 2,
-      threshold: 4,
+      threshold: 2,
       title: "Модный котик 2lv",
-      description: "Купи 4 товара",
+      description: "Купи 2 товара",
     },
-    {
-      level: 3,
-      threshold: 7,
-      title: "Модный котик 3lv",
-      description: "Купи 7 товаров",
-    },
-    // Далее +3 за уровень
-    ...Array.from({ length: 7 }, (_, i) => ({
-      level: i + 4,
-      threshold: 10 + i * 3, // 10, 13, 16...
-      title: `Модный котик ${i + 4}lv`,
-      description: `Купи ${10 + i * 3} товаров`,
+    ...Array.from({ length: 8 }, (_, i) => ({
+      level: i + 3,
+      threshold: i + 3,
+      title: `Модный котик ${i + 3}lv`,
+      description: `Купи ${i + 3} товаров`,
     })),
   ],
 };
-
 // 🔹 Все правила в одном месте
 export const ACHIEVEMENT_RULES: Record<string, AchievementRule> = {
   main_level: MAIN_LEVEL_RULE,

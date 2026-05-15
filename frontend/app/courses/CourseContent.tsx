@@ -58,29 +58,19 @@ export default function CoursesContent() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 🔥 Синхронизация с URL при изменении категории
+  // ✅ Оставь только этот, но без searchParams в зависимостях:
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (selectedCategory) {
-      params.set("category", selectedCategory);
-    } else {
-      params.delete("category");
+    // Обновляем URL только если категория изменилась и это не первоначальный рендер
+    if (selectedCategory !== categoryFromUrl) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (selectedCategory) {
+        params.set("category", selectedCategory);
+      } else {
+        params.delete("category");
+      }
+      router.push(`/courses?${params.toString()}`, { scroll: false });
     }
-    router.push(`/courses?${params.toString()}`, { scroll: false });
-  }, [selectedCategory, router, searchParams]);
-
-  // 🔥 Синхронизация поиска с URL
-  useEffect(() => {
-    const newSearchQuery = searchParams.get("search") || "";
-    setSearchQuery(newSearchQuery);
-  }, [searchParams]);
-
-  // 🔥 Синхронизация категории из URL
-  useEffect(() => {
-    const newCategory = searchParams.get("category") || "";
-    setSelectedCategory(newCategory);
-  }, [searchParams]);
-
+  }, [selectedCategory, router]); // ← Убрали searchParams!
   useEffect(() => {
     async function fetchCourses() {
       setLoading(true);

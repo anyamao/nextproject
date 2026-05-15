@@ -128,6 +128,13 @@ function Mainnav() {
           >
             Магазин
           </Link>
+          <Link
+            href="/leaderboard"
+            onClick={closeEverything}
+            className="ml-[20px] hover:text-blue-500 whitespace-nowrap duration-300"
+          >
+            Топ-котики
+          </Link>
         </div>
       </div>
     </main>

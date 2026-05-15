@@ -252,19 +252,17 @@ export default function CoursePromoPage() {
         let courseDetails: any = {};
         let isEnrolledValue = false;
 
-        if (token) {
-          try {
-            courseDetails = await apiFetch(`/courses/promo/${slug}`);
-            console.log("✅ Course details:", {
-              is_enrolled: courseDetails.is_enrolled,
-              completion_percent: courseDetails.completion_percent,
-              has_about: !!courseDetails.about,
-              teachers_count: courseDetails.teachers?.length || 0,
-            });
-            isEnrolledValue = courseDetails.is_enrolled || false;
-          } catch (err) {
-            console.warn("⚠️ Could not load course details:", err);
-          }
+        try {
+          courseDetails = await apiFetch(`/courses/promo/${slug}`);
+          console.log("✅ Course details:", {
+            is_enrolled: courseDetails.is_enrolled,
+            completion_percent: courseDetails.completion_percent,
+            has_about: !!courseDetails.about,
+            teachers_count: courseDetails.teachers?.length || 0,
+          });
+          isEnrolledValue = courseDetails.is_enrolled || false;
+        } catch (err) {
+          console.warn("⚠️ Could not load course details:", err);
         }
 
         const mergedCourse: PromoCourse = {

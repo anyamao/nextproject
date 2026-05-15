@@ -10,6 +10,7 @@ import {
   Coins,
   Check,
   Trophy,
+  X,
   PawPrint,
   BookOpen,
 } from "lucide-react";
@@ -56,7 +57,7 @@ export default function PublicProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = parseInt(params.id as string);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -89,57 +90,6 @@ export default function PublicProfilePage() {
     if (userId) fetchProfile();
   }, [userId]);
 
-  // 🔥 Загрузка статистики достижений с бэкенда
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    apiFetch("/profile/achievements");
-
-    apiFetch("/profile/achievements")
-      .then((backendData: any) => {
-        // 🔥 Параллельно загружаем статистику тестов
-        return apiFetch("/profile/test-stats")
-          .then((testStats: { tests_passed_75: number }) => {
-            // Объединяем данные
-            const stats: UserAchievementStats = {
-              testsPassed75:
-                testStats.tests_passed_75 ?? backendData.tests_passed_75 ?? 0,
-              coursesCompleted75: backendData.courses_completed_75 ?? 0,
-              itemsPurchased: backendData.items_purchased ?? 0,
-              hasCustomAvatar: backendData.has_custom_avatar ?? false,
-            };
-
-            console.log("🔍 [Achievements] Merged stats:", stats);
-            setAchievementStats(stats);
-          })
-          .catch(() => {
-            // Если тест-статс не загрузился — берём из основного эндпоинта
-            const stats: UserAchievementStats = {
-              testsPassed75: backendData.tests_passed_75 ?? 0,
-              coursesCompleted75: backendData.courses_completed_75 ?? 0,
-              itemsPurchased: backendData.items_purchased ?? 0,
-              hasCustomAvatar: backendData.has_custom_avatar ?? false,
-            };
-            setAchievementStats(stats);
-          });
-      })
-      .catch((err) => {
-        console.error("❌ Failed to load achievements:", err);
-        // 🔥 Фоллбэк: считаем на фронтенде если эндпоинт не работает
-
-        const fallbackStats: UserAchievementStats = {
-          testsPassed75: 0, // 🔥 Загружай через отдельный эндпоинт /profile/test-stats
-          coursesCompleted75:
-            profile.completed_courses?.filter((c) => c.completion_percent >= 75)
-              .length || 0,
-          itemsPurchased: 0,
-          hasCustomAvatar:
-            !!profile.avatar_url && profile.avatar_url !== "default_cat.jpg",
-        };
-
-        setAchievementStats(fallbackStats);
-      });
-  }, [profile?.id]);
   // 🔹 После загрузки статистики:
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -154,6 +104,77 @@ export default function PublicProfilePage() {
   // 🔹 Флаг: это мой профиль?
   const isMyProfile = currentUserId === userId;
   // 🔹 Логирование расчёта достижений:
+  // 🔹 Загрузка статистики достижений — теперь для любого пользователя:
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    // 🔥 Определяем, какой эндпоинт использовать:
+    const endpoint = isMyProfile
+      ? "/profile/achievements" // Свой профиль — приватный эндпоинт
+      : `/profile/public/${userId}/achievements`; // Чужой профиль — публичный
+
+    apiFetch(endpoint)
+      .then((backendData: any) => {
+        // 🔥 Для своего профиля ещё загружаем тест-статс отдельно (если нужно)
+        if (isMyProfile) {
+          return apiFetch("/profile/test-stats")
+            .then((testStats: { tests_passed_75: number }) => {
+              const stats: UserAchievementStats = {
+                testsPassed75:
+                  testStats.tests_passed_75 ?? backendData.tests_passed_75 ?? 0,
+                coursesCompleted75: backendData.courses_completed_75 ?? 0,
+                itemsPurchased: backendData.items_purchased ?? 0,
+                hasCustomAvatar: backendData.has_custom_avatar ?? false,
+              };
+              console.log(
+                "🔍 [Achievements] Merged stats (my profile):",
+                stats,
+              );
+              setAchievementStats(stats);
+            })
+            .catch(() => {
+              // Фоллбэк если тест-статс не загрузился
+              const stats: UserAchievementStats = {
+                testsPassed75: backendData.tests_passed_75 ?? 0,
+                coursesCompleted75: backendData.courses_completed_75 ?? 0,
+                itemsPurchased: backendData.items_purchased ?? 0,
+                hasCustomAvatar: backendData.has_custom_avatar ?? false,
+              };
+              setAchievementStats(stats);
+            });
+        } else {
+          // 🔥 Для чужого профиля — используем данные как есть
+          const stats: UserAchievementStats = {
+            testsPassed75: backendData.tests_passed_75 ?? 0,
+            coursesCompleted75: backendData.courses_completed_75 ?? 0,
+            itemsPurchased: backendData.items_purchased ?? 0,
+            hasCustomAvatar: backendData.has_custom_avatar ?? false,
+          };
+          console.log(
+            "🔍 [Achievements] Public stats for user",
+            userId,
+            ":",
+            stats,
+          );
+          setAchievementStats(stats);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Failed to load achievements:", err);
+        // 🔥 Фоллбэк: считаем на фронтенде из публичных данных профиля
+        const fallbackStats: UserAchievementStats = {
+          testsPassed75: 0, // 🔥 Нет публичного эндпоинта для тестов — заглушка
+          coursesCompleted75:
+            profile.completed_courses?.filter((c) => c.completion_percent >= 75)
+              .length || 0,
+          itemsPurchased: 0, // 🔥 Приватно — не показываем
+          hasCustomAvatar:
+            !!profile.avatar_url && profile.avatar_url !== "default_cat.jpg",
+        };
+        setAchievementStats(fallbackStats);
+      });
+  }, [profile?.id, userId, isMyProfile]); // ← Добавь isMyProfile в зависимости
   useEffect(() => {
     if (achievements) {
       console.log("🔍 [Achievements] Calculated:", {
@@ -209,6 +230,83 @@ export default function PublicProfilePage() {
           <ArrowLeft className="w-5 h-5" /> Назад
         </button>
       </div>
+
+      <div className="bg-pink-300 rounded-lg mb-[20px] justify-between items-center text-pink-900  w-full flex flex-row p-[10px] px-[20px] text-xs">
+        <p className="text-xs">
+          {" "}
+          Система кошачих рангов и левелов, хочешь узнать подробнее?
+        </p>
+        <div
+          onClick={() => setIsModalOpen(true)}
+          className="bg-pink-500  text-pink-100 hover:bg-pink-600 duration-300 cursor-pointer font-semibold rounded-lg p-[10px] px-[20px]"
+        >
+          узнать подробнее
+        </div>
+      </div>
+
+      {isModalOpen && (
+        <>
+          {/* Затемнение с анимацией fade-in */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 animate-in fade-in duration-300"
+            onClick={() => setIsModalOpen(false)}
+          />
+
+          {/* Окно с анимацией slide-up */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="relative w-[500px] max-w-[90vw] h-[560px] max-h-[85vh] flex flex-col p-[20px] rounded-lg shadow-xs border-[8px] border-pink-300 bg-pink-100 pointer-events-auto animate-in zoom-in-95 slide-in-from-bottom-10 duration-300">
+              {/* Кнопка закрытия */}
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-3 cursor-pointer hover:bg-pink-200 rounded-lg right-3 text-pink-400 hover:text-pink-600 transition-colors duration-200"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <p className="font-semibold text-md text-pink-900 mb-[10px] pr-6">
+                Эволюция котенка в кота
+              </p>
+
+              <div className="bg-pink-200 p-[20px] px-[20px] text-sm rounded-lg">
+                <p className="border-b-[2px] border-b-pink-300 text-pink-900 pb-[5px]">
+                  До прохождения первого курса на 75% ты котенок начиная с 0
+                  уровня и далее с каждым пройденным на 75% тестом твой уровень
+                  повышается на один.
+                </p>
+                <p className="pt-[5px] text-pink-900">
+                  При прохождении первого курса на 75% ты становишься котом
+                  первого уровня и далее твой уровень повышается с прохождением
+                  каждого нового курса на 75%
+                </p>
+              </div>
+
+              <p className="font-semibold text-md text-pink-900 mt-[20px] mb-[10px]">
+                Достижения по секциям
+              </p>
+
+              <p className="text-xs text-gray-700 mb-[10px]">
+                По каждому из этих достижений формируется топ во вкладке
+                Топ-котики, может ты уже там есть!
+              </p>
+
+              <div className="bg-pink-200 p-[20px] px-[20px] text-sm rounded-lg flex-1 overflow-y-auto">
+                <p className="border-b-[2px] border-b-pink-300 text-pink-900 pb-[5px]">
+                  Уничтожитель тестов: при каждом уникальном прохождении теста
+                  на 75% твой уровень повышается на 1
+                </p>
+                <p className="pt-[5px] border-b-[2px] pb-[5px] border-b-pink-300 text-pink-900">
+                  Умный кот: при каждом уникальном прохождении курса на 75% твой
+                  уровень повышается на 1
+                </p>
+                <p className="pt-[5px] text-pink-900">
+                  Модный котик: при каждой покупке в магазине твой уровень
+                  повышается на 1
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 🔹 Карточка профиля */}
       <div className="bg-white rounded-lg shadow-xs p-8 w-full mb-8">
@@ -272,8 +370,8 @@ export default function PublicProfilePage() {
                     </div>
                     <p className="text-xs text-purple-700 mt-1">
                       {achievements.main.isCatMode
-                        ? `Пройдите ещё ${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75} курс${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 < 5 ? "а" : "ов"} на 75%`
-                        : `Пройдите ещё ${achievements.main.nextLevel.threshold - achievementStats.testsPassed75} тест${achievements.main.nextLevel.threshold - achievementStats.testsPassed75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.testsPassed75 < 5 ? "а" : "ов"} на 75%`}
+                        ? `Пройти ${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75} курс${achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.coursesCompleted75 < 5 ? "а" : "ов"} на 75%`
+                        : `Пройти ${achievements.main.nextLevel.threshold - achievementStats.testsPassed75} тест${achievements.main.nextLevel.threshold - achievementStats.testsPassed75 === 1 ? "" : achievements.main.nextLevel.threshold - achievementStats.testsPassed75 < 5 ? "а" : "ов"} на 75%`}
                     </p>
                   </div>
                 )}
@@ -370,18 +468,16 @@ export default function PublicProfilePage() {
                   <h3 className="text-lg font-bold text-white">
                     {achievements.test_destroyer.currentLevel.title}
                   </h3>
-                  {isMyProfile && (
-                    <div className="flex flex-row items-center bg-emerald-200 rounded-lg p-2 px-3 mt-2">
-                      <p className="text-emerald-800 text-sm">
-                        {achievements.test_destroyer.currentLevel.description}
-                      </p>
-                      <Check className="w-4 h-4 text-emerald-700 ml-2" />
-                    </div>
-                  )}
+                  <div className="flex flex-row items-center bg-emerald-200 rounded-lg p-2 px-3 mt-2">
+                    <p className="text-emerald-800 text-sm">
+                      {achievements.test_destroyer.currentLevel.description}
+                    </p>
+                    <Check className="w-4 h-4 text-emerald-700 ml-2" />
+                  </div>
                 </div>
               </div>
 
-              {isMyProfile && achievements.test_destroyer.nextLevel && (
+              {achievements.test_destroyer.nextLevel && (
                 <div className="mt-4">
                   <div className="flex justify-between text-xs font-semibold text-emerald-100 mb-1">
                     <span>
@@ -389,7 +485,7 @@ export default function PublicProfilePage() {
                     </span>
                   </div>
                   <p className="text-xs text-emerald-100 mt-2">
-                    Пройдите ещё 1 тест на 75%
+                    Пройти ещё 1 тест на 75%
                   </p>
                 </div>
               )}
@@ -402,24 +498,22 @@ export default function PublicProfilePage() {
                   <h3 className="text-lg font-bold text-white">
                     {achievements.smart_cat.currentLevel.title}
                   </h3>
-                  {isMyProfile && (
-                    <div className="flex flex-row items-center bg-violet-200 rounded-lg p-2 px-3 mt-2">
-                      <p className="text-violet-800 text-sm">
-                        {achievements.smart_cat.currentLevel.description}
-                      </p>
-                      <Check className="w-4 h-4 text-violet-700 ml-2" />
-                    </div>
-                  )}
+                  <div className="flex flex-row items-center bg-violet-200 rounded-lg p-2 px-3 mt-2">
+                    <p className="text-violet-800 text-sm">
+                      {achievements.smart_cat.currentLevel.description}
+                    </p>
+                    <Check className="w-4 h-4 text-violet-700 ml-2" />
+                  </div>
                 </div>
               </div>
 
-              {isMyProfile && achievements.smart_cat.nextLevel && (
+              {achievements.smart_cat.nextLevel && (
                 <div className="mt-4">
                   <div className="flex justify-between font-semibold text-xs text-violet-100 mb-1">
                     <span>До {achievements.smart_cat.nextLevel.title}</span>
                   </div>
                   <p className="text-xs text-violet-100 mt-2">
-                    Завершите ещё 1 курс на 75%
+                    Завершить ещё 1 курс на 75%
                   </p>
                 </div>
               )}
@@ -432,24 +526,22 @@ export default function PublicProfilePage() {
                   <h3 className="text-lg font-bold text-white">
                     {achievements.fashion_cat.currentLevel.title}
                   </h3>
-                  {isMyProfile && (
-                    <div className="flex flex-row items-center bg-pink-200 rounded-lg p-2 px-3 mt-2">
-                      <p className="text-pink-800 text-sm">
-                        {achievements.fashion_cat.currentLevel.description}
-                      </p>
-                      <Check className="w-4 h-4 text-pink-700 ml-2" />
-                    </div>
-                  )}
+                  <div className="flex flex-row items-center bg-pink-200 rounded-lg p-2 px-3 mt-2">
+                    <p className="text-pink-800 text-sm">
+                      {achievements.fashion_cat.currentLevel.description}
+                    </p>
+                    <Check className="w-4 h-4 text-pink-700 ml-2" />
+                  </div>
                 </div>
               </div>
 
-              {isMyProfile && achievements.fashion_cat.nextLevel && (
+              {achievements.fashion_cat.nextLevel && (
                 <div className="mt-4">
                   <div className="flex justify-between font-semibold text-xs text-pink-100 mb-1">
                     <span>До {achievements.fashion_cat.nextLevel.title}</span>
                   </div>
                   <p className="text-xs text-pink-100 mt-2">
-                    Купите ещё 1 товар в магазине
+                    Купить ещё 1 товар в магазине
                   </p>
                 </div>
               )}
