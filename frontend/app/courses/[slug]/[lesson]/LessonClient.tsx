@@ -10,6 +10,8 @@ import {
   Trophy,
   Lock,
   Clock,
+  Star,
+  NotebookPen,
   Check,
   Trash2,
 } from "lucide-react";
@@ -524,12 +526,13 @@ export default function LessonClient({
             </div>
           )}
         </div>
-
-        {lesson.description && (
-          <p className="text-purple-700 mt-[25px] ord-text w-full text-center mb-8 leading-relaxed">
-            {lesson.description}
-          </p>
-        )}
+        <div className="hidden">
+          {lesson.description && (
+            <p className="text-purple-700 mt-[25px] ord-text w-full text-center mb-8 leading-relaxed">
+              {lesson.description}
+            </p>
+          )}
+        </div>
 
         {lesson.content ? (
           <article

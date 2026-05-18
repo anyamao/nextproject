@@ -256,8 +256,8 @@ export default function CourseLessonsPage() {
                     <div className="text-left">
                       <div className="flex flex-row">
                         {unit.unit_number > 0 && (
-                          <h2 className="text-lg font-semibold text-gray-900">
-                            Unit {unit.unit_number} -
+                          <h2 className="text-lg bg-purple-200 p-[2px] rounded-full mr-[10px] font-semibold text-purple-900">
+                            {unit.unit_number}
                           </h2>
                         )}
                         <h2
