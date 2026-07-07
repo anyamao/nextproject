@@ -1,76 +1,58 @@
+// hooks/useAuthListener.ts
+
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  decodeJWT,
-  isTokenExpired,
-  getUserFromToken,
-  authStorage,
-  AppUser,
-} from "@/lib/auth";
-
-declare global {
-  interface Window {
-    refreshAuth?: () => void;
-  }
-}
+import { useRouter } from "next/navigation";
+import useContactStore from "@/store/states";
+import { apiFetch } from "@/lib/api";
 
 export function useAuthListener() {
-  const [user, setUser] = useState<AppUser | null>(null);
+  const router = useRouter();
+  const { setUser, clearUser } = useContactStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = authStorage.getToken();
+    const checkAuth = async () => {
+      try {
+        // 🔥 Проверяем авторизацию через бэкенд (проверяет HttpOnly cookie)
+        const data = await apiFetch("/auth/me");
 
-      if (!token || isTokenExpired(token)) {
-        authStorage.clear();
-        setUser(null);
+        if (data?.user) {
+          setUser({
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+            avatar_url: data.user.avatar_url || "default_cat.jpg",
+            status: data.user.status,
+          });
+        } else {
+          clearUser();
+        }
+      } catch (error) {
+        // Если 401 - пользователь не авторизован
+        clearUser();
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const userData = getUserFromToken(token);
-      if (userData) {
-        setUser(userData);
-      } else {
-        authStorage.clear();
-        setUser(null);
-      }
-      setLoading(false);
     };
 
     checkAuth();
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "token") {
-        checkAuth();
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
+    // 🔥 Проверка каждые 5 минут
+    const interval = setInterval(checkAuth, 5 * 60 * 1000);
 
-    const interval = setInterval(checkAuth, 30000);
+    // 🔥 Слушаем события смены пользователя
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    window.addEventListener("focus", handleStorageChange);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
+      window.removeEventListener("focus", handleStorageChange);
     };
-  }, []);
+  }, [setUser, clearUser]);
 
-  const refreshAuth = () => {
-    const token = authStorage.getToken();
-    if (token && !isTokenExpired(token)) {
-      const userData = getUserFromToken(token);
-      if (userData) setUser(userData);
-    }
-  };
-
-  useEffect(() => {
-    window.refreshAuth = refreshAuth;
-    return () => {
-      delete window.refreshAuth;
-    };
-  }, [refreshAuth]);
-
-  return { user, loading };
+  return { loading };
 }

@@ -1,32 +1,58 @@
+// frontend/components/LogoutButton.tsx
+
 "use client";
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import useContactStore from "@/store/states";
-import { authStorage } from "@/lib/auth";
 
 export default function LogoutButton() {
   const router = useRouter();
-  const { logout } = useContactStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      authStorage.clear();
+      // 🔥 Запрос на бэкенд
+      const base_url =
+        typeof window !== "undefined"
+          ? window.location.hostname === "maoschool.ru"
+            ? ""
+            : "http://localhost:8010"
+          : "http://localhost:8010";
 
-      logout();
+      await fetch(`${base_url}/api/v1/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
+    // 🔥 Очищаем ВСЁ локальное состояние
+    if (typeof window !== "undefined") {
+      // Очищаем localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("maoschool-storage");
 
-      useContactStore.getState().setTokenBalance(0); // ← Добавь это!
+      // Очищаем sessionStorage
+      sessionStorage.clear();
 
-      window.location.reload();
-    } catch (err) {
-      console.error("Logout error:", err);
+      // Очищаем cookies (удаляем вручную)
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(
+            /=.*/,
+            "=; expires=" + new Date().toUTCString() + "; path=/",
+          );
+      });
     }
+
+    // 🔥 Принудительно перезагружаем страницу
+    window.location.href = "/";
   };
 
   return (
-    <button onClick={handleLogout} className="flex items-center ">
+    <button onClick={handleLogout} className="flex items-center w-full">
       <LogOut className="w-[17px] h-[17px] text-red-600" />
       <span className="ml-[10px] smaller-text">Выйти</span>
     </button>

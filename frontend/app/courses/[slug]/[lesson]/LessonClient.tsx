@@ -534,6 +534,129 @@ export default function LessonClient({
           )}
         </div>
 
+        <div className="flex bg-gray-200 text-sm text-gray-700 mt-[20px] flex-col rounded-lg shadow-xs p-[20px] py-[10px]">
+          <strong className="text-gray-600">В этом уроке вы узнаете</strong>
+          <p className="ml-[10px] mt-[5px]">Тригонометрические формулы</p>
+          <p className="ml-[10px] mt-[5px]">Решение задач по тригонометрии</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-xs text-sm p-[10px] sm:px-[30px] py-[20px] mt-[20px]">
+          <h4 className="font-semibold text-lg mb-[10px] text-gray-700">
+            Тригонометрические формулы
+          </h4>
+          <p>
+            <p>Следует просто запомнить все данные формулы</p>
+          </p>
+
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-1.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">Формулы суммы</p>
+          </div>
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-2.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">
+              Формулы двойного угла
+            </p>
+          </div>
+          <p>
+            Тут легче запомнить что просто cos(-x) = cos(x), четная, все
+            остальные будут sin(-x) = -sin(x), нечетные
+          </p>
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-4.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">Четности</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-xs text-sm p-[10px] sm:px-[30px] py-[20px] mt-[20px]">
+          <h4 className="font-semibold text-lg mb-[10px] text-gray-700">
+            Решение задач по тригонометрии
+          </h4>
+          <p>
+            Сверху написаны формулы понижения степени и снизу два примера как
+            решать задачи на сумму
+          </p>
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-3.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">
+              Пример формул разности
+            </p>
+          </div>
+          <p>
+            Если просят найти tg какого-то угла можно просто синус данного угла
+            поделить на косинус данного угла.
+          </p>
+          <p className=" bg-purple-300 rounded-lg p-[5px] px-[10px]  text-purple-950 mt-[20px]">
+            Найдите значение двух данных выражений
+          </p>
+
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-5.jpg"
+              className="w-[90%] rounded-lg mt-[20px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">
+              Решение через формулы суммы и через формулы двойного угла
+            </p>
+          </div>
+
+          <p className=" bg-purple-300 rounded-lg p-[5px] px-[10px]  text-purple-950 mt-[20px]">
+            Решите 2*sin(3п/2 + x), sinx = 0,2 , 0 больше x меньше п/2
+          </p>
+
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-6.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+            <p className="mt-[5px] text-xs text-gray-500">
+              Решение через формулу суммы
+            </p>
+          </div>
+          <p className=" bg-purple-300 rounded-lg p-[5px] px-[10px]  text-purple-950 mt-[20px]">
+            Решите 57cos16/sin74 + 12 и 4cos2a, если sina = -0,7
+          </p>
+
+          <div className="flex flex-col mb-[10px] items-center">
+            <img
+              src="/ege-math-trigonometry-2-7.jpg"
+              className="w-[90%] rounded-lg mt-[10px] max-w-[400px]"
+            />
+          </div>
+        </div>
+
+        <div className=" mt-[20px] w-full flex items-stretch flex-row  justify-between">
+          <div className="bg-indigo-200   text-sm text-indigo-800 rounded-lg w-full px-[20px] py-[10px]">
+            <div className="flex flex-row items-center justify-between">
+              <p className="font-bold text-md text-indigo-700 mb-[20px]">
+                Самое важное из урока{" "}
+              </p>
+              <Star className="text-indigo-500 fill-indigo-500 mt-[-15px] mr-[-5px] w-5 h-5"></Star>
+            </div>
+
+            <div className="flex flex-row items-start ">
+              <div className="flex flex-row items-center text-indigo-600 bg-indigo-50 mr-[10px] rounded-full min-w-5 min-h-5 justify-center font-bold text-xs">
+                1
+              </div>
+
+              <p className=" text-indigo-900">
+                Нужно запомнить данные формулы, они часто встречаются
+              </p>
+            </div>
+          </div>
+        </div>
         {lesson.content ? (
           <article
             className="prose prose-purple max-w-none w-full text-gray-800 lesson-content-root"

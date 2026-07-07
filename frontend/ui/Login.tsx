@@ -1,23 +1,24 @@
-// frontend/components/Login.tsx — твой оригинальный код + 2 правки
+// frontend/components/Login.tsx
+
 "use client";
 
-import { useState, useEffect } from "react"; // 🔥 ПРАВКА 1: добавил useEffect
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useContactStore from "@/store/states";
+import { apiFetch } from "@/lib/api";
 import { X, Eye, EyeOff } from "lucide-react";
 
 function getRussianErrorMessage(error: string): string {
   const errorMap: Record<string, string> = {
-    "User already registered": "Этот email уже зарегистрирован",
-    "email rate limit exceeded": "Слишком много попыток. Подождите 1 час",
-    "Invalid login credentials": "Неверный email или пароль",
+    "Invalid credentials": "Неверный email или пароль",
+    "User not found": "Пользователь не найден",
     "Email not confirmed": "Подтвердите ваш email",
-    'duplicate key value violates unique constraint "profiles_username_key"':
-      "Этот юзернейм уже занят",
-    'new row for relation "profiles" violates check constraint "username_length"':
-      "Юзернейм должен быть минимум 3 символа",
-    "Failed to sign up": "Не удалось зарегистрироваться. Попробуйте позже",
+    "Too many login attempts": "Слишком много попыток. Подождите 1 час",
+    "email rate limit exceeded": "Слишком много попыток. Подождите 1 час",
+    "Incorrect password": "Неверный пароль",
     "Failed to log in": "Не удалось войти. Проверьте данные",
+    "Session expired": "Сессия истекла, войдите снова",
+    "Too many requests": "Слишком много попыток. Подождите 1 минуту",
   };
   return errorMap[error] || "Произошла ошибка. Попробуйте ещё раз";
 }
@@ -34,7 +35,8 @@ export default function Login() {
     togglePassword,
     openRegister,
     toggleforgotpassword,
-    setUser,
+    login,
+    checkAuth, // 🔥 Добавляем checkAuth
   } = useContactStore();
 
   const [formData, setFormData] = useState({
@@ -45,6 +47,8 @@ export default function Login() {
   useEffect(() => {
     if (loginState) {
       window.scrollTo({ top: 0, behavior: "smooth" });
+      setError(null);
+      setFormData({ email: "", password: "" });
     }
   }, [loginState]);
 
@@ -55,46 +59,42 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setLoading(true);
     setError(null);
 
+    if (!formData.email || !formData.password) {
+      setError("Заполните все поля");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3010";
+      // 🔥 Логин через store
+      await login(formData.email, formData.password);
 
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      // 🔥 Обновляем состояние авторизации
+      await checkAuth();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to log in");
-      }
-
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser({
-        id: data.user.id,
-        username: data.user.username,
-        email: data.user.email,
-        avatar_url: data.user.avatar_url || "default_cat.jpg",
-        status: data.user.status,
-      });
+      // Закрываем модалку
       toggleLogin();
 
-      window.location.reload();
+      // 🔥 Редирект с обновлением состояния
+      router.push("/dashboard");
+      router.refresh();
     } catch (err: unknown) {
       const rawMessage =
         err instanceof Error ? err.message : "Failed to log in";
-      setError(getRussianErrorMessage(rawMessage));
+
+      if (rawMessage.includes("Too many requests")) {
+        setError("Слишком много попыток входа. Подождите 1 минуту");
+      } else {
+        setError(getRussianErrorMessage(rawMessage));
+      }
+
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -176,17 +176,24 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-[80%] h-[40px] mt-[20px] bg-purple-500 text-white rounded-lg disabled:opacity-50"
+              className="w-[80%] h-[40px] mt-[20px] bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
-              {loading ? "Входим.." : "Войти"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Входим..
+                </span>
+              ) : (
+                "Войти"
+              )}
             </button>
           </form>
 
           <div className="mt-[10px] flex">
             <p>Нет аккаунта?</p>
             <p
-              className="font-semibold text-blue-700 cursor-pointer ml-[5px]"
+              className="font-semibold text-blue-700 cursor-pointer ml-[5px] hover:text-blue-800 transition-colors"
               onClick={() => {
                 toggleLogin();
                 openRegister();

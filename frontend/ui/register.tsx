@@ -1,3 +1,5 @@
+// frontend/components/Contactform.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -6,51 +8,35 @@ import useContactStore from "@/store/states";
 import { LogIn, User, UserPen } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import AvatarWithOverlay from "@/components/AvatarWithOverlay";
-import { apiFetch } from "@/lib/api"; // 🔥 Добавь этот импорт!
 
 function Contactform() {
-  const isAuthenticated = useContactStore((state) => state.isAuthenticated);
-  const user = useContactStore((state) => state.user);
-  const setUser = useContactStore((state) => state.setUser);
-  const toggleRegister = useContactStore((state) => state.toggleRegister);
-  const { profilenavigationState, toggleprofilenavigation } = useContactStore();
+  const {
+    isAuthenticated,
+    user,
+    checkAuth,
+    toggleRegister,
+    profilenavigationState,
+    toggleprofilenavigation,
+    isLoading,
+  } = useContactStore();
 
   const [mounted, setMounted] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
 
-  const avatarUrl = user?.avatar_url || "default_cat.jpg";
   const userId = user?.id;
 
   useEffect(() => {
     setMounted(true);
 
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (!parsedUser.avatar_url) {
-          parsedUser.avatar_url = "default_cat.jpg";
-        }
-        setUser(parsedUser);
-      } catch (err) {
-        localStorage.removeItem("user");
+    const check = async () => {
+      if (!user && !isLoading) {
+        await checkAuth();
       }
-    }
-
-    const token = localStorage.getItem("token");
-    if (token) {
-      apiFetch("/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((data) => {
-          setUser(data);
-          localStorage.setItem("user", JSON.stringify(data));
-        })
-        .catch((err) => {});
-    }
-  }, [setUser]);
+    };
+    check();
+  }, [user, isLoading, checkAuth]);
 
   useEffect(() => {
     if (profilenavigationState) {
@@ -70,7 +56,7 @@ function Contactform() {
     }
   }, [profilenavigationState, shouldRender]);
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="w-[35px] h-[35px] rounded-full bg-gray-200 animate-pulse" />
     );
@@ -85,12 +71,12 @@ function Contactform() {
       {isAuthenticated && user && (
         <div
           onClick={toggleprofilenavigation}
-          className="relative w-[35px] h-[35px]; group"
+          className="relative w-[35px] h-[35px] group"
         >
           <AvatarWithOverlay
             baseAvatar={user?.avatar_url || "default_cat.jpg"}
             overlayImage={user?.equipped_item?.image}
-            alt={user?.username}
+            alt={user?.username || "User"}
             size="md"
           />
         </div>
@@ -99,7 +85,7 @@ function Contactform() {
       {shouldRender && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`cursor-pointer p-[15px] absolute bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[140px] right-0 top-0 mt-[-20px] mr-[-20px] sm:mt-[70px] shadow-md flex flex-col items-center text-black rounded-xl transition-all duration-300 origin-top ${
+          className={`cursor-pointer p-[15px] absolute bg-white z-80 border-[1px] border-gray-300 w-[250px] h-[160px] right-0 top-0 mt-[-20px] mr-[-20px] sm:mt-[70px] shadow-md flex flex-col items-center text-black rounded-xl transition-all duration-300 origin-top ${
             isAnimatingOut
               ? "opacity-0 -translate-y-[20px] scale-95"
               : isAnimatingIn
