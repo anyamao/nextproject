@@ -18,7 +18,6 @@ from core.middleware import (
 # Настройка логирования
 setup_logging()
 
-
 logger = logging.getLogger(__name__)
 
 # ====== СОЗДАНИЕ ПРИЛОЖЕНИЯ ======
@@ -41,8 +40,8 @@ app.add_middleware(LoggingMiddleware)
 # 3. Performance - мониторинг производительности
 app.add_middleware(PerformanceMiddleware)
 
-# 4. Auth - проверка авторизации
-# app.add_middleware(AuthMiddleware)  # Раскомментировать когда нужна защита
+# 4. Auth - проверка авторизации (защищает все маршруты, кроме PUBLIC_PATHS)
+app.add_middleware(AuthMiddleware)
 
 # 5. SecurityHeaders - добавляет заголовки безопасности
 app.add_middleware(SecurityHeadersMiddleware)
@@ -58,8 +57,15 @@ app.add_middleware(
 )
 
 # ====== ПОДКЛЮЧЕНИЕ РОУТЕРОВ ======
+
 try:
     from api.v1.router import router as v1_router
+
+    # 🔥 Проверяем, что роутер не пустой
+    print(f"🔍 Router has {len(v1_router.routes)} routes")
+    for route in v1_router.routes:
+        if hasattr(route, "path"):
+            print(f"  - {route.path}")
 
     app.include_router(v1_router, prefix="/api/v1")
     logger.info("✅ API v1 подключен на /api/v1")

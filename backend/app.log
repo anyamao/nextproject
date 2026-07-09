@@ -4123,3 +4123,1501 @@ WHERE users.id = $1::INTEGER - base.py:1848
 2026-07-08 05:30:11 - sqlalchemy.engine.Engine - INFO - [cached since 27.72s ago] (37,) - base.py:1848
 2026-07-08 05:30:11 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (9.80ms) - middleware.py:38
 2026-07-08 05:30:11 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:30:44 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:30:44 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:30:44 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:30:44 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:30:44 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:30:44 - sqlalchemy.engine.Engine - INFO - [cached since 61.27s ago] (37,) - base.py:1848
+2026-07-08 05:30:44 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (6.60ms) - middleware.py:38
+2026-07-08 05:30:44 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:32:18 - core.rate_limit - INFO - 📦 Rate Limiting in-memory (для разработки) - rate_limit.py:84
+2026-07-08 05:32:18 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:65
+2026-07-08 05:32:18 - main - INFO - ✅ API v1 также доступен без префикса - main.py:69
+2026-07-08 05:32:27 - core.rate_limit - INFO - 📦 Rate Limiting in-memory (для разработки) - rate_limit.py:84
+2026-07-08 05:32:27 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:32:27 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:33:33 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:33:33 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:33:33 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - [generated in 0.00035s] (37,) - base.py:1848
+2026-07-08 05:33:33 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (35.33ms) - middleware.py:38
+2026-07-08 05:33:33 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:33:35 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (5.62ms) - middleware.py:38
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:33:35 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:33:35 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (2.64ms) - middleware.py:38
+2026-07-08 05:34:00 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:34:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:34:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:34:00 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:34:00 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:34:00 - sqlalchemy.engine.Engine - INFO - [cached since 27.6s ago] (37,) - base.py:1848
+2026-07-08 05:34:00 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (8.13ms) - middleware.py:38
+2026-07-08 05:34:00 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:35:10 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:35:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:35:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:35:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:35:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:35:10 - sqlalchemy.engine.Engine - INFO - [cached since 97.04s ago] (37,) - base.py:1848
+2026-07-08 05:35:10 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (10.00ms) - middleware.py:38
+2026-07-08 05:35:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:38:50 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:38:50 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:38:50 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:38:50 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:38:50 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:38:50 - sqlalchemy.engine.Engine - INFO - [cached since 317.6s ago] (37,) - base.py:1848
+2026-07-08 05:38:50 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (4.27ms) - middleware.py:38
+2026-07-08 05:38:50 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:40:10 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:40:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:40:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:40:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:40:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:40:10 - sqlalchemy.engine.Engine - INFO - [cached since 397s ago] (37,) - base.py:1848
+2026-07-08 05:40:10 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (10.65ms) - middleware.py:38
+2026-07-08 05:40:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:45:10 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:45:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:45:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:45:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:45:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:45:10 - sqlalchemy.engine.Engine - INFO - [cached since 697s ago] (37,) - base.py:1848
+2026-07-08 05:45:10 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (13.44ms) - middleware.py:38
+2026-07-08 05:45:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:45:50 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:45:50 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (6.93ms) - middleware.py:38
+2026-07-08 05:45:50 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (5.84ms) - middleware.py:38
+2026-07-08 05:46:02 - core.rate_limit - INFO - 📦 Rate Limiting in-memory (для разработки) - rate_limit.py:84
+2026-07-08 05:46:02 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:46:02 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:27
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (11.15ms) - middleware.py:38
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:27
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (7.65ms) - middleware.py:38
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (11.05ms) - middleware.py:38
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (5.31ms) - middleware.py:38
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - [generated in 0.00060s] (37,) - base.py:1848
+2026-07-08 05:46:06 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (49.12ms) - middleware.py:38
+2026-07-08 05:46:06 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:46:28 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:46:28 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:28 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:28 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:46:28 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:46:28 - sqlalchemy.engine.Engine - INFO - [cached since 21.63s ago] (37,) - base.py:1848
+2026-07-08 05:46:28 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (8.37ms) - middleware.py:38
+2026-07-08 05:46:28 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:27
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (2.20ms) - middleware.py:38
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:27
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (5.97ms) - middleware.py:38
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:46:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (6.99ms) - middleware.py:38
+2026-07-08 05:46:31 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-08 05:46:31 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-08 05:46:31 - sqlalchemy.engine.Engine - INFO - [cached since 24.51s ago] (37,) - base.py:1848
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (4.21ms) - middleware.py:38
+2026-07-08 05:46:31 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (9.54ms) - middleware.py:38
+2026-07-08 05:46:31 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-08 05:47:58 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:47:58 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:47:58 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:48:03 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:48:03 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:48:03 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:48:26 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:48:26 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:48:26 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:48:31 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:48:31 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:48:31 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:48:49 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:48:49 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:48:49 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:48:55 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:48:55 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:48:55 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:49:16 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:49:16 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:49:16 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:49:23 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:49:23 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-08 05:49:23 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-08 05:49:56 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:49:56 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:50:15 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:50:15 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:50:20 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:50:20 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:50:44 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:50:44 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:50:50 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:50:50 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:17 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (1.08ms) - middleware.py:38
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:17 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:17 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (1.44ms) - middleware.py:38
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:27
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:19 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (1.12ms) - middleware.py:38
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:27
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:19 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (1.67ms) - middleware.py:38
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:19 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (2.38ms) - middleware.py:38
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:19 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (0.94ms) - middleware.py:38
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:19 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:19 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (1.53ms) - middleware.py:38
+2026-07-08 05:51:32 - core.middleware - DEBUG - 📥 POST /api/v1/auth/login - middleware.py:27
+2026-07-08 05:51:32 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:32 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:32 - core.middleware - DEBUG - 📤 POST /api/v1/auth/login -> 404 (2.17ms) - middleware.py:38
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:38 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (2.12ms) - middleware.py:38
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📥 POST /api/v1/auth/login - middleware.py:27
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:38 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:38 - core.middleware - DEBUG - 📤 POST /api/v1/auth/login -> 404 (9.94ms) - middleware.py:38
+2026-07-08 05:51:41 - core.middleware - DEBUG - 📥 POST /api/v1/auth/login - middleware.py:27
+2026-07-08 05:51:41 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:51:41 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:51:41 - core.middleware - DEBUG - 📤 POST /api/v1/auth/login -> 404 (7.48ms) - middleware.py:38
+2026-07-08 05:52:21 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:52:21 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:52:21 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:52:21 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (2.57ms) - middleware.py:38
+2026-07-08 05:52:43 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:52:43 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:52:43 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:52:43 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (3.26ms) - middleware.py:38
+2026-07-08 05:52:47 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:52:47 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:52:47 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:52:47 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (1.31ms) - middleware.py:38
+2026-07-08 05:52:49 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:52:49 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:52:49 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:52:49 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (4.55ms) - middleware.py:38
+2026-07-08 05:52:51 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:52:51 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:52:51 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:52:51 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (2.81ms) - middleware.py:38
+2026-07-08 05:54:06 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:54:06 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:55:12 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:55:13 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:27
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (2.17ms) - middleware.py:38
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:27
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:27
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (5.85ms) - middleware.py:38
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (5.75ms) - middleware.py:38
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (4.69ms) - middleware.py:38
+2026-07-08 05:55:13 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (3.01ms) - middleware.py:38
+2026-07-08 05:55:40 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:55:40 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:40 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:40 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (2.26ms) - middleware.py:38
+2026-07-08 05:55:41 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 05:55:41 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 05:55:41 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:55:41 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (2.52ms) - middleware.py:38
+2026-07-08 05:57:40 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:57:40 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:57:40 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:57:40 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (4.28ms) - middleware.py:38
+2026-07-08 05:58:12 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:58:12 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:58:12 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:58:12 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (4.36ms) - middleware.py:38
+2026-07-08 05:58:22 - core.middleware - DEBUG - 📥 GET /health - middleware.py:27
+2026-07-08 05:58:22 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:58:22 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:58:22 - core.middleware - DEBUG - 📤 GET /health -> 200 (2.61ms) - middleware.py:38
+2026-07-08 05:58:35 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:58:35 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:58:35 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:58:35 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (3.41ms) - middleware.py:38
+2026-07-08 05:59:40 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:59:40 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:59:48 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 05:59:48 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 05:59:50 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:59:50 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:59:50 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:59:50 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (2.48ms) - middleware.py:38
+2026-07-08 05:59:59 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:27
+2026-07-08 05:59:59 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:28
+2026-07-08 05:59:59 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 05:59:59 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (2.90ms) - middleware.py:38
+2026-07-08 06:00:13 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:27
+2026-07-08 06:00:13 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:28
+2026-07-08 06:00:13 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:29
+2026-07-08 06:00:13 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (3.78ms) - middleware.py:38
+2026-07-08 06:00:22 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:00:22 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 06:00:23 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:00:23 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 06:00:25 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-08 06:00:25 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-08 06:00:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-08 06:00:25 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (3.16ms) - middleware.py:31
+2026-07-08 06:00:38 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-08 06:00:38 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-08 06:00:38 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-08 06:00:38 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (2.73ms) - middleware.py:31
+2026-07-08 06:00:59 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:00:59 - main - WARNING - ⚠️  Не удалось подключить API роутер: cannot import name 'get_current_user' from 'core.auth' (/home/vika/Projects/Websites/nextproject/backend/core/auth.py) - main.py:71
+2026-07-08 06:01:36 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:01:36 - main - WARNING - ⚠️  Не удалось подключить API роутер: No module named 'models.course' - main.py:71
+2026-07-08 06:01:44 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:01:44 - main - WARNING - ⚠️  Не удалось подключить API роутер: No module named 'models.course' - main.py:71
+2026-07-08 06:01:49 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:01:49 - main - WARNING - ⚠️  Не удалось подключить API роутер: No module named 'models.course' - main.py:71
+2026-07-08 06:01:52 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:01:52 - main - WARNING - ⚠️  Не удалось подключить API роутер: No module named 'models.course' - main.py:71
+2026-07-08 06:01:58 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-08 06:01:58 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-08 06:01:58 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-08 06:01:58 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (3.47ms) - middleware.py:31
+2026-07-08 06:02:05 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-08 06:02:05 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-08 06:02:05 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-08 06:02:05 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (5.29ms) - middleware.py:31
+2026-07-08 06:02:09 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-08 06:02:09 - main - WARNING - ⚠️  Не удалось подключить API роутер: No module named 'models.course' - main.py:71
+2026-07-08 06:02:42 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-10 01:43:03 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-10 01:43:08 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-10 01:43:21 - core.rate_limit - INFO - ✅ Rate Limiting с Redis - rate_limit.py:69
+2026-07-10 01:43:48 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:44:43 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:45:08 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:45:08 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:45:08 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:45:23 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:45:23 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:45:23 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:45:27 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:45:28 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:45:28 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:45:28 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:45:28 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:28 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:28 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 401 (7.01ms) - middleware.py:31
+2026-07-10 01:45:33 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/courses/subjects - no token - middleware.py:66
+2026-07-10 01:45:33 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/articles - no token - middleware.py:66
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/37 - middleware.py:23
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:33 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:33 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/37 -> 404 (38.22ms) - middleware.py:31
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:33 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📥 POST /api/v1/auth/refresh - middleware.py:23
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:33 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 401 (11.44ms) - middleware.py:31
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 401 (5.95ms) - middleware.py:31
+2026-07-10 01:45:33 - core.middleware - DEBUG - 📤 POST /api/v1/auth/refresh -> 401 (9.98ms) - middleware.py:31
+2026-07-10 01:45:35 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/courses/subjects - no token - middleware.py:66
+2026-07-10 01:45:35 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/courses/subjects - no token - middleware.py:66
+2026-07-10 01:45:35 - core.middleware - DEBUG - 📥 POST /api/v1/auth/refresh - middleware.py:23
+2026-07-10 01:45:35 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:35 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:35 - core.middleware - DEBUG - 📤 POST /api/v1/auth/refresh -> 401 (3.79ms) - middleware.py:31
+2026-07-10 01:45:53 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-10 01:45:53 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:53 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:53 - auth - INFO - 📝 Registration attempt: 127@gmail.com from 127.0.0.1 - auth.py:143
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.email = $1::VARCHAR - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - [generated in 0.00342s] ('127@gmail.com',) - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.username = $1::VARCHAR - base.py:1848
+2026-07-10 01:45:53 - sqlalchemy.engine.Engine - INFO - [generated in 0.00041s] ('127',) - base.py:1848
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - INSERT INTO users (email, username, hashed_password, is_active, is_verified, updated_at, avatar_url, status, about_me, first_name, last_name, token_balance, equipped_item_id, registration_ip, last_login, email_verified_at, verification_token) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::BOOLEAN, $6::TIMESTAMP WITHOUT TIME ZONE, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::INTEGER, $13::INTEGER, $14::VARCHAR, $15::TIMESTAMP WITH TIME ZONE, $16::TIMESTAMP WITH TIME ZONE, $17::VARCHAR) RETURNING users.id, users.created_at - base.py:1848
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - [generated in 0.00044s] ('127@gmail.com', '127', '$2b$12$aca.En/47dlS/u013yAii.CFRjhy6HpCyZDGLsf4PDXNBu.kP4oPG', True, False, None, 'https://ui-avatars.com/api/?name=127&background=random&size=128', None, None, None, None, 0, None, '127.0.0.1', None, None, None) - base.py:1848
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - COMMIT - base.py:2718
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - [generated in 0.00063s] (38,) - base.py:1848
+2026-07-10 01:45:54 - auth - INFO - ✅ User registered: 127@gmail.com (ID: 38) - auth.py:178
+2026-07-10 01:45:54 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 201 (456.78ms) - middleware.py:31
+2026-07-10 01:45:54 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:56 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (2.55ms) - middleware.py:31
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:56 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:56 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (7.88ms) - middleware.py:31
+2026-07-10 01:45:56 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:45:56 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:45:56 - sqlalchemy.engine.Engine - INFO - [generated in 0.00047s] (38,) - base.py:1848
+2026-07-10 01:45:56 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (11.32ms) - middleware.py:31
+2026-07-10 01:45:56 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:45:57 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:45:57 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:45:57 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:45:57 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:45:57 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:45:57 - sqlalchemy.engine.Engine - INFO - [cached since 0.4819s ago] (38,) - base.py:1848
+2026-07-10 01:45:57 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (4.40ms) - middleware.py:31
+2026-07-10 01:45:57 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (8.82ms) - middleware.py:31
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (8.61ms) - middleware.py:31
+2026-07-10 01:46:02 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (5.91ms) - middleware.py:31
+2026-07-10 01:46:12 - core.middleware - DEBUG - 📥 POST /api/v1/auth/logout - middleware.py:23
+2026-07-10 01:46:12 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:12 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:12 - auth - INFO - User logged out from 127.0.0.1 - auth.py:258
+2026-07-10 01:46:12 - core.middleware - DEBUG - 📤 POST /api/v1/auth/logout -> 200 (5.19ms) - middleware.py:31
+2026-07-10 01:46:14 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/courses/subjects - no token - middleware.py:66
+2026-07-10 01:46:14 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/articles - no token - middleware.py:66
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:14 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 401 (5.37ms) - middleware.py:31
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:14 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📥 POST /api/v1/auth/refresh - middleware.py:23
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:14 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 401 (5.90ms) - middleware.py:31
+2026-07-10 01:46:14 - core.middleware - DEBUG - 📤 POST /api/v1/auth/refresh -> 401 (4.22ms) - middleware.py:31
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📥 POST /api/v1/auth/login - middleware.py:23
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:24 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:24 - auth - INFO - 🔑 Login attempt: 127@gmail.com from 127.0.0.1 - auth.py:215
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.email = $1::VARCHAR - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - [cached since 30.89s ago] ('127@gmail.com',) - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - [cached since 28.05s ago] (38,) - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - UPDATE users SET updated_at=now(), last_login=$1::TIMESTAMP WITH TIME ZONE WHERE users.id = $2::INTEGER - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - [generated in 0.00027s] (datetime.datetime(2026, 7, 9, 18, 46, 24, 930832), 38) - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - COMMIT - base.py:2718
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - [cached since 30.86s ago] (38,) - base.py:1848
+2026-07-10 01:46:24 - auth - INFO - ✅ User logged in: 127@gmail.com (ID: 38) - auth.py:227
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📤 POST /api/v1/auth/login -> 200 (310.26ms) - middleware.py:31
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:24 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - [cached since 28.12s ago] (38,) - base.py:1848
+2026-07-10 01:46:24 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (5.50ms) - middleware.py:31
+2026-07-10 01:46:24 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (11.91ms) - middleware.py:31
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (7.57ms) - middleware.py:31
+2026-07-10 01:46:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:25 - sqlalchemy.engine.Engine - INFO - [cached since 28.91s ago] (38,) - base.py:1848
+2026-07-10 01:46:25 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (9.48ms) - middleware.py:31
+2026-07-10 01:46:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:27 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:27 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:27 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:27 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:27 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:27 - sqlalchemy.engine.Engine - INFO - [cached since 30.8s ago] (38,) - base.py:1848
+2026-07-10 01:46:27 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (8.43ms) - middleware.py:31
+2026-07-10 01:46:27 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:37 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:37 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:37 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:37 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:37 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:37 - sqlalchemy.engine.Engine - INFO - [cached since 41.11s ago] (38,) - base.py:1848
+2026-07-10 01:46:37 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (5.59ms) - middleware.py:31
+2026-07-10 01:46:37 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:46:58 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:46:58 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:46:58 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:46:58 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:46:58 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:46:58 - sqlalchemy.engine.Engine - INFO - [cached since 61.45s ago] (38,) - base.py:1848
+2026-07-10 01:46:58 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (7.57ms) - middleware.py:31
+2026-07-10 01:46:58 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:01 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:01 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (4.43ms) - middleware.py:31
+2026-07-10 01:47:01 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (3.17ms) - middleware.py:31
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:07 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:07 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (4.25ms) - middleware.py:31
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:07 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (4.31ms) - middleware.py:31
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:07 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (7.09ms) - middleware.py:31
+2026-07-10 01:47:07 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:47:07 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:47:07 - sqlalchemy.engine.Engine - INFO - [cached since 70.24s ago] (38,) - base.py:1848
+2026-07-10 01:47:07 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (11.80ms) - middleware.py:31
+2026-07-10 01:47:07 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:47:44 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:47:44 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:44 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:44 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:47:44 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:47:44 - sqlalchemy.engine.Engine - INFO - [cached since 107.8s ago] (38,) - base.py:1848
+2026-07-10 01:47:44 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (5.78ms) - middleware.py:31
+2026-07-10 01:47:44 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:47:58 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:47:58 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:47:58 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:47:58 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:47:58 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:47:58 - sqlalchemy.engine.Engine - INFO - [cached since 121.4s ago] (38,) - base.py:1848
+2026-07-10 01:47:58 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (6.09ms) - middleware.py:31
+2026-07-10 01:47:58 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:49:48 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:49:48 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:49:48 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:50:19 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:50:19 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:50:19 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:50:40 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:50:40 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:50:40 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:50:54 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:50:54 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:50:54 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:51:00 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:51:00 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:51:00 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:51:06 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:51:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - [generated in 0.00055s] (38,) - base.py:1848
+2026-07-10 01:51:06 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (41.35ms) - middleware.py:31
+2026-07-10 01:51:06 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:09 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (24.06ms) - middleware.py:31
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:09 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:09 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:09 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (6.92ms) - middleware.py:31
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (7.44ms) - middleware.py:31
+2026-07-10 01:51:09 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:51:09 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:51:09 - sqlalchemy.engine.Engine - INFO - [cached since 2.626s ago] (38,) - base.py:1848
+2026-07-10 01:51:09 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (13.62ms) - middleware.py:31
+2026-07-10 01:51:09 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:22 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:22 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:22 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (9.26ms) - middleware.py:31
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (5.35ms) - middleware.py:31
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (3.86ms) - middleware.py:31
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:22 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:22 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:51:22 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:51:22 - sqlalchemy.engine.Engine - INFO - [cached since 15.95s ago] (38,) - base.py:1848
+2026-07-10 01:51:22 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (14.74ms) - middleware.py:31
+2026-07-10 01:51:22 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:51:43 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/test - no token - middleware.py:66
+2026-07-10 01:51:55 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:51:55 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:51:55 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:55 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:51:55 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:51:55 - sqlalchemy.engine.Engine - INFO - [cached since 48.81s ago] (38,) - base.py:1848
+2026-07-10 01:51:55 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (4.20ms) - middleware.py:31
+2026-07-10 01:51:55 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:51:59 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:51:59 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-10 01:51:59 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:51:59 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (2.55ms) - middleware.py:31
+2026-07-10 01:52:00 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:52:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:52:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:52:00 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:52:00 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:52:00 - sqlalchemy.engine.Engine - INFO - [cached since 54.02s ago] (38,) - base.py:1848
+2026-07-10 01:52:00 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (9.16ms) - middleware.py:31
+2026-07-10 01:52:00 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:53:47 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:53:47 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:53:47 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:54:12 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:54:12 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:54:12 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:54:56 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:54:56 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:54:56 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:54:58 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:54:58 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:54:58 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - [generated in 0.00034s] (38,) - base.py:1848
+2026-07-10 01:54:58 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (36.62ms) - middleware.py:31
+2026-07-10 01:54:58 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (22.29ms) - middleware.py:31
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (8.14ms) - middleware.py:31
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (6.58ms) - middleware.py:31
+2026-07-10 01:55:00 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:55:00 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:55:00 - sqlalchemy.engine.Engine - INFO - [cached since 2.489s ago] (38,) - base.py:1848
+2026-07-10 01:55:00 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (12.32ms) - middleware.py:31
+2026-07-10 01:55:00 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (2.76ms) - middleware.py:31
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (2.28ms) - middleware.py:31
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (2.12ms) - middleware.py:31
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:55:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:06 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:55:06 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:55:06 - sqlalchemy.engine.Engine - INFO - [cached since 8.258s ago] (38,) - base.py:1848
+2026-07-10 01:55:06 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (7.74ms) - middleware.py:31
+2026-07-10 01:55:06 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:55:31 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:55:31 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-10 01:55:31 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:55:31 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (2.02ms) - middleware.py:31
+2026-07-10 01:55:40 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:55:40 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:55:40 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:56:48 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:56:48 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:64
+2026-07-10 01:56:48 - main - INFO - ✅ API v1 также доступен без префикса - main.py:68
+2026-07-10 01:57:27 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:57:27 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 01:57:27 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 01:57:29 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:57:29 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 01:57:29 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 01:57:34 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:57:34 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:57:34 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - [generated in 0.00035s] (38,) - base.py:1848
+2026-07-10 01:57:34 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (35.54ms) - middleware.py:31
+2026-07-10 01:57:34 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:57:37 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:57:37 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (27.16ms) - middleware.py:31
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:57:37 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:57:37 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (6.84ms) - middleware.py:31
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (6.02ms) - middleware.py:31
+2026-07-10 01:57:37 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:57:37 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:57:37 - sqlalchemy.engine.Engine - INFO - [cached since 2.997s ago] (38,) - base.py:1848
+2026-07-10 01:57:37 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (10.21ms) - middleware.py:31
+2026-07-10 01:57:37 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:57:55 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/test - no token - middleware.py:66
+2026-07-10 01:58:02 - core.middleware - WARNING - 🚫 Unauthorized access to /api/v1/profile/test - no token - middleware.py:66
+2026-07-10 01:58:06 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:58:06 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-10 01:58:06 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:06 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (1.98ms) - middleware.py:31
+2026-07-10 01:58:49 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:58:49 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 01:58:49 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 01:58:51 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:58:51 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:58:51 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - [generated in 0.00061s] (38,) - base.py:1848
+2026-07-10 01:58:51 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (39.60ms) - middleware.py:31
+2026-07-10 01:58:51 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:58:53 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:58:53 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (31.62ms) - middleware.py:31
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:58:53 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:58:53 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (10.61ms) - middleware.py:31
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (7.48ms) - middleware.py:31
+2026-07-10 01:58:53 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:58:53 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:58:53 - sqlalchemy.engine.Engine - INFO - [cached since 2.463s ago] (38,) - base.py:1848
+2026-07-10 01:58:53 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (13.25ms) - middleware.py:31
+2026-07-10 01:58:53 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:59:08 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:59:08 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 01:59:08 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 01:59:11 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 01:59:11 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 01:59:11 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 01:59:12 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:59:12 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:59:12 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - [generated in 0.00043s] (38,) - base.py:1848
+2026-07-10 01:59:12 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (35.43ms) - middleware.py:31
+2026-07-10 01:59:12 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:59:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (26.67ms) - middleware.py:31
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:59:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:59:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 01:59:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (11.89ms) - middleware.py:31
+2026-07-10 01:59:15 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (10.41ms) - middleware.py:31
+2026-07-10 01:59:16 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 01:59:16 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 01:59:16 - sqlalchemy.engine.Engine - INFO - [cached since 3.192s ago] (38,) - base.py:1848
+2026-07-10 01:59:16 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (27.30ms) - middleware.py:31
+2026-07-10 01:59:16 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:00:29 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:00:29 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:00:29 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:00:51 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:00:51 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:00:51 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:01:52 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:01:52 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:01:52 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:02:17 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:02:17 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:02:17 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:02:38 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/38 - middleware.py:23
+2026-07-10 02:02:38 - core.middleware - DEBUG - 📍 Origin: unknown - middleware.py:24
+2026-07-10 02:02:38 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:02:38 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/38 -> 404 (17.40ms) - middleware.py:31
+2026-07-10 02:03:44 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:03:44 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:03:44 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:04:02 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:04:02 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:04:02 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:04:10 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:04:10 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:04:10 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:12 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (19.48ms) - middleware.py:31
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:12 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:12 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (1.40ms) - middleware.py:31
+2026-07-10 02:04:15 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:04:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:15 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (2.61ms) - middleware.py:31
+2026-07-10 02:04:17 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:04:17 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:17 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:17 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 404 (3.91ms) - middleware.py:31
+2026-07-10 02:04:35 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-10 02:04:35 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:35 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:35 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 404 (2.41ms) - middleware.py:31
+2026-07-10 02:04:52 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:04:52 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:04:52 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:04:57 - core.rate_limit - INFO - ✅ Rate Limiting (in-memory) - rate_limit.py:20
+2026-07-10 02:04:57 - main - INFO - ✅ API v1 подключен на /api/v1 - main.py:71
+2026-07-10 02:04:57 - main - INFO - ✅ API v1 также доступен без префикса - main.py:75
+2026-07-10 02:04:58 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:04:58 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:58 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version() - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - select current_schema() - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - [raw sql] () - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - [generated in 0.00036s] (38,) - base.py:1848
+2026-07-10 02:04:58 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (42.29ms) - middleware.py:31
+2026-07-10 02:04:58 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:04:59 - core.middleware - DEBUG - 📥 POST /api/v1/auth/register - middleware.py:23
+2026-07-10 02:04:59 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:04:59 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:04:59 - auth - INFO - 📝 Registration attempt: 129@gmail.com from 127.0.0.1 - auth.py:143
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.email = $1::VARCHAR - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - [generated in 0.00063s] ('129@gmail.com',) - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.username = $1::VARCHAR - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - [generated in 0.00047s] ('129',) - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - INSERT INTO users (email, username, hashed_password, is_active, is_verified, updated_at, avatar_url, status, about_me, first_name, last_name, token_balance, equipped_item_id, registration_ip, last_login, email_verified_at, verification_token) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::BOOLEAN, $6::TIMESTAMP WITHOUT TIME ZONE, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::INTEGER, $13::INTEGER, $14::VARCHAR, $15::TIMESTAMP WITH TIME ZONE, $16::TIMESTAMP WITH TIME ZONE, $17::VARCHAR) RETURNING users.id, users.created_at - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - [generated in 0.00054s] ('129@gmail.com', '129', '$2b$12$/8H.qJxReyCigoW302IlPuYikGeKnm/3fA8Ox9NxzcZ3Ln44N631m', True, False, None, 'https://ui-avatars.com/api/?name=129&background=random&size=128', None, None, None, None, 0, None, '127.0.0.1', None, None, None) - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - COMMIT - base.py:2718
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - [generated in 0.00031s] (39,) - base.py:1848
+2026-07-10 02:04:59 - auth - INFO - ✅ User registered: 129@gmail.com (ID: 39) - auth.py:178
+2026-07-10 02:04:59 - core.middleware - DEBUG - 📤 POST /api/v1/auth/register -> 201 (314.72ms) - middleware.py:31
+2026-07-10 02:04:59 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:02 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (21.39ms) - middleware.py:31
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (4.06ms) - middleware.py:31
+2026-07-10 02:05:02 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:02 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:02 - sqlalchemy.engine.Engine - INFO - [cached since 3.845s ago] (39,) - base.py:1848
+2026-07-10 02:05:02 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (8.13ms) - middleware.py:31
+2026-07-10 02:05:02 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:04 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:04 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:04 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - [generated in 0.00036s] (39,) - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - [cached since 0.005445s ago] (39,) - base.py:1848
+2026-07-10 02:05:04 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - [cached since 0.007863s ago] (39,) - base.py:1848
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (28.26ms) - middleware.py:31
+2026-07-10 02:05:04 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:04 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (22.36ms) - middleware.py:31
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (27.33ms) - middleware.py:31
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/achievements - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (6.36ms) - middleware.py:31
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/courses - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - [cached since 6.31s ago] (39,) - base.py:1848
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/courses -> 200 (7.44ms) - middleware.py:31
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (4.05ms) - middleware.py:31
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/achievements -> 200 (18.34ms) - middleware.py:31
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📥 GET /api/v1/profile/test-stats - middleware.py:23
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:04 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - [cached since 6.378s ago] (39,) - base.py:1848
+2026-07-10 02:05:04 - core.middleware - DEBUG - 📤 GET /api/v1/profile/test-stats -> 200 (16.45ms) - middleware.py:31
+2026-07-10 02:05:04 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (11.69ms) - middleware.py:31
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:25 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - [cached since 27.44s ago] (39,) - base.py:1848
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (11.00ms) - middleware.py:31
+2026-07-10 02:05:25 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:25 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - [cached since 21.19s ago] (39,) - base.py:1848
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (20.73ms) - middleware.py:31
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - [cached since 21.19s ago] (39,) - base.py:1848
+2026-07-10 02:05:25 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:25 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (22.00ms) - middleware.py:31
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (15.26ms) - middleware.py:31
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/achievements - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - [cached since 27.49s ago] (39,) - base.py:1848
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (6.74ms) - middleware.py:31
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/courses - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/achievements -> 200 (13.10ms) - middleware.py:31
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/courses -> 200 (3.81ms) - middleware.py:31
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📥 GET /api/v1/profile/test-stats - middleware.py:23
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:25 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - [cached since 27.53s ago] (39,) - base.py:1848
+2026-07-10 02:05:25 - core.middleware - DEBUG - 📤 GET /api/v1/profile/test-stats -> 200 (7.02ms) - middleware.py:31
+2026-07-10 02:05:25 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (7.26ms) - middleware.py:31
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:39 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:05:39 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (14.44ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - [cached since 34.97s ago] (39,) - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - [cached since 34.97s ago] (39,) - base.py:1848
+2026-07-10 02:05:39 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - [cached since 41.23s ago] (39,) - base.py:1848
+2026-07-10 02:05:39 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (26.53ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (23.41ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (30.03ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/achievements - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/courses - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (11.51ms) - middleware.py:31
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/courses -> 200 (2.73ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - [cached since 41.28s ago] (39,) - base.py:1848
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/achievements -> 200 (15.34ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📥 GET /api/v1/profile/test-stats - middleware.py:23
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - [cached since 41.32s ago] (39,) - base.py:1848
+2026-07-10 02:05:39 - core.middleware - DEBUG - 📤 GET /api/v1/profile/test-stats -> 200 (9.21ms) - middleware.py:31
+2026-07-10 02:05:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:41 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:05:41 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:41 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:41 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:41 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:41 - sqlalchemy.engine.Engine - INFO - [cached since 42.7s ago] (39,) - base.py:1848
+2026-07-10 02:05:41 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (17.69ms) - middleware.py:31
+2026-07-10 02:05:41 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:05:50 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:05:50 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:05:50 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:05:50 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:05:50 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:05:50 - sqlalchemy.engine.Engine - INFO - [cached since 51.83s ago] (39,) - base.py:1848
+2026-07-10 02:05:50 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (13.20ms) - middleware.py:31
+2026-07-10 02:05:50 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:00 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:00 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:00 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:00 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:00 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:00 - sqlalchemy.engine.Engine - INFO - [cached since 62.34s ago] (39,) - base.py:1848
+2026-07-10 02:06:00 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (4.00ms) - middleware.py:31
+2026-07-10 02:06:00 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:05 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:05 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (8.04ms) - middleware.py:31
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:05 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (3.83ms) - middleware.py:31
+2026-07-10 02:06:05 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:05 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:05 - sqlalchemy.engine.Engine - INFO - [cached since 66.67s ago] (39,) - base.py:1848
+2026-07-10 02:06:05 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (13.89ms) - middleware.py:31
+2026-07-10 02:06:05 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:08 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:08 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:08 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:08 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:08 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:08 - sqlalchemy.engine.Engine - INFO - [cached since 70.06s ago] (39,) - base.py:1848
+2026-07-10 02:06:08 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (18.77ms) - middleware.py:31
+2026-07-10 02:06:08 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:06:10 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39 - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:06:10 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:06:10 - profile - INFO - 📖 Getting public profile for user_id=39 - profile.py:33
+2026-07-10 02:06:10 - services.profile_service - INFO - 📦 Getting public profile for user 39 - profile_service.py:21
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - [cached since 65.78s ago] (39,) - base.py:1848
+2026-07-10 02:06:10 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - [cached since 65.78s ago] (39,) - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER AND users.is_active = true - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - [cached since 65.78s ago] (39,) - base.py:1848
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (29.19ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:10 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:06:10 - profile - INFO - ✅ Public profile viewed: user_id=39 - profile.py:44
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (18.58ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39 -> 200 (18.50ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (3.25ms) - middleware.py:31
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/courses - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/courses -> 200 (8.15ms) - middleware.py:31
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/public/39/achievements - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/achievements - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/public/39/achievements -> 200 (7.56ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - [cached since 72.09s ago] (39,) - base.py:1848
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/achievements -> 200 (13.48ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📥 GET /api/v1/profile/test-stats - middleware.py:23
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:10 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - [cached since 72.13s ago] (39,) - base.py:1848
+2026-07-10 02:06:10 - core.middleware - DEBUG - 📤 GET /api/v1/profile/test-stats -> 200 (7.46ms) - middleware.py:31
+2026-07-10 02:06:10 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:11 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:11 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:11 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:11 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:11 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:11 - sqlalchemy.engine.Engine - INFO - [cached since 73.01s ago] (39,) - base.py:1848
+2026-07-10 02:06:11 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (8.87ms) - middleware.py:31
+2026-07-10 02:06:11 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:15 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:15 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:15 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:15 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:15 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:15 - sqlalchemy.engine.Engine - INFO - [cached since 77.54s ago] (39,) - base.py:1848
+2026-07-10 02:06:15 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (7.44ms) - middleware.py:31
+2026-07-10 02:06:15 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:21 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (3.09ms) - middleware.py:31
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:21 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:21 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (3.82ms) - middleware.py:31
+2026-07-10 02:06:21 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:21 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:21 - sqlalchemy.engine.Engine - INFO - [cached since 82.66s ago] (39,) - base.py:1848
+2026-07-10 02:06:21 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (5.53ms) - middleware.py:31
+2026-07-10 02:06:21 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:34 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:34 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (7.37ms) - middleware.py:31
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:34 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (8.21ms) - middleware.py:31
+2026-07-10 02:06:34 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:34 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:34 - sqlalchemy.engine.Engine - INFO - [cached since 96.24s ago] (39,) - base.py:1848
+2026-07-10 02:06:34 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (11.94ms) - middleware.py:31
+2026-07-10 02:06:34 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:36 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:36 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:36 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:36 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:36 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:36 - sqlalchemy.engine.Engine - INFO - [cached since 98.24s ago] (39,) - base.py:1848
+2026-07-10 02:06:36 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (18.48ms) - middleware.py:31
+2026-07-10 02:06:36 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📥 GET /api/v1/courses/subjects - middleware.py:23
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📤 GET /api/v1/courses/subjects -> 404 (7.76ms) - middleware.py:31
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📥 GET /api/v1/articles - middleware.py:23
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:39 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📤 GET /api/v1/articles -> 404 (4.86ms) - middleware.py:31
+2026-07-10 02:06:39 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:39 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:39 - sqlalchemy.engine.Engine - INFO - [cached since 100.7s ago] (39,) - base.py:1848
+2026-07-10 02:06:39 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (9.63ms) - middleware.py:31
+2026-07-10 02:06:39 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:41 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:41 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:41 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:41 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:41 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:41 - sqlalchemy.engine.Engine - INFO - [cached since 103.4s ago] (39,) - base.py:1848
+2026-07-10 02:06:41 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (11.74ms) - middleware.py:31
+2026-07-10 02:06:41 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
+2026-07-10 02:06:51 - core.middleware - DEBUG - 📥 GET /api/v1/auth/me - middleware.py:23
+2026-07-10 02:06:51 - core.middleware - DEBUG - 📍 Origin: http://localhost:3010 - middleware.py:24
+2026-07-10 02:06:51 - core.middleware - DEBUG - 👤 IP: 127.0.0.1 - middleware.py:25
+2026-07-10 02:06:51 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit) - base.py:2712
+2026-07-10 02:06:51 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.username, users.hashed_password, users.is_active, users.is_verified, users.created_at, users.updated_at, users.avatar_url, users.status, users.about_me, users.first_name, users.last_name, users.token_balance, users.equipped_item_id, users.registration_ip, users.last_login, users.email_verified_at, users.verification_token 
+FROM users 
+WHERE users.id = $1::INTEGER - base.py:1848
+2026-07-10 02:06:51 - sqlalchemy.engine.Engine - INFO - [cached since 112.9s ago] (39,) - base.py:1848
+2026-07-10 02:06:51 - core.middleware - DEBUG - 📤 GET /api/v1/auth/me -> 200 (4.81ms) - middleware.py:31
+2026-07-10 02:06:51 - sqlalchemy.engine.Engine - INFO - ROLLBACK - base.py:2715
