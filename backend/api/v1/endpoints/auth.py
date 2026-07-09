@@ -74,6 +74,18 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+async def get_current_user_optional(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """
+    Получение текущего пользователя (опционально).
+    Если токен не передан - возвращает None.
+    """
+    try:
+        return await get_current_user(request, db)
+    except HTTPException:
+        return None
 # ====== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======
 
 def get_password_hash(password: str) -> str:

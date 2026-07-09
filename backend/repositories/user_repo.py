@@ -1,7 +1,7 @@
 # repositories/user_repo.py
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from typing import Optional, Dict, Any
 from models.user import User
 
@@ -11,10 +11,7 @@ class UserRepository:
         self.db = db
 
     async def create(self, user_data: Dict[str, Any]) -> User:
-        """
-        Создание пользователя
-        """
-        # 🔥 Фильтруем только те поля, которые есть в модели
+        """Создание пользователя"""
         valid_fields = [
             "email",
             "username",
@@ -61,7 +58,6 @@ class UserRepository:
         """Обновление пользователя"""
         user = await self.get_by_id(user_id)
         if user:
-            # 🔥 Фильтруем только валидные поля
             valid_fields = [
                 "email",
                 "username",

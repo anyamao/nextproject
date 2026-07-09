@@ -1,3 +1,5 @@
+// frontend/app/profile-settings/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,28 +23,23 @@ type UserProfile = {
   id: number;
   username: string;
   email: string;
-  avatar_url: string;
+  avatar_url: string | null;
   first_name: string | null;
   about_me: string | null;
   created_at?: string;
   last_name: string | null;
   status: string | null;
+  token_balance: number;
 };
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { setUser, toggleLogin } = useContactStore();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const { user, setUser, isAuthenticated, checkAuth } = useContactStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [aboutMe, setAboutMe] = useState("");
-  const [status, setStatus] = useState("");
-  const [username, setUsername] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState("default_cat.jpg");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -50,6 +47,15 @@ export default function ProfileSettingsPage() {
     message: string;
     type?: "success" | "error" | "info";
   } | null>(null);
+
+  // 🔥 Форма
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
+  const [status, setStatus] = useState("");
+  const [username, setUsername] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("default_cat.jpg");
+
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     onConfirm: () => void;
@@ -69,41 +75,77 @@ export default function ProfileSettingsPage() {
     setToast({ message, type });
   };
 
+  // 🔥 Проверка авторизации через store
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/auth/login");
-          return;
-        }
-
-        const data = await apiFetch("/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } catch (err: any) {
-        setError("Не удалось загрузить профиль");
-        showToast("Не удалось загрузить профиль", "error");
-        if (err?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          router.push("/auth/login");
-        }
-      } finally {
-        setLoading(false);
+    const checkAuthAndLoad = async () => {
+      // Проверяем авторизацию
+      if (!isAuthenticated) {
+        await checkAuth();
       }
+
+      // Если все еще не авторизован - редирект
+      if (!useContactStore.getState().isAuthenticated) {
+        router.push("/login");
+        return;
+      }
+
+      // Загружаем профиль
+      await fetchProfile();
     };
 
-    fetchProfile();
-  }, [router]);
+    checkAuthAndLoad();
+  }, [isAuthenticated]);
 
-  useEffect(() => {}, [aboutMe, status]);
+  // 🔥 Загрузка профиля через apiFetch (с cookie)
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
 
+      // 🔥 Используем apiFetch - он автоматически отправляет cookie
+      const data = await apiFetch("/profile/me");
+
+      setProfile(data);
+
+      // Заполняем форму
+      setUsername(data.username || "");
+      setFirstName(data.first_name || "");
+      setLastName(data.last_name || "");
+      setStatus(data.status || "");
+      setAboutMe(data.about_me || "");
+      setSelectedAvatar(data.avatar_url || "default_cat.jpg");
+
+      // Обновляем user в store
+      if (data) {
+        setUser({
+          id: data.id,
+          email: data.email,
+          username: data.username,
+          avatar_url: data.avatar_url || "default_cat.jpg",
+          status: data.status,
+        });
+      }
+    } catch (err: any) {
+      console.error("❌ Failed to load profile:", err);
+
+      if (err?.status === 401) {
+        // Если не авторизован - редирект на логин
+        router.push("/login");
+      } else {
+        setError("Не удалось загрузить профиль");
+        showToast("Не удалось загрузить профиль", "error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔥 Сохранение профиля
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!username.trim() || username.length < 3) {
-      setError("Имя должно содержать минимум 3 символа");
-      showToast("Имя должно содержать минимум 3 символа", "error");
+      setError("Имя пользователя должно содержать минимум 3 символа");
+      showToast("Имя пользователя должно содержать минимум 3 символа", "error");
       return;
     }
 
@@ -112,14 +154,9 @@ export default function ProfileSettingsPage() {
     setSuccess(false);
 
     try {
-      const token = localStorage.getItem("token");
-
-      const updated = await apiFetch("/profile/settings", {
+      // 🔥 Используем apiFetch
+      const updated = await apiFetch("/profile/update", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           username: username.trim(),
           first_name: firstName.trim() || null,
@@ -132,19 +169,15 @@ export default function ProfileSettingsPage() {
 
       setProfile(updated);
 
-      const newUser = {
+      // Обновляем user в store
+      setUser({
         id: updated.id,
         email: updated.email,
         username: updated.username,
-        avatar_url: updated.avatar_url ?? selectedAvatar,
-        status: updated.status ?? status,
-        first_name: updated.first_name ?? firstName,
-        last_name: updated.last_name ?? lastName,
-        about_me: updated.about_me ?? aboutMe,
-      };
+        avatar_url: updated.avatar_url || selectedAvatar,
+        status: updated.status,
+      });
 
-      localStorage.setItem("user", JSON.stringify(newUser));
-      setUser(newUser);
       setSuccess(true);
       showToast("Профиль успешно обновлён!", "success");
       setTimeout(() => setSuccess(false), 3000);
@@ -156,23 +189,23 @@ export default function ProfileSettingsPage() {
     }
   };
 
+  // 🔥 Удаление аккаунта
   const handleDeleteAccount = async () => {
     setDeleting(true);
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-
       await apiFetch("/profile/delete", {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // Очищаем состояние
       setUser(null);
-      toggleLogin();
+
+      // Показываем уведомление
       showToast("Аккаунт успешно удалён", "success");
+
+      // Редирект на главную
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -196,10 +229,23 @@ export default function ProfileSettingsPage() {
     });
   };
 
+  // 🔥 Загрузка
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
+      </main>
+    );
+  }
+
+  // 🔥 Если не авторизован
+  if (!useContactStore.getState().isAuthenticated) {
+    return (
+      <main className="flex-1 flex flex-col items-center justify-center py-20 px-4">
+        <p className="text-red-600 text-lg mb-4">Вы не авторизованы</p>
+        <Link href="/login" className="text-purple-600 hover:underline">
+          Войти
+        </Link>
       </main>
     );
   }
@@ -246,11 +292,12 @@ export default function ProfileSettingsPage() {
           className="bg-pink-400 px-[20px] flex hover:bg-pink-500 duration-300 cursor-pointer flex-row items-center py-[5px] text-pink-50 rounded-lg"
         >
           магазин
-          <ChevronRight className="w-4 h-4 ml-[5px]"></ChevronRight>
-          <Sparkles className="text-pink-400 w-10 absolute mb-[5px] ml-[-20px] -rotate-12 left-0 bottom-0 h-10"></Sparkles>
-          <Sparkles className="text-pink-400 w-9 absolute mb-[10px] mr-[-15px] rotate-12 right-0 bottom-0 h-9"></Sparkles>
+          <ChevronRight className="w-4 h-4 ml-[5px]" />
+          <Sparkles className="text-pink-400 w-10 absolute mb-[5px] ml-[-20px] -rotate-12 left-0 bottom-0 h-10" />
+          <Sparkles className="text-pink-400 w-9 absolute mb-[10px] mr-[-15px] rotate-12 right-0 bottom-0 h-9" />
         </Link>
       </div>
+
       <form onSubmit={handleSaveProfile} className="w-full space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-xs">
           <AvatarSelector
@@ -259,8 +306,8 @@ export default function ProfileSettingsPage() {
           />
         </div>
 
-        <div className="bg-purple-500 rotate-2 my-[30px] md:p-8 p-2  rounded-lg shadow-xs">
-          <div className="flex flex-col -rotate-2 p-[20px] rounded-lg  bg-purple-200">
+        <div className="bg-purple-500 rotate-2 my-[30px] md:p-8 p-2 rounded-lg shadow-xs">
+          <div className="flex flex-col -rotate-2 p-[20px] rounded-lg bg-purple-200">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Обо мне
             </h2>
@@ -291,8 +338,8 @@ export default function ProfileSettingsPage() {
                 </p>
               )}
             </div>
+
             <div className="space-y-4 mt-[10px]">
-              {/* Статус */}
               <div>
                 <label className="block text-sm font-semibold text-purple-900 mb-2">
                   Статус
@@ -302,7 +349,7 @@ export default function ProfileSettingsPage() {
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   maxLength={200}
-                  className="w-full p-3  focus:ring-2 focus:ring-purple-500  rounded-lg bg-white outline-none transition"
+                  className="w-full p-3 focus:ring-2 focus:ring-purple-500 rounded-lg bg-white outline-none transition"
                   placeholder="Например: 🎓 Студент | 💻 Разработчик"
                   disabled={saving}
                 />
@@ -329,6 +376,7 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
         </div>
+
         <div className="bg-white p-6 rounded-lg shadow-xs">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Данные для сертификата
@@ -347,7 +395,6 @@ export default function ProfileSettingsPage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
                 placeholder="Иван"
                 disabled={saving}
@@ -361,7 +408,6 @@ export default function ProfileSettingsPage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
                 placeholder="Иванов"
                 disabled={saving}
@@ -369,6 +415,7 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
         </div>
+
         <button
           type="submit"
           disabled={saving || !username.trim() || username.length < 3}
@@ -400,7 +447,7 @@ export default function ProfileSettingsPage() {
             type="button"
             onClick={openDeleteConfirmDialog}
             disabled={deleting}
-            className="w-full py-3 bg-red-600 text-white  border-red-200 rounded-xl font-semibold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-red-600 text-white border-red-200 rounded-xl font-semibold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Trash2 className="w-5 h-5" /> Удалить аккаунт
           </button>
