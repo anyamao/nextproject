@@ -38,47 +38,73 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# core/middleware.py - обновленный AuthMiddleware
+
+
 class AuthMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware для проверки авторизации.
-    Пропускает все запросы, которые начинаются с /api/v1/auth/
-    """
+    """Middleware для проверки авторизации"""
+
+    # 🔥 ПУБЛИЧНЫЕ МАРШРУТЫ (не требуют авторизации)
+    PUBLIC_PATHS: List[str] = [
+        # Системные
+        "/",
+        "/health",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        # Аутентификация
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/test",
+        "/auth/register",
+        "/auth/login",
+        "/auth/refresh",
+        "/auth/test",
+        # 🔥 КУРСЫ (ПУБЛИЧНЫЕ)
+        "/api/v1/courses/subjects",
+        "/api/v1/courses/",
+        "/courses/subjects",
+        "/courses/",
+        # Профиль (публичный)
+        "/api/v1/profile/public",
+        "/profile/public",
+    ]
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
-        # 🔥 ПРОПУСКАЕМ ВСЕ АУТЕНТИФИКАЦИОННЫЕ МАРШРУТЫ
-        if path.startswith("/api/v1/auth/") or path.startswith("/auth/"):
+        # 🔥 Пропускаем все пути, начинающиеся с /api/v1/courses/
+        if path.startswith("/api/v1/courses/"):
             return await call_next(request)
 
-        # 🔥 ПРОПУСКАЕМ ПУБЛИЧНЫЕ ПРОФИЛИ
-        if "/profile/public" in path:
+        # 🔥 Пропускаем /courses/ без префикса
+        if path.startswith("/courses/"):
             return await call_next(request)
 
-        # 🔥 ПРОПУСКАЕМ HEALTH, DOCS, ROOT
-        if path in ["/", "/health", "/docs", "/redoc", "/openapi.json"]:
+        # Проверяем остальные публичные пути
+        is_public = any(path.startswith(p) for p in self.PUBLIC_PATHS)
+
+        if is_public:
             return await call_next(request)
 
-        # 🔥 ВСЕ ОСТАЛЬНЫЕ МАРШРУТЫ ТРЕБУЮТ АВТОРИЗАЦИЮ
+        # 🔥 ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизацию)
         token = request.cookies.get("access_token")
 
         if not token:
-            logger.warning(f"🚫 Unauthorized access to {path} - no token")
             return JSONResponse(
                 status_code=401, content={"detail": "Authentication required"}
             )
 
         payload = decode_token(token)
         if not payload:
-            logger.warning(f"🚫 Invalid token for {path}")
             return JSONResponse(status_code=401, content={"detail": "Invalid token"})
 
         request.state.user_id = payload.get("user_id")
         request.state.username = payload.get("username")
         request.state.email = payload.get("sub")
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
 
 class PerformanceMiddleware(BaseHTTPMiddleware):

@@ -24,6 +24,7 @@ router = APIRouter()
 
 # ====== СХЕМЫ ======
 
+
 class UserCreate(BaseModel):
     email: EmailStr = Field(..., description="Email пользователя")
     username: str = Field(
@@ -53,6 +54,7 @@ class UserCreate(BaseModel):
             raise ValueError("Пароль должен содержать спецсимвол")
         return v
 
+
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -64,15 +66,18 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int = 900
     user: UserResponse
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
 
 async def get_current_user_optional(
     request: Request,
@@ -86,16 +91,21 @@ async def get_current_user_optional(
         return await get_current_user(request, db)
     except HTTPException:
         return None
+
+
 # ====== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======
+
 
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
         plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
+
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -103,13 +113,16 @@ def create_access_token(data: dict) -> str:
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
+
 def decode_token(token: str) -> Optional[dict]:
     try:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except jwt.PyJWTError:
         return None
 
+
 # ====== АУТЕНТИФИКАЦИЯ (DEPENDENCY) ======
+
 
 async def get_current_user(
     request: Request,
@@ -117,32 +130,32 @@ async def get_current_user(
 ) -> User:
     """Получение текущего пользователя из токена"""
     access_token = request.cookies.get("access_token")
-    
+
     if not access_token:
         raise AuthException(detail="Not authenticated")
-    
+
     payload = decode_token(access_token)
     if not payload:
         raise AuthException(detail="Invalid token")
-    
+
     user_id = payload.get("user_id")
     if not user_id:
         raise AuthException(detail="Invalid token payload")
-    
+
     repo = UserRepository(db)
     user = await repo.get_by_id(user_id)
-    
+
     if not user:
         raise AuthException(detail="User not found")
-    
+
     return user
+
 
 # ====== ЭНДПОИНТЫ ======
 
+
 @router.post(
-    "/register",
-    response_model=TokenResponse,
-    status_code=status.HTTP_201_CREATED
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
 @limiter.limit(REGISTER_LIMIT)
 async def register(
@@ -157,45 +170,51 @@ async def register(
     # Rate limiting
     if not await rate_checker.check_ip_rate_limit(client_ip, limit=10, window=3600):
         raise RateLimitException(detail="Слишком много попыток. Попробуйте позже")
-    
-    if not await rate_checker.check_email_rate_limit(user_data.email, limit=3, window=3600):
+
+    if not await rate_checker.check_email_rate_limit(
+        user_data.email, limit=3, window=3600
+    ):
         raise RateLimitException(detail="Слишком много попыток для этого email")
 
     repo = UserRepository(db)
-    
+
     # Проверка существования
     if await repo.get_by_email(user_data.email):
         raise AppException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration failed"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Registration failed"
         )
-    
+
     if await repo.get_by_username(user_data.username):
         raise AppException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration failed"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Registration failed"
         )
 
     # Создание пользователя
     hashed_password = get_password_hash(user_data.password)
-    new_user = await repo.create({
-        "email": user_data.email,
-        "username": user_data.username,
-        "hashed_password": hashed_password,
-        "avatar_url": f"https://ui-avatars.com/api/?name={user_data.username}&background=random&size=128",
-        "is_active": True,
-        "registration_ip": client_ip,
-    })
+    new_user = await repo.create(
+        {
+            "email": user_data.email,
+            "username": user_data.username,
+            "hashed_password": hashed_password,
+            "avatar_url": f"https://ui-avatars.com/api/?name={user_data.username}&background=random&size=128",
+            "is_active": True,
+            "registration_ip": client_ip,
+        }
+    )
 
     logger.info(f"✅ User registered: {user_data.email} (ID: {new_user.id})")
-    log_security_event("registration_success", user_id=new_user.id, email=new_user.email)
+    log_security_event(
+        "registration_success", user_id=new_user.id, email=new_user.email
+    )
 
     # Создание токенов
-    access_token = create_access_token({
-        "sub": new_user.email,
-        "user_id": new_user.id,
-        "username": new_user.username,
-    })
+    access_token = create_access_token(
+        {
+            "sub": new_user.email,
+            "user_id": new_user.id,
+            "username": new_user.username,
+        }
+    )
 
     response.set_cookie(
         key="access_token",
@@ -239,11 +258,13 @@ async def login(
     logger.info(f"✅ User logged in: {login_data.email} (ID: {user.id})")
     log_security_event("login_success", user_id=user.id, email=user.email)
 
-    access_token = create_access_token({
-        "sub": user.email,
-        "user_id": user.id,
-        "username": user.username,
-    })
+    access_token = create_access_token(
+        {
+            "sub": user.email,
+            "user_id": user.id,
+            "username": user.username,
+        }
+    )
 
     response.set_cookie(
         key="access_token",
@@ -280,7 +301,9 @@ async def get_me(user: User = Depends(get_current_user)):
 
 
 @router.post("/refresh")
-async def refresh_token(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+async def refresh_token(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+):
     """Обновление access токена"""
     access_token = request.cookies.get("access_token")
     if not access_token:
@@ -299,11 +322,13 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
     if not user:
         raise AuthException(detail="User not found")
 
-    new_token = create_access_token({
-        "sub": user.email,
-        "user_id": user.id,
-        "username": user.username,
-    })
+    new_token = create_access_token(
+        {
+            "sub": user.email,
+            "user_id": user.id,
+            "username": user.username,
+        }
+    )
 
     response.set_cookie(
         key="access_token",
@@ -316,3 +341,20 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
     )
 
     return {"access_token": new_token, "token_type": "bearer"}
+
+
+# core/auth.py - добавить в конец
+
+
+async def get_current_user_optional(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """
+    Получение текущего пользователя (опционально).
+    Если токен не передан или невалидный - возвращает None.
+    """
+    try:
+        return await get_current_user(request, db)
+    except HTTPException:
+        return None

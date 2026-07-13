@@ -34,6 +34,14 @@ type Course = {
   is_enrolled?: boolean;
 };
 
+type CoursesResponse = {
+  courses: Course[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+};
+
 const CATEGORIES = [
   { value: "", label: "Все", icon: Filter },
   { value: "Английский", label: "Английский", icon: Globe },
@@ -52,12 +60,19 @@ export default function CoursesContent() {
 
   const [searchQuery, setSearchQuery] = useState(searchQueryFromUrl);
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [coursesData, setCoursesData] = useState<CoursesResponse>({
+    courses: [],
+    total: 0,
+    page: 1,
+    limit: 12,
+    total_pages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [page, setPage] = useState(1);
 
+  // 🔥 Обновляем URL при изменении категории
   useEffect(() => {
     if (selectedCategory !== categoryFromUrl) {
       const params = new URLSearchParams(searchParams.toString());
@@ -68,7 +83,9 @@ export default function CoursesContent() {
       }
       router.push(`/courses?${params.toString()}`, { scroll: false });
     }
-  }, [selectedCategory, router]); // ← Убрали searchParams!
+  }, [selectedCategory, router]);
+
+  // 🔥 Загрузка курсов
   useEffect(() => {
     async function fetchCourses() {
       setLoading(true);
@@ -76,39 +93,24 @@ export default function CoursesContent() {
         const params = new URLSearchParams();
         if (selectedCategory) params.append("category", selectedCategory);
         if (searchQuery) params.append("search", searchQuery);
+        if (page) params.append("page", String(page));
+        params.append("limit", "12");
 
         const queryString = params.toString();
         const url = `/courses/subjects${queryString ? `?${queryString}` : ""}`;
 
-        const data = await apiFetch(url);
-        setCourses(data);
-        setFilteredCourses(data);
+        const data = await apiFetch<CoursesResponse>(url);
+        setCoursesData(data);
       } catch (err) {
+        console.error("Failed to fetch courses:", err);
       } finally {
         setLoading(false);
       }
     }
     fetchCourses();
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, page]);
 
-  useEffect(() => {
-    let result = courses;
-
-    if (searchQuery) {
-      result = result.filter(
-        (c) =>
-          c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    }
-
-    if (selectedCategory) {
-      result = result.filter((c) => c.category === selectedCategory);
-    }
-
-    setFilteredCourses(result);
-  }, [courses, searchQuery, selectedCategory]);
-
+  // 🔥 Загрузка избранного
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -131,7 +133,7 @@ export default function CoursesContent() {
 
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 
@@ -149,7 +151,9 @@ export default function CoursesContent() {
         else next.add(courseId);
         return next;
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to toggle favorite:", err);
+    }
   };
 
   const formatDuration = (minutes: number | null) => {
@@ -186,6 +190,7 @@ export default function CoursesContent() {
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
+    setPage(1);
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
       params.set("search", value);
@@ -197,7 +202,15 @@ export default function CoursesContent() {
 
   const handleCategoryChange = (categoryValue: string) => {
     setSelectedCategory(categoryValue);
+    setPage(1);
   };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const courses = coursesData.courses || [];
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 w-full max-w-[1400px] mx-auto mt-[40px]">
@@ -209,20 +222,19 @@ export default function CoursesContent() {
       </div>
 
       <div className="w-full mb-8 space-y-4">
-        <div className="w-full mb-8 space-y-4">
-          <div className="max-w-md mx-auto">
-            <div className="flex items-center gap-3 w-full border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-purple-400 transition  pl-3 pr-3">
-              <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Поиск курсов..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="flex-1 py-3 outline-none bg-transparent"
-              />
-            </div>
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center gap-3 w-full border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-purple-400 transition pl-3 pr-3">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Поиск курсов..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="flex-1 py-3 outline-none bg-transparent"
+            />
           </div>
         </div>
+
         <div className="flex flex-wrap w-full justify-center gap-2">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
@@ -232,7 +244,7 @@ export default function CoursesContent() {
               <button
                 key={cat.value || "all"}
                 onClick={() => handleCategoryChange(cat.value)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs  font-medium transition ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition ${
                   isActive
                     ? "bg-gray-800 text-gray-100 shadow-md"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -250,7 +262,7 @@ export default function CoursesContent() {
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600" />
         </div>
-      ) : filteredCourses.length === 0 ? (
+      ) : courses.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-2xl w-full">
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">
@@ -263,6 +275,7 @@ export default function CoursesContent() {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("");
+                setPage(1);
                 router.push("/courses");
               }}
               className="text-purple-600 hover:underline mt-2"
@@ -272,172 +285,198 @@ export default function CoursesContent() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 justify-between md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {filteredCourses.map((course) => {
-            const isFav = favorites.has(course.id);
+        <>
+          <div className="grid grid-cols-1 justify-between md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            {courses.map((course) => {
+              const isFav = favorites.has(course.id);
 
-            return (
-              <Link
-                key={course.id}
-                href={`/courses/promo/${course.slug}`}
-                className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
-              >
-                {course.is_enrolled &&
-                  (course.completion_percent ?? 0) >= 90 && (
-                    <div className="absolute flex flex-row items-center top-48 right-3 bg-gray-900 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
-                      <p>Пройдено</p>
-                      <Check className="ml-[5px] w-4 h-4"></Check>
-                    </div>
-                  )}
-
-                <button
-                  onClick={(e) => toggleFavorite(e, course.id)}
-                  className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${
-                    isFav
-                      ? "bg-red-600 text-white hover:bg-red-600"
-                      : "bg-white text-gray-400 hover:text-red-500 hover:bg-white"
-                  }`}
-                  title={
-                    isFav ? "Убрать из избранного" : "Добавить в избранное"
-                  }
+              return (
+                <Link
+                  key={course.id}
+                  href={`/courses/promo/${course.slug}`}
+                  className="group block bg-white rounded-lg max-w-[430px] border border-gray-200 shadow-xs hover:border-purple-300 transition-all overflow-hidden relative"
                 >
-                  <svg
-                    className={`w-5 h-5 ${isFav ? "fill-current" : ""}`}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    fill={isFav ? "currentColor" : "none"}
+                  {course.is_enrolled &&
+                    (course.completion_percent ?? 0) >= 90 && (
+                      <div className="absolute flex flex-row items-center top-48 right-3 bg-gray-900 text-xs font-semibold z-10 w-[110px] px-[15px] py-[5px] items-center justify-center text-white rounded-lg h-[28px]">
+                        <p>Пройдено</p>
+                        <Check className="ml-[5px] w-4 h-4" />
+                      </div>
+                    )}
+
+                  <button
+                    onClick={(e) => toggleFavorite(e, course.id)}
+                    className={`absolute top-4 right-4 z-10 p-2 rounded-full transition shadow-sm ${
+                      isFav
+                        ? "bg-red-600 text-white hover:bg-red-600"
+                        : "bg-white text-gray-400 hover:text-red-500 hover:bg-white"
+                    }`}
+                    title={
+                      isFav ? "Убрать из избранного" : "Добавить в избранное"
+                    }
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className={`w-5 h-5 ${isFav ? "fill-current" : ""}`}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      fill={isFav ? "currentColor" : "none"}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </button>
 
-                {course.image && (
-                  <div className="h-65 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
-                    <img
-                      src={`/${course.image}`}
-                      alt={course.title}
-                      className="w-[120%] h-[140%] mt-[-20px] ml-[15px] object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        (
-                          e.target as HTMLImageElement
-                        ).parentElement?.classList.add("hidden");
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    {course.category && (
-                      <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
-                        {CATEGORIES.find((c) => c.value === course.category)
-                          ?.label || course.category}
-                      </span>
-                    )}
-                    {course.certificate_available && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg bg-yellow-200 text-yellow-700">
-                        <svg
-                          className="w-3 h-3"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Сертификат
-                      </span>
-                    )}
-                  </div>
-
-                  <h2 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-1">
-                    {course.title}
-                  </h2>
-                  {course.description && (
-                    <p className="text-gray-600 mt-2 text-sm line-clamp-2">
-                      {course.description}
-                    </p>
+                  {course.image && (
+                    <div className="h-65 -mx-6 -mt-6 rounded-t-2xl overflow-hidden bg-gray-100">
+                      <img
+                        src={`/${course.image}`}
+                        alt={course.title}
+                        className="w-[120%] h-[140%] mt-[-20px] ml-[15px] object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          (
+                            e.target as HTMLImageElement
+                          ).parentElement?.classList.add("hidden");
+                        }}
+                      />
+                    </div>
                   )}
 
-                  <div className="flex flex-row justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex flex-row items-center">
-                      {course.duration_minutes && (
-                        <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      {course.category && (
+                        <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                          {CATEGORIES.find((c) => c.value === course.category)
+                            ?.label || course.category}
+                        </span>
+                      )}
+                      {course.certificate_available && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg bg-yellow-200 text-yellow-700">
                           <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
                           >
                             <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              fillRule="evenodd"
+                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
                             />
                           </svg>
-                          <span>{formatDuration(course.duration_minutes)}</span>
-                        </div>
+                          Сертификат
+                        </span>
                       )}
-                      {course.enrolled_count !== undefined && (
-                        <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                          </svg>
-                          <span>{course.enrolled_count}+</span>
-                        </div>
-                      )}
-                      {renderRating(course.rating)}
                     </div>
-                    {course.is_enrolled ? (
-                      <Link
-                        href={`/courses/${course.slug}`}
-                        className="bg-purple-500 text-sm font-semibold ml-[10px] hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
-                      >
-                        <p>Продолжить</p>
-                        <ChevronRight className="w-5 h-5 ml-[10px]" />
-                      </Link>
-                    ) : (
-                      <Link
-                        href={`/courses/promo/${course.slug}`}
-                        className="bg-purple-500 text-sm font-semibold hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
-                      >
-                        <p>Записаться</p>
-                        <ChevronRight className="w-5 h-5 ml-[10px]" />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
 
-      {!loading &&
-        filteredCourses.length > 0 &&
-        (searchQuery || selectedCategory) && (
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Показано {filteredCourses.length} из {courses.length} курсов
-          </p>
-        )}
+                    <h2 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 line-clamp-1">
+                      {course.title}
+                    </h2>
+                    {course.description && (
+                      <p className="text-gray-600 mt-2 text-sm line-clamp-2">
+                        {course.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-row justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex flex-row items-center">
+                        {course.duration_minutes && (
+                          <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span>
+                              {formatDuration(course.duration_minutes)}
+                            </span>
+                          </div>
+                        )}
+                        {course.enrolled_count !== undefined && (
+                          <div className="flex items-center gap-1 mr-[10px] text-xs text-gray-500">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                              />
+                            </svg>
+                            <span>{course.enrolled_count}+</span>
+                          </div>
+                        )}
+                        {renderRating(course.rating)}
+                      </div>
+                      {course.is_enrolled ? (
+                        <Link
+                          href={`/courses/${course.slug}`}
+                          className="bg-purple-500 text-sm font-semibold ml-[10px] hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
+                        >
+                          <p>Продолжить</p>
+                          <ChevronRight className="w-5 h-5 ml-[10px]" />
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/courses/promo/${course.slug}`}
+                          className="bg-purple-500 text-sm font-semibold hover:bg-purple-600 rounded-lg flex flex-row items-center text-white p-[10px]"
+                        >
+                          <p>Записаться</p>
+                          <ChevronRight className="w-5 h-5 ml-[10px]" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Пагинация */}
+          {coursesData.total_pages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {Array.from(
+                { length: coursesData.total_pages },
+                (_, i) => i + 1,
+              ).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handlePageChange(p)}
+                  className={`px-4 py-2 rounded-lg transition ${
+                    p === page
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loading &&
+            courses.length > 0 &&
+            (searchQuery || selectedCategory) && (
+              <p className="text-center text-sm text-gray-500 mt-6">
+                Показано {courses.length} из {coursesData.total} курсов
+              </p>
+            )}
+        </>
+      )}
     </main>
   );
 }

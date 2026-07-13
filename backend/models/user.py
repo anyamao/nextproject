@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy.orm import relationship
 from core.database import Base
 
 
@@ -34,17 +35,25 @@ class User(Base):
     token_balance = Column(Integer, nullable=False, default=0, server_default="0")
     equipped_item_id = Column(Integer, nullable=True)
 
-    # 🔥 ДОБАВЛЯЕМ НЕДОСТАЮЩИЕ ПОЛЯ
+    # Безопасность
     registration_ip = Column(String(45), nullable=True)
     last_login = Column(TIMESTAMP(timezone=True), nullable=True)
     email_verified_at = Column(TIMESTAMP(timezone=True), nullable=True)
     verification_token = Column(String(255), nullable=True)
 
+    # 🔥 Связи с курсами
+    # ВАЖНО: используем ТО ЖЕ ИМЯ, что в models/course.py!
+    favorite_courses = relationship(
+        "Course", secondary="user_favorites", back_populates="favorites"
+    )
+    course_progress = relationship(
+        "UserCourseProgress", back_populates="user", cascade="all, delete-orphan"
+    )
+
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.email})>"
 
     def to_dict(self) -> dict:
-        """Конвертация в словарь"""
         return {
             "id": self.id,
             "email": self.email,

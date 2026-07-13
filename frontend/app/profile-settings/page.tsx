@@ -5,19 +5,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Save,
-  Trash2,
-  Sparkles,
-  ChevronRight,
-  AlertTriangle,
-} from "lucide-react";
+import { ArrowLeft, Save, Trash2, Sparkles, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import useContactStore from "@/store/states";
 import AvatarSelector from "@/components/AvatarSelector";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Toast from "@/components/Toast";
+// 🔥 ИМПОРТИРУЕМ САНИТИЗАЦИЮ
+import {
+  sanitizeText,
+  sanitizeUsername,
+  sanitizeTextarea,
+  hasDangerousPatterns,
+} from "@/lib/sanitize";
 
 type UserProfile = {
   id: number;
@@ -42,7 +42,6 @@ export default function ProfileSettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error" | "info";
@@ -78,57 +77,51 @@ export default function ProfileSettingsPage() {
   // 🔥 Проверка авторизации через store
   useEffect(() => {
     const checkAuthAndLoad = async () => {
-      // Проверяем авторизацию
       if (!isAuthenticated) {
         await checkAuth();
       }
 
-      // Если все еще не авторизован - редирект
       if (!useContactStore.getState().isAuthenticated) {
         router.push("/login");
         return;
       }
 
-      // Загружаем профиль
       await fetchProfile();
     };
 
     checkAuthAndLoad();
   }, [isAuthenticated]);
 
-  // 🔥 Загрузка профиля через apiFetch (с cookie)
+  // 🔥 Загрузка профиля
   const fetchProfile = async () => {
     try {
       setLoading(true);
 
-      // 🔥 Используем apiFetch - он автоматически отправляет cookie
       const data = await apiFetch("/profile/me");
 
       setProfile(data);
 
-      // Заполняем форму
-      setUsername(data.username || "");
-      setFirstName(data.first_name || "");
-      setLastName(data.last_name || "");
-      setStatus(data.status || "");
-      setAboutMe(data.about_me || "");
+      // 🔥 Заполняем форму с санитизацией
+      setUsername(sanitizeUsername(data.username));
+      setFirstName(sanitizeText(data.first_name));
+      setLastName(sanitizeText(data.last_name));
+      setStatus(sanitizeText(data.status));
+      setAboutMe(sanitizeTextarea(data.about_me));
       setSelectedAvatar(data.avatar_url || "default_cat.jpg");
 
-      // Обновляем user в store
       if (data) {
         setUser({
           id: data.id,
           email: data.email,
-          username: data.username,
+          username: sanitizeUsername(data.username),
           avatar_url: data.avatar_url || "default_cat.jpg",
-          status: data.status,
+          status: sanitizeText(data.status),
         });
       }
     } catch (err: any) {
       console.error("❌ Failed to load profile:", err);
 
       if (err?.status === 401) {
-        // Если не авторизован - редирект на логин
         router.push("/login");
       } else {
         setError("Не удалось загрузить профиль");
@@ -139,11 +132,76 @@ export default function ProfileSettingsPage() {
     }
   };
 
+  // 🔥 Обработчики изменения полей с санитизацией
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // 🔥 Санитизируем username (удаляем недопустимые символы)
+    const sanitized = sanitizeUsername(raw);
+    setUsername(sanitized);
+    setError(null);
+  };
+
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // 🔥 Санитизируем текст
+    const sanitized = sanitizeText(raw);
+    setFirstName(sanitized);
+    setError(null);
+  };
+
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const sanitized = sanitizeText(raw);
+    setLastName(sanitized);
+    setError(null);
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // 🔥 Проверяем на опасные паттерны
+    if (hasDangerousPatterns(raw)) {
+      setError("Обнаружен запрещенный контент");
+      return;
+    }
+    const sanitized = sanitizeText(raw);
+    setStatus(sanitized);
+    setError(null);
+  };
+
+  const handleAboutMeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const raw = e.target.value;
+    // 🔥 Проверяем на опасные паттерны
+    if (hasDangerousPatterns(raw)) {
+      setError("Обнаружен запрещенный контент");
+      return;
+    }
+    const sanitized = sanitizeTextarea(raw);
+    setAboutMe(sanitized);
+    setError(null);
+  };
+
   // 🔥 Сохранение профиля
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username.trim() || username.length < 3) {
+    // 🔥 Финальная санитизация перед отправкой
+    const finalUsername = sanitizeUsername(username);
+    const finalFirstName = sanitizeText(firstName);
+    const finalLastName = sanitizeText(lastName);
+    const finalStatus = sanitizeText(status);
+    const finalAboutMe = sanitizeTextarea(aboutMe);
+
+    // 🔥 Проверка на опасные паттерны
+    if (
+      hasDangerousPatterns(finalAboutMe) ||
+      hasDangerousPatterns(finalStatus)
+    ) {
+      setError("Обнаружен запрещенный контент");
+      showToast("Обнаружен запрещенный контент", "error");
+      return;
+    }
+
+    if (!finalUsername || finalUsername.length < 3) {
       setError("Имя пользователя должно содержать минимум 3 символа");
       showToast("Имя пользователя должно содержать минимум 3 символа", "error");
       return;
@@ -154,28 +212,26 @@ export default function ProfileSettingsPage() {
     setSuccess(false);
 
     try {
-      // 🔥 Используем apiFetch
       const updated = await apiFetch("/profile/update", {
         method: "PATCH",
         body: JSON.stringify({
-          username: username.trim(),
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
-          status: status.trim() || null,
-          about_me: aboutMe.trim() || null,
+          username: finalUsername,
+          first_name: finalFirstName || null,
+          last_name: finalLastName || null,
+          status: finalStatus || null,
+          about_me: finalAboutMe || null,
           avatar_url: selectedAvatar,
         }),
       });
 
       setProfile(updated);
 
-      // Обновляем user в store
       setUser({
         id: updated.id,
         email: updated.email,
-        username: updated.username,
+        username: finalUsername,
         avatar_url: updated.avatar_url || selectedAvatar,
-        status: updated.status,
+        status: finalStatus,
       });
 
       setSuccess(true);
@@ -199,13 +255,9 @@ export default function ProfileSettingsPage() {
         method: "DELETE",
       });
 
-      // Очищаем состояние
       setUser(null);
-
-      // Показываем уведомление
       showToast("Аккаунт успешно удалён", "success");
 
-      // Редирект на главную
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -320,7 +372,7 @@ export default function ProfileSettingsPage() {
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={handleUsernameChange}
                   minLength={3}
                   maxLength={30}
                   className="w-full p-3 bg-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
@@ -328,7 +380,7 @@ export default function ProfileSettingsPage() {
                   disabled={saving}
                 />
                 <p className="text-xs text-gray-700 mt-1">
-                  Минимум 3 символа, максимум 30
+                  Только буквы, цифры, _, . и -. Минимум 3 символа
                 </p>
               </div>
 
@@ -347,7 +399,7 @@ export default function ProfileSettingsPage() {
                 <input
                   type="text"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={handleStatusChange}
                   maxLength={200}
                   className="w-full p-3 focus:ring-2 focus:ring-purple-500 rounded-lg bg-white outline-none transition"
                   placeholder="Например: 🎓 Студент | 💻 Разработчик"
@@ -362,7 +414,7 @@ export default function ProfileSettingsPage() {
                 </label>
                 <textarea
                   value={aboutMe}
-                  onChange={(e) => setAboutMe(e.target.value)}
+                  onChange={handleAboutMeChange}
                   maxLength={2000}
                   rows={4}
                   className="w-full p-3 bg-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition resize-none"
@@ -394,7 +446,7 @@ export default function ProfileSettingsPage() {
               <input
                 type="text"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={handleFirstNameChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
                 placeholder="Иван"
                 disabled={saving}
@@ -407,7 +459,7 @@ export default function ProfileSettingsPage() {
               <input
                 type="text"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={handleLastNameChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition"
                 placeholder="Иванов"
                 disabled={saving}
